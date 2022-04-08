@@ -1,0 +1,25 @@
+There is definitely a better way to do this, but in order to use the function pari_prime_check,
+which executes the fast index divisor check, an extra function needs to be added to the standard
+pari libary.
+
+One way to do this is as follows:
+
+1) Paste the function from the file buch3-insert.c into buch3.c 
+located in src/basemath
+ 
+2) In src/headers/paridecl.h paste the following line 
+GEN     pari_prime_check(GEN nf, GEN beta, GEN prim, GEN bad, GEN cpct);
+into the buch3.c header section.
+ 
+3) In src/language/init.h paste the line 
+{"pari_prime_check",0,(void*)pari_prime_check,10,"GGGGG","pari_prime_check(nf,beta, prim,bad, cpct): primecertify. Uses matrix relations to check prime does not divide index. Returns 1 if successful, 0 after 2r ideals have been considered without success"}
+into the appropriate alphabetical spot
+
+
+Please excuse the .py extension, my text editor does not highlight .gp files appropriately!
+Use the AllTest.gp and experiment- files as samples for how to make use of the functions within.
+experiment files read in precomputed data from the input folder in order to avoid having to execute bnfinit for large input.
+Some of the larger discriminant fields do not work, which currently I suspect is because the log lattice data
+was not computed to sufficient precision, but may also be due to a bug.
+
+Test cases are currently in progress, but far from complete.
