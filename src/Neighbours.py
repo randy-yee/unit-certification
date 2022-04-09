@@ -18,6 +18,7 @@ FUNCTIONS:
 - cubescan_unequal
 
 - is_minimum
+- is_minimum_alternate
 - is_neighbour
 
 - expand_minset
@@ -211,6 +212,32 @@ is_minimum(idealmat, v, G, eps)={
     if (length(normedbody)!=0,
         return(0),
         return(1));
+};
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\ This function will take in a column vector which represent coefficients wrt the integral basis and check if it is a minimum in the given ideal
+\\ Uses cubescan to verify that the normed body is empty
+\\ INPUT:
+\\ - idealmat is a matrix representing an ideal I
+\\ - v is the column vector of an element of G wrt zk
+\\ - G is the number field
+\\ - eps is an error
+\\ OUTPUT:
+\\ - 0 or 1 depending on whether v is a minimum of idealmat
+
+is_minimum_alternate(idealmat, v, G, eps)={
+    my(normedbody, I_v);
+    normI_deltaK = ceil(((2/Pi)^(G.r2))*abs(G.disc)^(1/2)*idealnorm(G,y));
+    v_norm = abs(nfeltnorm(G,vecholder ));
+    if(v_norm < 1 || v_norm > normI_deltaK , return(0));
+
+    I_v=idealdiv(G,idealmat,v);
+    real_Iv = embed_real(G, G[5][1]*I_v);
+    LLLchange = qflll(real_Iv);
+    I_v_LLL = real_Iv*LLLchange;
+    if(norml2(I_v_LLL[,1]) < 1, return(0));
+    if(checkred_old(I_v*LLLchange,G, eps ),return(1), return(0) );
 };
 
 \\ This function will take in a column vector which represent coefficients wrt the integral basis and check if it is a minima in the given ideal
