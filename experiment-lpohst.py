@@ -40,7 +40,7 @@ read("input/test-poly-3-0.gp"); data = data3_0;
 
 SMALLEXAMPLE = 0;
 {
-for(i=1,10,
+for(i=11,12,
     \\
     \\ INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -66,13 +66,13 @@ for(i=1,10,
     \\print(precision(lglat_new,10), "\nMODPAIR", modpair1);
 
     \\lglat_new = lglat; lglat_new[,1] = 3*lglat_new[,1]; print(precision(lglat_new,10), "\nMODPAIR", modpair1);
-    lglat_new = lglat; \\modpair1[2] =1;
+
 
     \\write(OUTFILE1,"\n--- Field number ", i, " " , K.pol, "\nModified lglat ", precision(lglat_new,10));
     \\inputreg = unscaled_determinant(K,lglat_new);
     \\write(OUTFILE1," Input Regulator: ", precision(inputreg,10));
 
-
+    lglat_new = lglat; \\modpair1[2] =1;
     unitvector_cpct = cpct_from_loglattice(K, lglat_new, eps);                  \\ computation of compact reps
     tbefore = getabstime();
 

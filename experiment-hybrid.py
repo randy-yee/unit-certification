@@ -34,7 +34,7 @@ read("input/test-poly-3-0.gp"); data = data3_0;
 
 {
 
-for(i=1, 10,
+for(i=22, 23,
 
     \\
     \\ INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
@@ -148,7 +148,7 @@ for(i=1, 10,
 
     \\write(OUTFILE1,"BSGS Output Regulator: ", precision(outreg,10 ), ". Ratios: ", (modpair1[2]-inputreg/outreg)< eps);
     write(OUTFILE1, "bsgs time ",precision(bsgstime,10), " In minutes: ", precision(bsgstime/60000.0,15) );
-    write(OUTFILE1,"Overall time: ", precision(bsgstime+lptime , 10) , " In minutes: ", precision(bsgstime+lptime/60000.0,15) );
+    write(OUTFILE1,"Overall time: ", precision(bsgstime+lptime , 10) , " In minutes: ", precision((bsgstime+lptime)/60000.0,15) );
 
 );
 }

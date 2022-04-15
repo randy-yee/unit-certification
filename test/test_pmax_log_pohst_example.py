@@ -1,7 +1,7 @@
 {
 read("src/PmaxLog.py");
-
 default(realprecision, 1000);
+TIMING = 1;
 }
 
 {
@@ -28,8 +28,8 @@ default(realprecision, 1000);
     \\print("Gv = ", precision(Gv,10));
     pohst_k = 2*Gv;
 
-    lbound = lower_regbound(K1,  pohst_k,eps);
-    index_bound = ceil(log_determinant(K1, ind_unitmat)/(lbound));
+    \\lbound = lower_regbound(K1,  pohst_k,eps);
+    \\index_bound = ceil(log_determinant(K1, ind_unitmat)/(lbound));
     \\print("pohst - k is ", precision(pohst_k,10));
     \\print("Lower bound is: ", precision(lbound,10), " index_bound is ", index_bound);
 

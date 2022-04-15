@@ -9,7 +9,8 @@ If you only want to test a subset, either make a new file similar to this one,
 or comment out the unwanted tests from the list below.
 
 See https://linux.die.net/man/1/gp for available flags
-If you have problems with memory, use the -s flag to specify stack size
+If you have problems with memory, use the -s flag to specify stack size,
+validated for 8GB stack size
 */
 
 
@@ -27,8 +28,5 @@ read("test/test_pmax_normal.py");
 read("test/test_bsgs.py");
 read("test/test_pmax_log.py");
 */
-}
-
-{
-
+read("test/test_pmax_log_pohst_example.py");
 }

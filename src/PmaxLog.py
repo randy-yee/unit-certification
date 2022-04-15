@@ -287,7 +287,7 @@ get_search_ideal_cpct(G,p, k, cpctreps, expmat, logmat, torsion_coeffs=[])={
 
             \\ irreducibility check of Pohst/Arenz
             if (embedded_eta^( (factor_candidate[1]^factor_candidate.f-1)/p) != 1,
-                write("maxQ-2-1.txt", "p = ",p, ". Ideals checked = ",prime_ctr, " Q = ", (prime_q-1)/p , "*", p, "+1. Ideal norm ", idealnorm(G,factor_candidate)  );
+                \\write("findingQ.log", "p = ",p, ". Ideals checked = ",prime_ctr, " Q = ", (prime_q-1)/p , "*", p, "+1. Ideal norm ", idealnorm(G,factor_candidate)  );
                 return([factor_candidate,cpctreps]);                                           \\ Should always exit the function here unless the input is invalid
             );
             prime_ctr+=1;
@@ -366,7 +366,6 @@ update_eta_set_log(G,p,k, cpct_reps, expmat, loglat, torsion_coeffs = [])={
         exponent_i = get_new_eta_cpct(G, p , k, i, cebotarev_ideal, temporary_cpctreps, expmat,torsion_coeffs);
         exponent_tracker = concat(exponent_tracker, exponent_i);
     );
-    if(DEBUG_UPDATE, print("exponent tracker ", exponent_tracker););
     return(exponent_tracker);
 }
 
@@ -390,9 +389,10 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
             \\print("adding torsion");
             betavec = concat(betavec, [[ List( [nfalgtobasis(G, torsiongen)] ), [1]  ]] );
         );
-
-        \\if(1,                                                                   \\ UNCOMMENT ONLY IF YOU WANT TO IGNORE THE FAST PRIME CHECK
+        lpohst_ploop_t1 =0;
+        \\if(1,                                                                 \\ UNCOMMENT LINE AND COMMENT OUT THE LINE BELOW IF YOU WANT TO SKIP THE FAST PRIME CHECK
         if(pari_prime_check(G, betavec, p, compact_lcm, 1) == 0 ,
+
             print("\npari_prime_check detects possible index divisor ", p);
             eta_exp_mat = matid(length(new_units));
 
@@ -401,25 +401,30 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
                 \\ update eta set using the torsion unit, store the coeffs in a vector
                 torsion_coeffs = update_eta_set_log(G,p,0,unitvector_cpct, eta_exp_mat, new_units);
             );
-            print("torsion coefficients: ", torsion_coeffs);
 
             k = 1;                                                              \\# each time a new prime is considered, reset k to 1
             solutionflag = 1;                                                   \\# flag indicates if a solution has been found
             solution = 0;                                                       \\# variable to hold either 0 or a found solutions
 
             while(solutionflag == 1,
+                \\lpohst_ploop_t2 =getabstime(); print("timing of pohst section: ", lpohst_ploop_t2 -lpohst_ploop_t1 );
+                \\lpohst_ploop_t1 =getabstime();
                 test_eta_k = new_units*eta_exp_mat[,k];
                 test_eta_k = test_eta_k/p;
-                if( 0,print("LPohst: Checking pth root, p=",p, ". \ntest_eta: ", precision(test_eta_k,10)););
+                \\if( 0,print("LPohst: Checking pth root, p=",p, ". \ntest_eta: ", precision(test_eta_k,10)););
 
-                \\eta_k_complex_log = vector(G.r1+G.r2, t, 0);
-                \\for(i =1, length(unitvector_cpct),
-                \\    eta_k_complex_log += eta_exp_mat[i,k]*complex_log_from_cpct(G, unitvector_cpct[i]);
-                \\);
+                eta_k_complex_log = vector(G.r1+G.r2, t, 0);
+                for(i =1, length(unitvector_cpct),
+                    eta_k_complex_log += eta_exp_mat[i,k]*complex_log_from_cpct(G, unitvector_cpct[i]);
+                );
+
+                GP_ASSERT_NEAR(real(eta_k_complex_log/p),test_eta_k,eps);
+
                 \\print(precision(eta_k_complex_log/p,10));
                 \\complex_check_in_unitlattice(G, eta_k_complex_log, eps);
+                lattice_check_t1 = getabstime();
                 solutionflag = check_in_unitlattice(G, test_eta_k~, eps);
-
+                print("lattice check time: ", getabstime() - lattice_check_t1);
                 if(solutionflag ==1,
                     print("LPohst: Found Solutions --");
 
@@ -431,15 +436,17 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
                     \\print("After replacement: ", precision(new_units,10));
                     new_units = new_units*qflll(new_units);
 
+                    cpct_t1 = getabstime();
                     unitvector_cpct = cpct_from_loglattice(G, new_units, eps);
-
+                    cpct_t2 = getabstime();
+                    print("recomputing compact reps time: ", (cpct_t2 -cpct_t1 ) );
                     \\for(i=1, length(unitvector_cpct),
                     \\    v1 = log(nfeltembed(G,compact_reconstruct(G, unitvector_cpct[i][1],unitvector_cpct[i][2]) ));
                     \\    v2 = complex_log_from_cpct(G, unitvector_cpct[i]) ;
                     \\    print(precision(norml2(v1-v2),10));
                     \\);
 
-                    \\ if the cpct reps have changed, then need to update these two variables
+                    \\ if the cpct reps have changed, then need to update betavec and the lcm
                     betavec = unitvector_cpct;
                     compact_lcm = lcm_denominators(unitvector_cpct);
 
@@ -457,12 +464,6 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
 
                     if(k == length(L),solutionflag = 0; break;);
 
-                    \\for(s =1, length(unitvector_cpct),
-                    \\    comp = compact_reconstruct(G, unitvector_cpct[s][1], unitvector_cpct[s][2]);
-                    \\    print(precision(log(abs(G[5][1]*comp)),10));
-                    \\    print("\n",precision(new_units[,s],10));
-                    \\);
-
                     updatevec = update_eta_set_log(G,p,k,unitvector_cpct, eta_exp_mat, new_units, torsion_coeffs);
 
                     eta_exp_mat = update_expmat(eta_exp_mat, updatevec, k , p );
@@ -470,14 +471,14 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
                         torsion_coeffs[s] = (torsion_coeffs[s]+updatevec[s-k]*torsion_coeffs[k]);
                     );
                     \\print("eta matrix after checking eta_" , k);print(eta_exp_mat);
-                    \\print("LPohst: Eta update complete\n");
                     \\# Update k and reset solutionflag to 1
                     k+=1;
                     solutionflag = 1;
                 );
             );
+
         , \\else:
-            \\if(p%1000000 ==1, print("LPohst: pari_check succeeds for, ",p, ". Now checking p = ", nextprime(p+1)));
+            if(p%100000 ==1, print("LPohst: pari_check succeeds for, ",p, ". Now checking p = ", nextprime(p+1)));
         );
         if(torsion %p == 0,
             betavec = unitvector_cpct;
