@@ -6,8 +6,9 @@ read("src/CompactRepresentation.py");
 \\ read("src/Neighbours.py");
 }
 
-
-{ \\ test cases for compact_rep_buchmann and compact_reconstruct
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\ test cases for compact_rep_buchmann and compact_reconstruct
+{
     my(G1, G2, O_K, n, eps = 10^(-9));
     G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
@@ -38,6 +39,10 @@ read("src/CompactRepresentation.py");
     );
 }
 
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\ Testing conversion from logarithm to compact representation
+\\ with large-ish values
 {
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep,
         log_lattice, cpct_units, eps = 10^(-20)
@@ -59,7 +64,9 @@ read("src/CompactRepresentation.py");
     GP_ASSERT_VEC_NEAR(log_from_cpct(G1, cpct_rep)[1..r], large_unit, eps);
 }
 
-
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\ testing computation of logarithm lattice from set of compact representations
+\\ and back: log_lattice_from_compact_set  cpct_from_loglattice
 {
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep,
         log_lattice, cpct_units, eps = 10^(-20)
@@ -82,7 +89,9 @@ read("src/CompactRepresentation.py");
     GP_ASSERT_MAT_NEAR(log_lattice, log_lattice_from_compact_set(G1, cpct_units), eps);
 }
 
-
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\ Second test case of conversion from loglattice to cpct representations
+\\ cpct_from_loglattice log_lattice_from_compact_set
 {
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep,
         log_lattice, cpct_units, eps = 10^(-20)
@@ -100,6 +109,8 @@ read("src/CompactRepresentation.py");
 
 }
 
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 {\\ test giantstep function
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep, delta_K,
         log_lattice, cpct_units, eps = 10^(-20)
