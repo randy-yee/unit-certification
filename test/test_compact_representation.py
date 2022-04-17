@@ -125,5 +125,37 @@ read("src/CompactRepresentation.py");
     GP_ASSERT_TRUE(norml2(new_minima[2]) <= delta_K);
 }
 
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+{\\ test reddiv function. This is an example in which the LLL basis of uI
+ \\ does have a minimum as the first basis element
+    my(G1, G2, n, r, logarithm_lattice_c, cpct_rep, delta_K, idealmat, uvec,
+        log_lattice, cpct_units, eps = 10^(-20)
+    );
+
+    G1 = nfinit(x^3 - 14105*x^2 + 190241206*x - 1434835874037);
+    n = poldegree(G1.pol); r= G1.r1 +G1.r2-1;
+    idealmat =
+    [1, 0, 5512998124844705338064/8078344704142404472089;
+    0, 1,  400989849241203212816/8078344704142404472089;
+    0, 0, 1/8078344704142404472089];
+    uvec = [159313008.820576934721790381118980083806910541, 7120911.20594078063086462944469944690117925262];
+
+    LLLcoeffmat = [7186829957262695351/8078344704142404472089, 519691674836511290/897593856015822719121, -6786646683055913860/8078344704142404472089;
+99203606606426/8078344704142404472089, -101780408781643/897593856015822719121, 29525541364643/8078344704142404472089;
+-60657402575/8078344704142404472089, 353725531/897593856015822719121, 61180101772/8078344704142404472089];
+    beta = [7186829957262695351/8078344704142404472089, 99203606606426/8078344704142404472089, -60657402575/8078344704142404472089]~;
+
+    \\ confirms that the 3rd basis element is actually located in the normed body
+    \\ of the first one
+    GP_ASSERT_VEC_LT(valuationvec(G1, LLLcoeffmat[,3],column=1), valuationvec(G1, LLLcoeffmat[,1],column=1) ,eps);
+
+    \\ assert that the is_minimum test fails
+    GP_ASSERT_FALSE(is_minimum(LLLcoeffmat, beta, G1, eps));
+    GP_ASSERT_TRUE(is_minimum(LLLcoeffmat, LLLcoeffmat[,3], G1, eps));
+    \\reddiv_compact(idealmat, uvec, G1, G[5][1]);
+}
+
+
 default(realprecision, 100);
 print("Testing compact representation functions complete")

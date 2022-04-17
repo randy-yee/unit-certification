@@ -292,14 +292,14 @@ reddiv_compact(y,u,G,M1, p_avoid=1)={
 
     \\ need to scan to make sure the first basis vector is a shortest one
     real_mat_uY = embed_real(G, LLL_numerical_uY);
-    enum_result = qfminim(real_mat_uY~*real_mat_uY, norml2(real_mat_uY[,1])+comp,,2 );
+    enum_result = qfminim(real_mat_uY~*real_mat_uY, norml2(real_mat_uY[,1])-comp,,2 );
 
-    /* NOTE THIS CHECK NEEDS TO BE PUT IN, BUT IS_MINIMUM IS TOO SLOW IN FIELDS WITH LARGE R2
-    \\ NEED TO IMPLEMENT THE METHOD FROM THE PAPER
-    if(enum_result[1]!=2 && !is_minimum(LLLcoeffmat,beta , G, comp),
+    /* NOTE THIS CHECK NEEDS IS TOO SLOW IN FIELDS WITH LARGE DEGREE (see pohst example)
+    \\ Try to implement the method from the paper
+    */
+    if(length(enum_result[3])!=0 && !is_minimum(LLLcoeffmat,beta , G, comp),
         short_index =0;
         short_length = norml2(real_mat_uY[,1])+1;
-        print("first basis vector is not shortest, changing selection");
 
         for(j=1, length(enum_result[3]),
             iter_length = norml2(real_mat_uY*enum_result[3][,j]);
@@ -309,10 +309,8 @@ reddiv_compact(y,u,G,M1, p_avoid=1)={
         );
         beta = LLLcoeffmat*enum_result[3][,short_index];
 
-        \\print(enum_result[3]);
-        \\breakpoint();
     );
-    */
+
 
     new_y = idealdiv(G,y,beta); new_y = idealhnf(G,new_y);                      \\ the reduced ideal y / mu, in hnf form
 
