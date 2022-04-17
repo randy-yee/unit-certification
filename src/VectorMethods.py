@@ -20,6 +20,8 @@ flipvec
 vec_less_than
 */
 
+sqrt2 = sqrt(2);
+
 read("src/MLLL.py");
 read("test/TestingUtility.gp")
 

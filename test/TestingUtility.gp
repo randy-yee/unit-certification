@@ -89,6 +89,18 @@ GP_ASSERT_LT(arg1, arg2)={
   );
 }
 
+GP_ASSERT_VEC_LT(arg1, arg2,eps)={
+  if(length(arg1) != length(arg2), print("Invalid Assert,
+    vectors not the same length");breakpoint(); );
+  for(i=1, length(arg1),
+    if((arg1[i] - arg2[i]) < eps,
+    ,
+      print("Assert failed. ", arg1[i], " is not less than ", arg2[i]);
+      breakpoint();
+    );
+  );
+}
+
 
 \\ Shortcut function way to print values at a particular precision.
 debug_print(string, value, p_level = 10)={
