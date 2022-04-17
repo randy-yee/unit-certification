@@ -418,7 +418,7 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
                     eta_k_complex_log += eta_exp_mat[i,k]*complex_log_from_cpct(G, unitvector_cpct[i]);
                 );
 
-                GP_ASSERT_NEAR(real(eta_k_complex_log/p),test_eta_k,eps);
+                GP_ASSERT_VEC_NEAR(real(eta_k_complex_log/p)[1..G.r1+G.r2-1]~,test_eta_k,eps);
 
                 \\print(precision(eta_k_complex_log/p,10));
                 \\complex_check_in_unitlattice(G, eta_k_complex_log, eps);
