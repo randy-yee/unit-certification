@@ -437,7 +437,7 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
                 solutionflag = check_in_unitlattice(G, test_eta_k~, eps);
                 if (solutionflag != complex_check_in_unitlattice(G, eta_k_complex_log/p, eps), print("flags not matching");breakpoint());
 
-                print("DEBUGGING: lattice check time: ", getabstime() - lattice_check_t1);
+                //print("DEBUGGING: lattice check time: ", getabstime() - lattice_check_t1);
                 if(solutionflag ==1,
                     print("LPohst: Found Solutions --");
 
