@@ -128,7 +128,7 @@ read("src/CompactRepresentation.py");
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 {\\ test reddiv function. This is an example in which the LLL basis of uI
- \\ does have a minimum as the first basis element
+ \\ does not have a minimum as the first basis element
     my(G1, G2, n, r, logarithm_lattice_c, cpct_rep, delta_K, idealmat, uvec,
         log_lattice, cpct_units, eps = 10^(-20)
     );

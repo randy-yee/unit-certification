@@ -113,8 +113,10 @@ check_in_unitlattice(G, v, eps)={
         log_mu_p = v - log_mu[1..r];                                            \\ this is log(mu') as in the FJ paper.
 
         if(DEBUG_MEMBERSHIP,
-        print("\n Checking if v is in unit lattice, v: ", precision(v,10), "\n psi(mu)=log_mu: ", precision(log_mu,10), \
-            "\n  Norm(v - psi(mu)) = ", precision(norml2(log_mu_p),10) );
+        print("\n Original membership check: \n \
+            - Checking if v is in unit lattice, v: ", precision(v,10),
+            "\n- psi(mu)=log_mu: ", precision(log_mu,10), \
+            "\n- Norm(v - psi(mu)) = ", precision(norml2(log_mu_p),10) );
         );
 
         if(norml2(log_mu_p) > radius_S^2, return(0));                           \\ if the returned element is too far away, return 0
@@ -183,28 +185,34 @@ check_in_unitlattice(G, v, eps)={
 complex_check_in_unitlattice(G, v, eps)={
     if(type(v) == "t_COL", v = v~);
     if(norml2(v)<eps^2,
-        return(1),                          \\ v is zero, automatically return 1
+        return(1),                          \\ should mean v is zero, automatically return 1
     \\else
-        M_inv = G[5][1]^(-1);               \\ note that this is intentionally global!
+        M_inv = G[5][1]^(-1);
         my(
             m1=G[5][1], n=poldegree(G.pol), r=G.r1+G.r2-1,
-            radius_S, jump_output, log_mu, new_y, log_mu_p, babystock, babystock_log, scaled_basis, quadform, change_of_basis
+            radius_S, jump_output, log_mu, new_y, log_mu_p, babystock,
+            babystock_log, scaled_basis, quadform, change_of_basis
         );
 
+        \\ use jump to get a nearby divisor
         radius_S = 1/4*sqrt(r)*log(abs(G.disc));                                            \\ This is the search radius S
-        jump_output = giantstep_high_precision(matid(n),real(v[1..r]),G,n,eps,1);             \\ obtain a minima mu that is 'close' to v using JUMP
-
-
+        jump_output = giantstep_high_precision(matid(n),real(v[1..r]),G,n,eps,1);           \\ obtain a minima mu that is 'close' to v using JUMP
 
         log_mu = jump_output[3];                                                \\ this is a log vector of mu,  Psi(mu) in the Fonteine-Jacobson paper
         new_y = jump_output[1];                                                 \\ this is the reduced ideal (1/mu)*y
-        log_mu_p = v - log_mu;                                            \\ this is log(mu') as in the FJ paper.
+        log_mu_p = v - log_mu;                                                  \\ this is log(mu') as in the FJ paper.
 
-        if(abs(norml2(log_mu_p) ) <= eps, return(1) );
+        if(DEBUG_MEMBERSHIP,
+        print("\n Complex membership check: \n",
+            "- Checking if v is in unit lattice, v: ", precision(v,10),
+            "\n- psi(mu)=log_mu: ", precision(log_mu,10), \
+            "\n- Norm(v - psi(mu)) = ", precision(norml2(log_mu_p),10) );
+        );
+
+        if(abs(norml2(real(log_mu_p)) ) <= eps, return(1) );
         elmp = exp(log_mu_p);
-        \\M_inv = m1^(-1);                                                      \\this is defined globally in log_pohst_pari
-        coeffs = M_inv*elmp~;                                                   \\ note M_inv needs to be converted to a square matrix by breaking up the real and complex parts
-                                                                                \\ same with elmp
+        coeffs = M_inv*elmp~;
+
         \\print(precision(coeffs,10));
 
         \\ check if the vector is all integers
@@ -212,10 +220,12 @@ complex_check_in_unitlattice(G, v, eps)={
             if( abs(imag(coeffs[i]) ) >= eps, return(0));
             if( abs(real(coeffs[i])-round(coeffs[i])) >= eps, return(0););
         );
-        print("coeffs are all integers"); breakpoint();
+        if(DEBUG_MEMBERSHIP,print("coeffs are all integers"););
         \\
         \\ Also need to check that the ideal 1/mu' I = O_K
-        return(1);
+        check_ideal = idealdiv(G, new_y, round(coeffs));
+        if(DEBUG_MEMBERSHIP, print("Verifying (1/mu')I = O_K"),check_ideal == matid(n));
+        if (check_ideal == matid(n), return(1), return(0));
 
     );
 }
@@ -332,7 +342,7 @@ get_new_eta_cpct(G, p, k, j, searchideal, cpctreps, expmat,torsion_coeffs=[])={
     );
     resfield_gen = ffprimroot(ffgen(eta_k_mod));                                \\ gets a multiplicative generator
 
-    if(DEBUG_NEW_ETA, print("eta_k_j ",eta_k_mod );print(" ---- get_new_eta: Is ", resfield_gen , " really a generator? ", resfield_gen.p - resfield_gen^((searchideal.p^searchideal.f -1)/2) ););
+    if(DEBUG_NEW_ETA, print("eta_k_j ",eta_k_mod ););
 
     dlog_k = fflog(eta_k_mod, resfield_gen);                                    \\ get the DLOG wrt the mult. generator
     dlog_j = fflog(eta_j_mod, resfield_gen);
@@ -422,9 +432,12 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
 
                 \\print(precision(eta_k_complex_log/p,10));
                 \\complex_check_in_unitlattice(G, eta_k_complex_log, eps);
+
                 lattice_check_t1 = getabstime();
                 solutionflag = check_in_unitlattice(G, test_eta_k~, eps);
-                print("lattice check time: ", getabstime() - lattice_check_t1);
+                if (solutionflag != complex_check_in_unitlattice(G, eta_k_complex_log/p, eps), print("flags not matching");breakpoint());
+
+                print("DEBUGGING: lattice check time: ", getabstime() - lattice_check_t1);
                 if(solutionflag ==1,
                     print("LPohst: Found Solutions --");
 

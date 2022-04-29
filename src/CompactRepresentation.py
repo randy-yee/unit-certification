@@ -294,12 +294,12 @@ reddiv_compact(y,u,G,M1, p_avoid=1)={
     real_mat_uY = embed_real(G, LLL_numerical_uY);
     enum_result = qfminim(real_mat_uY~*real_mat_uY, norml2(real_mat_uY[,1])-comp,,2 );
 
-    /* NOTE THIS CHECK NEEDS IS TOO SLOW IN FIELDS WITH LARGE DEGREE (see pohst example)
-    \\ Try to implement the method from the paper
+    /* NOTE THIS CHECK IS SLOW IN FIELDS WITH LARGE DEGREE (see pohst example)
+    \\
     */
     if(length(enum_result[3])!=0 && !is_minimum(LLLcoeffmat,beta , G, comp),
-        short_index =0;
-        short_length = norml2(real_mat_uY[,1])+1;
+        short_index =1;
+        short_length = norml2(real_mat_uY[,1]);
 
         for(j=1, length(enum_result[3]),
             iter_length = norml2(real_mat_uY*enum_result[3][,j]);
@@ -458,7 +458,7 @@ if(type(v) == "t_COL", v = v~);
         idealB = idealsquare(idealB, G);
 
         u_square = pointwise_vector_mul(u,u)~;
-        \\print("GSHP");
+
         \\debug_compare(log(u_square), shrunken_v- 2*log_distance[1..G.r1+G.r2-1]);
         \\debug_compare(u_square, abs(create_target(G, shrunken_v- 2*log_distance[1..G.r1+G.r2-1], 1)) );
         [idealB,u,log_mu_k,beta] = reddiv_compact(idealB, u_square, G, G[5][1],avp);
@@ -504,12 +504,8 @@ complex_log_from_cpct(G, cpct_rep)={
     my(intermediate, lvec_complex = vector(G.r1+G.r2,k,0) ) ;
     for(j=1, length(cpct_rep[1]),
         lvec_complex*=2;
-        print("embedding");
         intermediate = log(nfeltembed(G, nfeltdiv(G, cpct_rep[1][j], cpct_rep[2][j])));
-        print(precision(intermediate,10));
-        print("done embedding");
         lvec_complex+= intermediate;
-        \\print("************** Loop ", j, " **************\n  alpha/d: ", intermediate);
       );
       return(lvec_complex);
 }
