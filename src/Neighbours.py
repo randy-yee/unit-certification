@@ -320,7 +320,7 @@ expand_minset(idealmat, minset, G, axis)={
 		\\ Now scan cube with boundaries included.
 		expansion = cubescan_equal(idealmat, Cvector, G,eps);
 
-        for(i=1, length(expansion), expansion_set = setunion(expansion_set, [ flipvec(expansion[i]) ] ));     \\ This is our Set of minimal elements as column vectors
+        for(i=1, length(expansion), expansion_set = setunion(expansion_set, [ vec_flip_positive(expansion[i]) ] ));     \\ This is our Set of minimal elements as column vectors
 		if(DEBUG_EXPAND,
 		      print(" expansion_set elements: \n--", expansion_set);
 		      for(i=1, length(expansion_set), print("--", precision(valuationvec(G,nfbasistoalg(G,expansion_set[i])),10))); print("\n");
@@ -479,7 +479,7 @@ NEIGHBORS(G, idealmat, minima1, eps, p_avoid =1,target = 0)={
     D = idealdiv(G, idealmat, minima1); D=idealhnf(G,D);
     if(target != 0, adjusted_targ = target - log(abs(nfeltembed(G, minima1)))[1..G.r1+G.r2-1] );
     neighborlist = compute_one_neighbours(G, D, eps, p_avoid, adjusted_targ);
-    newlist = vector(length(neighborlist), i , flipvec(nfalgtobasis(G, nfeltmul(G, minima1, neighborlist[i]))) );
+    newlist = vector(length(neighborlist), i , vec_flip_positive(nfalgtobasis(G, nfeltmul(G, minima1, neighborlist[i]))) );
     newlist = Set(newlist);
     return(newlist);
 }

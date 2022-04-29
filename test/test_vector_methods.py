@@ -144,15 +144,15 @@
     GP_ASSERT_TRUE(samevecs(v1,v2, eps));
 }
 
-{ \\ test cases for flipvec
+{ \\ test cases for vec_flip_positive
 
     my(v1, v2, v3, eps = 10^(-9));
     v1= [1.1111111,2.23455678, 3.333555577];
     v2= [0,0,0, -1.1111111003,2.23455678002, 3.333555577111];
     v3= [-0.00001111111,2.23455678, 3.333555577];
-    GP_ASSERT_VEC_NEAR(flipvec(v1),v1, eps);
-    GP_ASSERT_VEC_NEAR(flipvec(v2),-v2, eps);
-    GP_ASSERT_VEC_NEAR(flipvec(v3),-v3, eps);
+    GP_ASSERT_VEC_NEAR(vec_flip_positive(v1),v1, eps);
+    GP_ASSERT_VEC_NEAR(vec_flip_positive(v2),-v2, eps);
+    GP_ASSERT_VEC_NEAR(vec_flip_positive(v3),-v3, eps);
 }
 
 { \\ test cases for vec_less_than

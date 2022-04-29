@@ -17,7 +17,7 @@ read("src/CompactRepresentation.py");
     logarithm_lattice = get_log_lattice_bnf(G2);
     for(i=1, length(G2.fu),
         cpct_rep = compact_rep_buchmann(G1, logarithm_lattice[,i]~, O_K , eps, avp=1);
-        GP_ASSERT_EQ(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2]), flipvec(nfalgtobasis(G1, G2.fu[i])) );
+        GP_ASSERT_EQ(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2]), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
     );
 }
 
@@ -30,12 +30,12 @@ read("src/CompactRepresentation.py");
     logarithm_lattice = get_log_lattice_bnf(G2);
     for(i=1, length(G2.fu),
         cpct_rep = compact_rep_buchmann(G1, logarithm_lattice[,i], O_K , eps, avp=1);
-        GP_ASSERT_EQ(flipvec(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2])), flipvec(nfalgtobasis(G1, G2.fu[i])) );
+        GP_ASSERT_EQ(vec_flip_positive(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2])), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
     );
 
     cpct_list = cpct_from_loglattice(G1, logarithm_lattice, eps);
     for(i=1, length(G2.fu),
-        GP_ASSERT_EQ(flipvec(compact_reconstruct(G1, cpct_list[i][1], cpct_list[i][2])), flipvec(nfalgtobasis(G1, G2.fu[i])) );
+        GP_ASSERT_EQ(vec_flip_positive(compact_reconstruct(G1, cpct_list[i][1], cpct_list[i][2])), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
     );
 }
 

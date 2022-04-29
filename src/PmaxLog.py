@@ -50,6 +50,7 @@ DEBUG_MLLL = 0;
 DEBUG_NEW_ETA = 0;
 DEBUG_MEMBERSHIP = 0;
 DEBUG_LPOHST = 0;
+TIMING = 0;
 
 
 
@@ -416,8 +417,6 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
             solution = 0;                                                       \\# variable to hold either 0 or a found solutions
 
             while(solutionflag == 1,
-                \\lpohst_ploop_t2 =getabstime(); print("timing of pohst section: ", lpohst_ploop_t2 -lpohst_ploop_t1 );
-                \\lpohst_ploop_t1 =getabstime();
 
                 test_eta_k = new_units*eta_exp_mat[,k];
                 test_eta_k = test_eta_k/p;
@@ -440,9 +439,11 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
                 if(solutionflag ==1,
                     print("LPohst: Found Solutions --");
 
+                    \\# These two lines use mlll instead of column replacement
                     \\new_units = new_units*eta_exp_mat;
                     \\new_units = my_mlll(matconcat([new_units, test_eta_k]),eps);
 
+                    \\ These lines replace the kth unit, which is different than described in Pohst
                     new_units = replace_column(new_units, k, test_eta_k);
                     new_units = new_units*qflll(new_units);
 
@@ -468,18 +469,17 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
                         torsion_coeffs = update_eta_set_log(G,p,0,unitvector_cpct, eta_exp_mat, new_units);
                     );
                     k = 1;
-                    if (index_bound ==1, print("Index is now 1. Ending LPohst");break;);
-                , \\else                                                           # this is the case where solutionflag = 0
-                    \\print("LPohst: no solution found");
+                    if (index_bound ==1, print("Index is now 1. Ending LPohst"); break;);
+                , \\else                                                        # this is the case when no sol is found
 
                     if(k == length(L),solutionflag = 0; break;);
 
                     updatevec = update_eta_set_log(G,p,k,unitvector_cpct, eta_exp_mat, new_units, torsion_coeffs);
-
                     eta_exp_mat = update_expmat(eta_exp_mat, updatevec, k , p );
                     for(s = k+1, length(torsion_coeffs),
                         torsion_coeffs[s] = (torsion_coeffs[s]+updatevec[s-k]*torsion_coeffs[k]);
                     );
+
                     \\ Update k and reset solutionflag to 1
                     k+=1;
                     solutionflag = 1;

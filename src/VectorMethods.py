@@ -15,7 +15,7 @@ vector_approximate
 is_trace_zero
 check0
 samevecs
-flipvec
+vec_flip_positive
 
 vec_less_than
 */
@@ -36,13 +36,13 @@ make_poly(coeff_list) = {
 };
 
 \\ just a method for printing out matrices in a slightly nicer fashion
-printmat(M) = {
+printmat(M, digits=10) = {
     my(mat_dimensions = matsize(M),
     output_string = "";);
     for(i = 1, mat_dimensions[1],
         output_string="";
         for(j = 1, mat_dimensions[2],
-            output_string = concat(concat(output_string, M[i,j]), "          ");
+            output_string = concat(concat(output_string, precision(M[i,j],digits)), "     ");
         );
         print(output_string);
     );
@@ -158,7 +158,7 @@ samevecs(v1,v2, eps)={
 
 \\ Method for ensuring the that first nonzero entry of a vector is positive
 
-flipvec(v1)={
+vec_flip_positive(v1)={
   for(i=1, length(v1),
       if(v1[i] != 0,
           if(v1[i] < 0, return(-v1), return(v1));
