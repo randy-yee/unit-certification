@@ -115,26 +115,26 @@ get_subdivisions(G,lattice_lambda, dimensions, detLambda, B, delta,REQ_BSGS)={
 
 
 
-\\ This is a special fix for a particular rank 2 example from Ha, try to generalize later!
-\\    if(G.r1 +G.r2-1 == 2,
-\\        avec = vector(dimensions, i , sides);
-\\        avec[1]=round(sqrt(fullregion_to_babystock_ratio*sqrt(norml2(lattice_lambda[,1]))/(sqrt(norml2(lattice_lambda[,2]))/B ) ));
-\\        avec[2]=ceil(1/(fullregion_to_babystock_ratio/avec[1]));
-\\        print("new avec ", avec[1], "  ", avec[2]); breakpoint();
-\\        ,
-\\        avec[1] = ceil(fullregion_to_babystock_ratio);
-\\        avec[2] =1;
-\\        while(a_product < fullregion_to_babystock_ratio,
-\\            avec[ind]+=1;
-\\            a_product/= sides;
-\\            a_product *= (sides+1);
-\\            ind += 1;
-\\        );
-\\    );
+    \\ This is a special fix for a particular rank 2 example from Ha, try to generalize later!
+    \\    if(G.r1 +G.r2-1 == 2,
+    \\        avec = vector(dimensions, i , sides);
+    \\        avec[1]=round(sqrt(fullregion_to_babystock_ratio*sqrt(norml2(lattice_lambda[,1]))/(sqrt(norml2(lattice_lambda[,2]))/B ) ));
+    \\        avec[2]=ceil(1/(fullregion_to_babystock_ratio/avec[1]));
+    \\        print("new avec ", avec[1], "  ", avec[2]); breakpoint();
+    \\        ,
+    \\        avec[1] = ceil(fullregion_to_babystock_ratio);
+    \\        avec[2] =1;
+    \\        while(a_product < fullregion_to_babystock_ratio,
+    \\            avec[ind]+=1;
+    \\            a_product/= sides;
+    \\            a_product *= (sides+1);
+    \\            ind += 1;
+    \\        );
+    \\    );
 
-finalproduct =1; for(i=1, length(avec), finalproduct*=avec[i]); print(avec, " actual a_i product: ", finalproduct, " target: ", round(fullregion_to_babystock_ratio));
-\\    print("vector of a_i ", avec);
-    return(avec);
+    finalproduct =1; for(i=1, length(avec), finalproduct*=avec[i]); print(avec, " actual a_i product: ", finalproduct, " target: ", round(fullregion_to_babystock_ratio));
+    \\    print("vector of a_i ", avec);
+        return(avec);
 }
 
 
@@ -492,7 +492,7 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
         exp_webpoint,
         baby_hashmap = Map(),
         ideal_J, nu, logdist, beta,
-        region_minima,
+        region_minima=Set(),
         directions,
         ball_minima,
         newctr = 0,
@@ -533,7 +533,7 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
         \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
         \\ Take the elements found on the ball near the current point in the web, and enter them into the hash map
         \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-        region_minima = Set(concat(region_minima,ball_minima));
+        \\region_minima = setunion(region_minima, ball_minima); \\ Set(concat(region_minima,ball_minima));
         for(ctr=1, length(ball_minima),
             if(mapisdefined(baby_hashmap, ball_minima[ctr][1]),
                 existing_entry = mapget(baby_hashmap, ball_minima[ctr][1]);
@@ -686,24 +686,22 @@ jump_giant_steps(G, lat_lambda, gs_sublattice, bstock, avec, eps)={
         giant_coeffs = zero_vec,
         giant_divisor,
         current_giant_vec,
-        matches, new_vec
+        matches, new_vec,
+        identity = matid(field_deg)
     );
     giant_coeffs[r] = 1;
 
     while(giant_coeffs != zero_vec,
         \\ Get the expected giant-step position, and then compute a nearby reduced divisor
         current_giant_vec = (gs_sublattice*giant_coeffs~)~;
-        giant_divisor = giantstep(matid(field_deg), current_giant_vec, G, field_deg, eps);
-        \\debug_compare(giant_divisor,giantstep_high_precision(matid(field_deg), current_giant_vec, G, field_deg, eps));
-
-        \\write("normal-giant-step.txt", giant_coeffs, "  ", precision(current_giant_vec,20), "\n",giant_divisor[1], precision(giant_divisor[3],20));
-        \\print("Jump Alg. output:  ", giant_coeffs, "  ", giant_divisor[1], precision(giant_divisor[3],10));
+        giant_divisor = giantstep(identity, current_giant_vec, G, field_deg, eps);
 
         if(mapisdefined(bstock, giant_divisor[1]),
             if(DEBUG_BSGS>0 ,print("Match in the babystock. Checking for new vector:"););
             matches = mapget(bstock, giant_divisor[1]);
             for(i=1, length(matches),
                 new_vec = giant_divisor[3][1..r] - matches[i];
+                print ("match", precision(norml2(new_vec),10) );
                 if(norml2(new_vec) > (eps*10)^2 && is_vec_in_lattice(new_vec~,lat_lambda,eps)==0,
                     if(DEBUG_BSGS>0, print("New vector found: Initial reg = ", precision(matdet(lat_lambda),10)););
                     lat_lambda = my_mlll( matconcat([lat_lambda, new_vec~]),eps);
@@ -866,7 +864,7 @@ one_massive_qfminim(G, giant_sublattice, S_radius)={
 \\ - lattice scan (default), and neighbours ("NEIGHBOURS")
 bsgs(G, cpct_reps, B, delta, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN")={
 
-    print("\nBSGS Algorithm Start");
+    print("\nBSGS Algorithm Start"); bsgs_start = getabstime();
     my(S_radius, r = G.r1 + G.r2 -1,
         field_deg = poldegree(G.pol),
         zero_vec = vector(r, i , 0),                                            \\ length r zero vector, used to check when giantsteps are done
@@ -920,10 +918,10 @@ bsgs(G, cpct_reps, B, delta, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN"
     \\ THIS SECTION SEARCHES USING THE SCAN ALGORITHM
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     if(alg == "SCAN",
-        my(foundflag = 1);
-        [lattice_lambda,babystock, unscanned_babystock_region] = babystock_scan_jump(matid(field_deg),lattice_lambda, giant_sublattice, G, eps);
-        \\print("unscanned_babystock_region variable: ", unscanned_babystock_region);
-        foundflag = length(unscanned_babystock_region);
+        my(foundflag = 1, num_elts_found = []);
+        [lattice_lambda,babystock, num_elts_found] = babystock_scan_jump(matid(field_deg),lattice_lambda, giant_sublattice, G, eps);
+        \\print("unscanned_babystock_region variable: ", num_elts_found);
+        foundflag = length(num_elts_found);
 
 
         while(foundflag !=0,
@@ -932,14 +930,14 @@ bsgs(G, cpct_reps, B, delta, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN"
             [avec, giant_sublattice, babystock_region] = get_giant_step_params(G,lattice_lambda, r, B, delta,REQ_BSGS);
             babystock_region = expand_babystock_region(babystock_region,S_radius );
 
-            [lattice_lambda, babystock, unscanned_babystock_region] = babystock_scan_jump(matid(field_deg),lattice_lambda, giant_sublattice, G, eps);
-            foundflag = length(unscanned_babystock_region);
+            [lattice_lambda, babystock, num_elts_found] = babystock_scan_jump(matid(field_deg),lattice_lambda, giant_sublattice, G, eps);
+            foundflag = length(num_elts_found);
             if(DEBUG_BSGS>0 ,print("FoundFlag ",foundflag););
         );
     );
 
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    babytime = getabstime()-tb; \\print("Babystock search time: ", precision(getabstime()-t1,15));
+    babytime = getabstime()-tb;
     write(FILE1, "Babystock time: ", precision(babytime, 10), "   ",  precision(babytime/60000.0, 15));
 
     print("\nGiant Loop\n");
@@ -957,68 +955,8 @@ bsgs(G, cpct_reps, B, delta, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN"
         tg = getabstime();
         lattice_lambda = jump_giant_steps(G, lattice_lambda, giant_sublattice, babystock, avec, eps);
         gianttime = getabstime() -tg;
+    bsgs_end = getabstime();
+    write(FILE1,  "\nGiantstep time:  ", gianttime,  "   ",precision(gianttime/60000.0,15), "\nTotal: ",precision((bsgs_end-bsgs_start)/60000.0 ,15 ));
 
-    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    /*  An old method for doing bsgs, using stepwise ideal mul. expect to lose a lot of precision though
-    \\ GIANT-STEPS
-    \\ Obtain the ideal, unit and log corresponding to each giant increment
-    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    my( giant_step_ideals = [], giant_step_ideals_inverse = []; );
-    tg = getabstime();
-    [giant_step_ideals, giant_step_ideals_inverse] = get_giant_step_increment_vectors(G, giant_sublattice, field_deg, eps);
-    \\print(precision(giant_step_ideals[j],10)); print(precision(giant_step_ideals_inverse[j],10));
-
-    giant_coeffs = zero_vec; giant_coeffs[r] = 1;
-    gstep_expected_position = vector(G.r1+G.r2-1, i, 0)~;
-    directions = vector(length(lattice_lambda), i , 1);
-    step_direction = vector(length(lattice_lambda), i , 0); step_direction[length(lattice_lambda)] = 1;   \\ step direction always keeps track of the index of the giant step we want to multiply with
-    giant_divisor = [matid(field_deg), vector(r+1, i,1 ), vector(r+1, i, 0)];
-    while(giant_coeffs != zero_vec,
-        \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-        \\ Compute the new giant divisor by multiplying by appropriate ideal
-        \\ the first nonzero coord of step_direction tells us what to multiply by, direction indicates if whether we want the inverse or not
-        \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-        for(k=1, length(lattice_lambda),
-            if(step_direction[k] !=0,                                               \\ based on the largest place value that changed, update exp_webpoint and webpoint
-                if(directions[k]==1,
-                    giant_divisor = [idealmul(G, giant_divisor[1], giant_step_ideals[k][1]), pointwise_vector_mul(giant_divisor[2],giant_step_ideals[k][2] )~, giant_divisor[3] += giant_step_ideals[k][3]  ];
-                    gstep_expected_position += giant_sublattice[,k];
-                , \\else
-                    giant_divisor = [idealmul(G, giant_divisor[1], giant_step_ideals_inverse[k][1]), pointwise_vector_mul(giant_divisor[2],giant_step_ideals_inverse[k][2] )~, giant_divisor[3] += giant_step_ideals_inverse[k][3]  ];
-                    gstep_expected_position -= giant_sublattice[,k];
-                );
-                k = length(lattice_lambda)+1;
-            );
-        );
-
-        giant_divisor = get_next_giant_divisor(G, giant_divisor);
-        \\print("reduced Giant Divisor  ", giant_coeffs, "  ", giant_divisor[1], "  " , precision(giant_divisor[3][1..r],10));
-        giant_divisor = adjust_giant_step(G, giant_divisor, gstep_expected_position, S_radius, eps);
-
-
-        if(mapisdefined(babystock, giant_divisor[1]),
-            \\if(DEBUG_BSGS>0 ,print("baby-giant match. checking for new vector:"););
-            matches = mapget(babystock, giant_divisor[1]);
-            for(i=1, length(matches),
-                new_vec = giant_divisor[3][1..r] - matches[i];
-                \\print("g = ", precision(giant_divisor[1],10), "  Difference: ", precision(new_vec,10));
-                if(norml2(new_vec) > (eps*10)^2 && is_vec_in_lattice(new_vec~,lattice_lambda,eps)==0,
-
-                    if(DEBUG_BSGS>0, print("New vector found: Initial reg = ", precision(matdet(lattice_lambda),10)););
-                    lattice_lambda = my_mlll( matconcat([lattice_lambda, new_vec~]),eps);
-                    if(DEBUG_BSGS>0, print("new regulator = ", precision(matdet(lattice_lambda),10)););
-                );
-            );
-        );
-
-        step_direction = giant_coeffs;
-        giant_coeffs = increment_coordinates(avec, giant_coeffs);
-        step_direction = giant_coeffs - step_direction;
-        directions = update_directions(step_direction, directions);
-    );
-    gianttime = getabstime() -tg;
-    */
-
-    write(FILE1,  "\nGiantstep time:  ", gianttime,  "   ",precision(gianttime/60000.0,15) );
     return(cpct_from_loglattice(G,lattice_lambda,eps));
 }
