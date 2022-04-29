@@ -122,7 +122,7 @@ check_in_unitlattice(G, v, eps)={
         if(norml2(log_mu_p) > radius_S^2, return(0));                           \\ if the returned element is too far away, return 0
         if(norml2(log_mu_p) < eps,
             print("  Element of unit lattice found");                  \\ if the returned log is the zero vector, then we know we have containment
-            return(1)
+            return(1);
         );
 
         exp_log_mu_p = create_target(G, log_mu_p); \\print(" l2norm of log_mu' = ", precision(norml2(exp_log_mu_p),10));
@@ -388,21 +388,20 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
 
     my(new_units = L, index_holder = 1, index_bound = B, solution, solutionflag = 0, p = 2);
     my(eta_exp_mat, compact_lcm, test_eta_k, updatevec);
-    my( torsion_coeffs, [torsion, torsiongen] = nfrootsof1(G); );
+    my( torsion_coeffs, [torsion, torsiongen] = nfrootsof1(G) );
     betavec = unitvector_cpct;
 
     compact_lcm = lcm_denominators(unitvector_cpct);
+
     while(p <= index_bound,
 
-
+        \\ include torsion in pari check when p is not coprime
         if(torsion %p == 0,
-            \\print("adding torsion");
             betavec = concat(betavec, [[ List( [nfalgtobasis(G, torsiongen)] ), [1]  ]] );
         );
-        lpohst_ploop_t1 =0;
+        lpohst_ploop_t1 = 0;
         \\if(1,                                                                 \\ UNCOMMENT LINE AND COMMENT OUT THE LINE BELOW IF YOU WANT TO SKIP THE FAST PRIME CHECK
         if(pari_prime_check(G, betavec, p, compact_lcm, 1) == 0 ,
-
             print("\npari_prime_check detects possible index divisor ", p);
             eta_exp_mat = matid(length(new_units));
 
@@ -419,25 +418,25 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
             while(solutionflag == 1,
                 \\lpohst_ploop_t2 =getabstime(); print("timing of pohst section: ", lpohst_ploop_t2 -lpohst_ploop_t1 );
                 \\lpohst_ploop_t1 =getabstime();
+
                 test_eta_k = new_units*eta_exp_mat[,k];
                 test_eta_k = test_eta_k/p;
-                \\if( 0,print("LPohst: Checking pth root, p=",p, ". \ntest_eta: ", precision(test_eta_k,10)););
 
                 eta_k_complex_log = vector(G.r1+G.r2, t, 0);
                 for(i =1, length(unitvector_cpct),
                     eta_k_complex_log += eta_exp_mat[i,k]*complex_log_from_cpct(G, unitvector_cpct[i]);
                 );
 
-                GP_ASSERT_VEC_NEAR(real(eta_k_complex_log/p)[1..G.r1+G.r2-1]~,test_eta_k,eps);
-
+                \\GP_ASSERT_VEC_NEAR(real(eta_k_complex_log/p)[1..G.r1+G.r2-1]~,test_eta_k,eps);
                 \\print(precision(eta_k_complex_log/p,10));
                 \\complex_check_in_unitlattice(G, eta_k_complex_log, eps);
 
                 lattice_check_t1 = getabstime();
                 solutionflag = check_in_unitlattice(G, test_eta_k~, eps);
-                if (solutionflag != complex_check_in_unitlattice(G, eta_k_complex_log/p, eps), print("flags not matching");breakpoint());
+                \\if (solutionflag != complex_check_in_unitlattice(G, eta_k_complex_log/p, eps), print("flags not matching");breakpoint());
 
-                //print("DEBUGGING: lattice check time: ", getabstime() - lattice_check_t1);
+                \\print("DEBUGGING: lattice check time: ", getabstime() - lattice_check_t1);
+
                 if(solutionflag ==1,
                     print("LPohst: Found Solutions --");
 
@@ -445,8 +444,6 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
                     \\new_units = my_mlll(matconcat([new_units, test_eta_k]),eps);
 
                     new_units = replace_column(new_units, k, test_eta_k);
-                    \\print("replace column k", k);
-                    \\print("After replacement: ", precision(new_units,10));
                     new_units = new_units*qflll(new_units);
 
                     cpct_t1 = getabstime();
@@ -472,7 +469,7 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
                     );
                     k = 1;
                     if (index_bound ==1, print("Index is now 1. Ending LPohst");break;);
-                , \\else:                                                           # this is the case where solutionflag = 0
+                , \\else                                                           # this is the case where solutionflag = 0
                     \\print("LPohst: no solution found");
 
                     if(k == length(L),solutionflag = 0; break;);
@@ -483,8 +480,7 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
                     for(s = k+1, length(torsion_coeffs),
                         torsion_coeffs[s] = (torsion_coeffs[s]+updatevec[s-k]*torsion_coeffs[k]);
                     );
-                    \\print("eta matrix after checking eta_" , k);print(eta_exp_mat);
-                    \\# Update k and reset solutionflag to 1
+                    \\ Update k and reset solutionflag to 1
                     k+=1;
                     solutionflag = 1;
                 );
@@ -495,11 +491,10 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps)={
         );
         if(torsion %p == 0,
             betavec = unitvector_cpct;
-            \\for(s =1, length(unitvector_cpct), print(unitvector_cpct[s][2]));
-            compact_lcm = lcm_denominators(unitvector_cpct);                        \\ used as the 'bad' input to pari_prime_check, ignores non-coprime primes during the equation finding step
-
+            compact_lcm = lcm_denominators(unitvector_cpct);                    \\ used as the 'bad' input to pari_prime_check, ignores non-coprime primes during the equation finding step
         );
         p = nextprime(p+1);
     );
     return(new_units);
+
 }
