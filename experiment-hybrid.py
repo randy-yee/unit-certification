@@ -15,21 +15,21 @@ DEBUG_REDDIV = 0;
 
 OUTFILE1 = "data/tmp-experiment-hybrid.txt";
 
-\\read("input/test-poly-1-1.gp"); data = data1_1;
-read("input/test-poly-3-0.gp"); data = data3_0;
-\\read("input/test-poly-4-0.gp"); data = data4_0;
-\\read("input/test-poly-2-1.gp"); data = data2_1;
-\\read("input/test-poly-0-2.gp"); data = data0_2;
+\\read("input/test-poly-1-1.gp");  ;
+read("input/test-poly-3-0.gp");  ;
+\\read("input/test-poly-4-0.gp");  ;
+\\read("input/test-poly-2-1.gp");  ;
+\\read("input/test-poly-0-2.gp");  ;
 
-\\read("input/test-poly-1-2.gp"); data = data1_2;
-\\read("input/test-poly-3-1.gp"); data = data3_1;
-\\read("input/test-poly-5-0.gp"); data = data5_0;
-\\read("input/test-poly-0-3.gp"); data = data0_3;
-\\read("input/test-poly-2-2.gp"); data = data2_2;
+\\read("input/test-poly-1-2.gp");  ;
+\\read("input/test-poly-3-1.gp");  ;
+\\read("input/test-poly-5-0.gp");  ;
+\\read("input/test-poly-0-3.gp");  ;
+\\read("input/test-poly-2-2.gp");  ;
 
-\\read("input/test-poly-4-1.gp"); data = data4_1;
-\\read("input/test-poly-0-4.gp"); data = data0_4;
-\\read("input/test-poly-1-3.gp"); data = data1_3;
+\\read("input/test-poly-4-1.gp");  ;
+\\read("input/test-poly-0-4.gp");  ;
+\\read("input/test-poly-1-3.gp");  ;
 
 
 {

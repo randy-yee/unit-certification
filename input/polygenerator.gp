@@ -259,15 +259,15 @@ maxcomplex = 2;
 
 
 print("Gathering polynomials");
-disc_cap = 41;
-for(r =3, 3,
-	for(s = 0, 0,
+disc_cap = 35;
+for(r =0, 0,
+	for(s = 5, 6,
 		writefile = concat(["test-poly-", Str(r),"-",Str(s)]);
 		\\if(r+2*s < 7 || r+2*s > 14 || r+s-1 > 6, ,
 		if(0, ,
 				write(writefile, "\\\\ Signatures ", r, " ",s);
-				write(writefile, data,Str(r),"_"Str(s), " = [\\" );
-				discsize = 40;
+				write(writefile, data," = [\\" );
+				discsize = 10;
 				while(discsize<disc_cap,
 						tally = 0;
 						while(tally < 10,
@@ -285,39 +285,3 @@ for(r =3, 3,
 	);
 );
 }
-
-
-/*
-{for(i=1, 10,
-	pol1 = random_poly(0,2, 29);
-	print(pol1, ",    \\\\", poldisc(pol1), "      ", precision(log(abs(poldisc(pol1)))/log(10),10) );
-)
-}
-{for(i=1, 10,
-	pol1 = random_poly(0,3, 30);
-	print(pol1, ",    \\\\ ", poldisc(pol1), "      ", precision(log(abs(poldisc(pol1)))/log(10),10) );
-)
-}
-
-{for(i=1, 10,
-	pol1 = random_poly(0,4, 30);
-	print(pol1, ",    \\\\ ", poldisc(pol1), "      ", precision(log(abs(poldisc(pol1)))/log(10),10) );
-)
-}
-{for(i=1, 10,
-	pol1 = random_poly(0,5, 30);
-	print(pol1, ",    \\\\ ", poldisc(pol1), "      ", precision(log(abs(poldisc(pol1)))/log(10),10) );
-)
-}
-*/
-\\for(i=1, 10, f = generate_real_cubic(24);print("[",polcoeff(f,3),",",polcoeff(f,2),",",polcoeff(f,1),",",polcoeff(f,0) "],  \\\\ ", poldisc(f)););
-\\print("];")
-\\testpoly = mixed_quartic(20);
-\\{for(i=1,50,
-\\f = mixed_quartic(30);
-\\print("[",polcoeff(f,4), ",",  polcoeff(f,3),",",polcoeff(f,2),",",polcoeff(f,1),",",polcoeff(f,0) "], \\\\ ", poldisc(f), " " exponent(poldisc(f)) );
-\\);
-\\}
-
-\\ f = generate_real_cubic(); print("[",polcoeff(f,3),",",polcoeff(f,2),",",polcoeff(f,1),",",polcoeff(f,0) "  \\\\ ", poldisc(f));
-\\print("Double checking, is it irreducible? ", polisirreducible(f), ". And is it index one?  ", nfinit(f).index)

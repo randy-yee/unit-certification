@@ -7,6 +7,10 @@ This file contains some helpful functions for testing to emulate
 assert statements.
 */
 
+SCREEN(arg1, info_string, prec =10)={
+  print(info_string, " ", precision(arg1,prec));
+}
+
 GP_ASSERT_TRUE(arg1)={
   if(arg1,
   ,
