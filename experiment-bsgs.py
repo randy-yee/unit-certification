@@ -15,28 +15,32 @@ DEBUG_CPCT = 0;
 DEBUG_REDDIV = 0;
 
 
-OUTFILE1 = "data/tmp-experiment-data-bsgs-3-0.txt";
+sigstring = "5-0";
+outfilestring = concat(concat("data/tmp-experiment-data-bsgs-",sigstring),".txt");
+outfilestring;
+infilestring = concat(concat("input/test-poly-",sigstring),".gp");
+OUTFILE1 = outfilestring;
+read(infilestring)
 
 
+\\read("input/test-poly-1-1.gp");
+\\read("input/test-poly-3-0.gp");
+\\read("input/test-poly-4-0.gp");
+\\read("input/test-poly-2-1.gp");
+\\read("input/test-poly-0-2.gp");
 
-\\read("input/test-poly-1-1.gp");  ;
-read("input/test-poly-3-0.gp");  ;
-\\read("input/test-poly-4-0.gp");  ;
-\\read("input/test-poly-2-1.gp");  ;
-\\read("input/test-poly-0-2.gp");  ;
+\\read("input/test-poly-1-2.gp");
+\\read("input/test-poly-3-1.gp");
+\\read("input/test-poly-5-0.gp");
+\\read("input/test-poly-0-3.gp");
+\\read("input/test-poly-2-2.gp");
 
-\\read("input/test-poly-1-2.gp");  ;
-\\read("input/test-poly-3-1.gp");  ;
-\\read("input/test-poly-5-0.gp");  ;
-\\read("input/test-poly-0-3.gp");  ;
-\\read("input/test-poly-2-2.gp");  ;
-
-\\read("input/test-poly-4-1.gp");  ;
-\\read("input/test-poly-0-4.gp");  ;
-\\read("input/test-poly-1-3.gp");  ;
+\\read("input/test-poly-4-1.gp");
+\\read("input/test-poly-0-4.gp");
+\\read("input/test-poly-1-3.gp");
 
 {
-for(i=9, 10,
+for(i=1, 10,
 
     \\
     \\ INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
