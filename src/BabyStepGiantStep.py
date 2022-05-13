@@ -218,8 +218,6 @@ get_giant_step_params(G,lattice_lambda, r,B, delta,REQ_BSGS)={
     giant_legs = matrix(r, r-1, s,t, -lattice_lambda[s,t]/avec[t]);             \\ giant_legs is a matrix with columns (-v_i /a_i) for i =1 ..r-1
 
 
-
-
     \\print("vectors only scaled by a", precision(norml2(giant_legs[,r]),10)); breakpoint();
     giant_legs = matconcat([giant_legs, -lattice_lambda[,r]/(avec[r]*B)] );     \\ column r is (-v_r /(a_r*B))
     if(DEBUG_BSGS,
@@ -248,12 +246,14 @@ PRECISIONLOSS = 10^5
 /******************************************************************************/
 check_babystock_for_units(ball_minima,L,G,eps)={
 
-    my(new_counter, candidate);
-    new_counter=0;                                                              \\ track the number of new minima found.
+    my(new_counter:small, candidate, ideal_identity, eps_sqr = eps^2, n:small = poldegree(G.pol));
+    ideal_identity = matid(n);
+    new_counter=0;                                                                      \\ track the number of new minima found.
+
     for(i=1,length(ball_minima),
-        if(testequalOK(ball_minima[i][1],G)==1,                                 \\ if the ideal (1/mu)*O_k = O_k then check further
-            candidate=ball_minima[i][2];                                        \\ candidate = log(mu)
-            if(norml2(candidate)>eps^2&&is_vec_in_lattice(candidate~,L,eps)==0,           \\ if nonzero and v is not already in L, then
+        if(ball_minima[i][1] == ideal_identity,                                         \\ if the ideal (1/mu)*O_k = O_k then check further
+            candidate=ball_minima[i][2];                                                \\ candidate = log(mu)
+            if(norml2(candidate)>eps_sqr&&is_vec_in_lattice(candidate~,L,eps)==0,           \\ if nonzero and v is not already in L, then
                 new_counter+=1;
                 print("Babystock unit found, " precision(L,10), "  ", precision(candidate,10));
                 L = my_mlll(matconcat([L, candidate~]), eps);
@@ -273,7 +273,7 @@ check_babystock_for_units(ball_minima,L,G,eps)={
 \\ - web is the max distance between "web" points
 \\ - eps is the usual error
 \\ OUTPUT:
-\\ - epB, set of minima in B_D, each represented as a pair (ideal, logvector)
+\\ - a Set of minima in B_D, each represented as a pair (ideal, logvector)
 /******************************************************************************/
 scanball(G, y,u,psimu,web,eps)={
     my(n, ball_minima=[], x, scan_bound, vecholder, gram_mat, scan_elements, vec_numerical, LLL_reduced_yu, new_y);
@@ -300,8 +300,7 @@ scanball(G, y,u,psimu,web,eps)={
                 if(checkred_old(new_y,G,eps)==1,                                                  \\ check if its reduced, and if yes, add add to ball_minima
                     vec_numerical = (G[5][1]*vecholder)~;                                            \\ get the numericals
                     \\print("SCANBALL: Psi of potential minima: ",precision(vector_approximate(log(abs(vec_numerical[1..G.r1+G.r2-1]))+psimu,eps), 10 ));
-                    ball_minima=Set(concat(ball_minima,[[new_y,vector_approximate(log(abs(vec_numerical[1..G.r1+G.r2-1]))+psimu,eps)]]));
-                    \\ball_minima=Set(concat(ball_minima,[[new_y,log(abs(vec_numerical[1..G.r1+G.r2-1]))+psimu]]));
+                    ball_minima = setunion(ball_minima, Set([[new_y,vector_approximate(log(abs(vec_numerical[1..G.r1+G.r2-1]))+psimu,eps)]] ));
                 );
             );
         );
@@ -496,6 +495,7 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
         directions,
         ball_minima,
         newctr = 0,
+        existing_entry,
         field_deg = poldegree(G.pol),
         identity_n = matid(field_deg)
     );
@@ -504,26 +504,23 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
     \\ Establish a number of parameters including the web of regularly distributed points,
     \\ and some values that allow us to move easily between each of the points sucessively.
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    denoms= vector( length(L), i, ceil(norml2(giant_legs[,i])));
+
+    \\ subdivide the babystock region based on the lengths of the defining vectors
+    denoms = vector( length(L), i, ceil(norml2(giant_legs[,i])));
     babystock_t = giant_legs;
     for(i=1, length(babystock_t), babystock_t[,i]/denoms[i] );
 
-    directions = vector(length(L), i , 1);
     xvector = vector(matsize(giant_legs)[2], i,0)~;
-    while(web_coords != zerovec || next_coords==[],                             \\ loops over all of the web points in the babystock region
+    web_coords = increment_coordinates(denoms, web_coords);
 
-        next_coords = increment_coordinates(denoms, web_coords);      \\ compute the next point's coefficients
+    while(web_coords != zerovec,                                               \\ loops over all of the web points in the babystock region
 
-        xvector = babystock_t*next_coords~;
+        xvector = babystock_t*web_coords~;                                     \\ this holds the web point to be scanned
+        web_coords = increment_coordinates(denoms, web_coords);                \\ compute the next point's coefficients
 
         [ideal_J, nu, logdist] = giantstep(y, xvector, G, field_deg, eps);
-        web_coords = next_coords;
-        \\output = giantstep(y, webpoint, G, field_deg, eps);
-        \\[ideal_J, nu, logdist, beta] = reddiv_compact(ideal_J, exp_webpoint, G, G[5][1]);
-        \\[ideal_J, nu, logdist, beta] = reddiv_compact(y, exp_webpoint, G, G[5][1]);
 
         ball_minima = scanball(G, ideal_J, nu, logdist[1..length(L)], web_distance, eps);
-
         [L, newctr] = check_babystock_for_units(ball_minima,L,G,eps);
         if(newctr != 0,
             print("Found a unit in babystock. new reg =", precision(abs(matdet(L)),10) );
@@ -535,8 +532,7 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
         \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
         \\region_minima = setunion(region_minima, ball_minima); \\ Set(concat(region_minima,ball_minima));
         for(ctr=1, length(ball_minima),
-            if(mapisdefined(baby_hashmap, ball_minima[ctr][1]),
-                existing_entry = mapget(baby_hashmap, ball_minima[ctr][1]);
+            if(mapisdefined(baby_hashmap, ball_minima[ctr][1], &existing_entry),
                 repeatflag = is_repeat_babystock(existing_entry, ball_minima[ctr][2],eps);
 
                 if(repeatflag==0,
@@ -548,127 +544,10 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
             );
         );
     );
-
     print("Babysteps stored");
     return([L,baby_hashmap, []]);
 }
-/*
-\\ - y is some value
- */
-babystock_scan_v2(y,L,babystock_box,G,eps)={
-    my(next_coords = [],
-        zerovec = vector(length(L), i, 0),
-        web_coords = zerovec,                                                   \\ used to track the coefficients for the web points
-        web_step = [[],[]],                                                     \\ stores the fixed elements we use to modify the web point
-        webpoint,
-        web_distance,
-        web_increments,
-        box_volume,
-        box_subdivisions,
-        exp_webpoint,
-        baby_hashmap = Map(),
-        ideal_J, nu, logdist, beta,
-        region_minima,
-        directions,
-        ball_minima,
-        newctr = 0,
-        field_deg = poldegree(G.pol),
-        identity_n = matid(field_deg)
-    );
 
-    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    \\ Establish a number of parameters including the web of regularly distributed points,
-    \\ and some values that allow us to move easily between each of the points sucessively.
-    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-    box_volume = vector( length(L), i, babystock_box[2][i]-babystock_box[1][i]);        \\ dimensions of the box
-    box_subdivisions = ceil((field_deg)*box_volume);                                    \\ store m_i, the number of subdivisions on each side of the box
-
-    web_increments = vector(length(L), i, box_volume[i]/box_subdivisions[i]);           \\ vector of distances to next web point in each direction
-    \\ Contains two vectors of length r. Multiply by by web_step[1][i] to move forward in the ith direction, web_step[2][i] to move in reverse
-    web_step = get_web_step_multipliers(G, length(L),web_increments);
-
-    [webpoint, exp_webpoint, web_distance] = get_initial_webpoint(G, length(L), babystock_box[1], web_increments);
-    logtracker = webpoint;
-    if(DEBUG_BSGS>3,
-        print("DEBUGGING Babystock 'web' parameters: ");
-        print("Babystock subdivisions: ", box_subdivisions);
-        print("max dist. betwn web points: ", precision(web_distance,10));
-        print("1st web point in log lattice = ", precision(webpoint,10));
-    );
-    mymat = matdiagonal(web_increments);
-
-    output = get_giant_step_increment_vectors(G, mymat, field_deg, eps);
-
-    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    \\ Begin scanning the points in the web of regularly distributed points
-    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    [ideal_J, nu, logdist, beta] = reddiv_compact(y, exp_webpoint, G, G[5][1]);
-    ball_minima = scanball(G, ideal_J, nu, logdist[1..length(L)], web_distance, eps);
-    babydivisor = [ideal_J, nu, logdist];
-
-    region_minima = Set(concat(region_minima,ball_minima));
-    \\ check for new elements in Lambda
-
-    directions = vector(length(L), i , 1);                                      \\ initialize as all positive directions
-    log_tracker = vector(length(L)+1, i, 0);
-    while(web_coords != zerovec || next_coords==[],                             \\ loops over all of the web points in the babystock region
-        \\print(web_coords);
-        next_coords = increment_coordinates(box_subdivisions, web_coords);      \\ compute the next point's coefficients
-        web_coords = web_coords - next_coords;                                  \\ obtain difference vector
-        directions = update_directions(web_coords, directions);                 \\ based on the diff vector, change step directions
-
-        for(k=1, length(L),
-            if(web_coords[k] !=0,                                               \\ based on the largest place value that changed, update exp_webpoint and webpoint
-                \\exp_webpoint = pointwise_vector_mul(exp_webpoint, web_step[directions[k]][k])~;
-                if(directions[k] == 1,
-                    \\webpoint[k] += web_increments[k];
-                    babydivisor = [idealmul(G, babydivisor[1], output[1][k][1]), pointwise_vector_mul(babydivisor[2],output[1][k][2] )~, babydivisor[3] += output[1][k][3]  ];
-                ,\\else
-                    \\webpoint[k] -= web_increments[k];
-                    babydivisor = [idealmul(G, babydivisor[1], output[2][k][1]), pointwise_vector_mul(babydivisor[2],output[2][k][2] )~, babydivisor[3] += output[2][k][3]  ];
-                );
-                k = length(L)+1;
-            );
-        );
-        babydivisor = get_next_giant_divisor(G, babydivisor);
-
-        \\print("coord loop ", next_coords, "  ", precision(exp_webpoint));
-        web_coords = next_coords;
-
-        ball_minima = scanball(G, babydivisor[1], babydivisor[2], babydivisor[3][1..length(L)], web_distance, eps);
-
-
-
-        [L, newctr] = check_babystock_for_units(ball_minima,L,G,eps);
-        if(newctr != 0,
-            print("Found a unit in babystock. new reg =", precision(abs(matdet(L)),10) );
-            babystock_box[1][1] += (web_coords[1]*web_increments[1]);
-            return([L, baby_hashmap, babystock_box]);
-        );
-
-        \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-        \\ Take the elements found on the ball near the current point in the web, and enter them into the hash map
-        \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-        region_minima = Set(concat(region_minima,ball_minima));
-        for(ctr=1, length(ball_minima),
-            if(mapisdefined(baby_hashmap, ball_minima[ctr][1]),
-                existing_entry = mapget(baby_hashmap, ball_minima[ctr][1]);
-                repeatflag = is_repeat_babystock(existing_entry, ball_minima[ctr][2],eps);
-
-                if(repeatflag==0,
-                    existing_entry = concat( mapget(baby_hashmap, ball_minima[ctr][1]), [ball_minima[ctr][2]]);
-                    mapput(baby_hashmap, ball_minima[ctr][1], existing_entry );
-                );
-            ,\\else
-                mapput(baby_hashmap, ball_minima[ctr][1], [ball_minima[ctr][2]]);
-            );
-        );
-    );
-    \\print("Babysteps stored");
-    \\write("babystock_scan_test2.txt", precision(baby_hashmap,10));
-    return([L,baby_hashmap, []]);
-}
 
 \\ subroutine of bsgs - performs giant steps using jump algorithm one at a time and checks with babystock
 \\ INPUT:
@@ -685,33 +564,45 @@ jump_giant_steps(G, lat_lambda, gs_sublattice, bstock, avec, eps)={
         zero_vec = vector(r, i , 0),
         giant_coeffs = zero_vec,
         giant_divisor,
-        current_giant_vec,
+        current_giant_vec = zero_vec,
         matches, new_vec,
         identity = matid(field_deg)
     );
     giant_coeffs[r] = 1;
-
+    SCREEN(0, "Additional timing variables and file write in jump");
+    my(giant_t1, giant_tn, giant_tmid, ctr);
+    giant_t1 = getabstime();
+    giant_tmid = giant_t1;
     while(giant_coeffs != zero_vec,
+
         \\ Get the expected giant-step position, and then compute a nearby reduced divisor
-        current_giant_vec = (gs_sublattice*giant_coeffs~)~;
+        \\if(giant_coeffs[r] != 0,
+        \\    current_giant_vec += gs_sublattice[,r]~;
+        \\,
+            current_giant_vec = (gs_sublattice*giant_coeffs~)~;
+        \\);
         giant_divisor = giantstep(identity, current_giant_vec, G, field_deg, eps);
 
         if(mapisdefined(bstock, giant_divisor[1]),
-            if(DEBUG_BSGS>0 ,print("Match in the babystock. Checking for new vector:"););
-            matches = mapget(bstock, giant_divisor[1]);
+            matches = mapget(bstock, giant_divisor[1]);                         \\ list of existing babystock matched elements
             for(i=1, length(matches),
-                new_vec = giant_divisor[3][1..r] - matches[i];
-                print ("match", precision(norml2(new_vec),10) );
+                new_vec = giant_divisor[3][1..r] - matches[i];                  \\ compute difference
                 if(norml2(new_vec) > (eps*10)^2 && is_vec_in_lattice(new_vec~,lat_lambda,eps)==0,
-                    if(DEBUG_BSGS>0, print("New vector found: Initial reg = ", precision(matdet(lat_lambda),10)););
                     lat_lambda = my_mlll( matconcat([lat_lambda, new_vec~]),eps);
-                    if(DEBUG_BSGS>0, print("new regulator = ", precision(matdet(lat_lambda),10)););
+                    if(DEBUG_BSGS>0, print("New element found. New regulator = ", precision(matdet(lat_lambda),10)););
                 );
             );
         );
-
         giant_coeffs = increment_coordinates(avec, giant_coeffs);
+
+        ctr++;
+        if(ctr %500 ==0,
+            giant_tn = getabstime();
+            write("data/jump-timing.txt", ctr "jumps took: ", (giant_tn- giant_tmid), "milliseconds");
+            giant_tmid = giant_tn;
+        )
     );
+    write("data/jump-timing.txt", "Total jump time: ", (giant_tn- giant_t1), "milliseconds\n");
     return(lat_lambda);
 };
 

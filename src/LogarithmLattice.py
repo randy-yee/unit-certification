@@ -41,7 +41,7 @@ testequalOK(y,K)={
     yhnf=idealhnf(K,y);
     if(yhnf==matid(n),
         1,
-    0);                                \\else
+    0);
 }
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
