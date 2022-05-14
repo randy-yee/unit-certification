@@ -15,7 +15,7 @@ DEBUG_CPCT = 0;
 DEBUG_REDDIV = 0;
 
 
-sigstring = "5-0";
+sigstring = "3-0";
 outfilestring = concat(concat("data/tmp-experiment-data-bsgs-",sigstring),".txt");
 outfilestring;
 infilestring = concat(concat("input/test-poly-",sigstring),".gp");
@@ -40,7 +40,7 @@ read(infilestring)
 \\read("input/test-poly-1-3.gp");
 
 {
-for(i=1, 10,
+for(i=4, 4,
 
     \\
     \\ INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
@@ -81,7 +81,6 @@ for(i=1, 10,
     print("input determinant ", precision(unscaled_determinant(K,lglat_new),10));
     write(OUTFILE1, "\n--------------------------\n", i, " Field pol: ", K.pol, "Disc: ", K.disc, ".      Signature: ", K.r1, " ", K.r2);
     write(OUTFILE1, "\nRegulator: ", precision(reg1,10),"--------------------------precision value", ceil(REQ_BSGS));
-
     cpct_units = cpct_from_loglattice(K, lglat_new, eps);
 
     B = 1;          \\ 1 means you scan the whole region
