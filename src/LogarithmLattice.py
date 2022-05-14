@@ -385,7 +385,7 @@ is_vec_in_lattice(v,L,eps)={
     v_solution=L^(-1)*v;                            \\ solves L*x = v for x.
     round_solution=round(v_solution);               \\ rounds the entries, this strategy is checking if x is an integer vector.
     \\
-    if(norml2(v_solution-round_solution)<(eps*10)^2,   \\ If v is in L, then cov should be equal to covin up to some error
+    if(norml2(v_solution-round_solution)<eps,   \\ If v is in L, then cov should be equal to covin up to some error
         1,
     return(0));                           \\ else
 }

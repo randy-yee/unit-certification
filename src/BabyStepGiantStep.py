@@ -253,7 +253,7 @@ check_babystock_for_units(ball_minima,L,G,eps)={
     for(i=1,length(ball_minima),
         if(ball_minima[i][1] == ideal_identity,                                         \\ if the ideal (1/mu)*O_k = O_k then check further
             candidate=ball_minima[i][2];                                                \\ candidate = log(mu)
-            if(norml2(candidate)>eps_sqr&&is_vec_in_lattice(candidate~,L,eps)==0,           \\ if nonzero and v is not already in L, then
+            if(norml2(candidate)>eps_sqr&&is_vec_in_lattice(candidate~,L,eps_sqr)==0,           \\ if nonzero and v is not already in L, then
                 new_counter+=1;
                 print("Babystock unit found, " precision(L,10), "  ", precision(candidate,10));
                 L = my_mlll(matconcat([L, candidate~]), eps);
@@ -573,6 +573,8 @@ jump_giant_steps(G, lat_lambda, gs_sublattice, bstock, avec, eps)={
     my(giant_t1, giant_tn, giant_tmid, ctr);
     giant_t1 = getabstime();
     giant_tmid = giant_t1;
+
+    my(eps_sqr = (eps*10)^2);
     while(giant_coeffs != zero_vec,
 
         \\ Get the expected giant-step position, and then compute a nearby reduced divisor
@@ -587,7 +589,7 @@ jump_giant_steps(G, lat_lambda, gs_sublattice, bstock, avec, eps)={
             matches = mapget(bstock, giant_divisor[1]);                         \\ list of existing babystock matched elements
             for(i=1, length(matches),
                 new_vec = giant_divisor[3][1..r] - matches[i];                  \\ compute difference
-                if(norml2(new_vec) > (eps*10)^2 && is_vec_in_lattice(new_vec~,lat_lambda,eps)==0,
+                if(norml2(new_vec) > eps_sqr && is_vec_in_lattice(new_vec~,lat_lambda,eps_sqr)==0,
                     lat_lambda = my_mlll( matconcat([lat_lambda, new_vec~]),eps);
                     if(DEBUG_BSGS>0, print("New element found. New regulator = ", precision(matdet(lat_lambda),10)););
                 );
@@ -811,12 +813,10 @@ bsgs(G, cpct_reps, B, delta, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN"
     if(alg == "SCAN",
         my(foundflag = 1, num_elts_found = []);
         [lattice_lambda,babystock, num_elts_found] = babystock_scan_jump(matid(field_deg),lattice_lambda, giant_sublattice, G, eps);
-        \\print("unscanned_babystock_region variable: ", num_elts_found);
         foundflag = length(num_elts_found);
 
-
         while(foundflag !=0,
-            \\ this should regenerate lattice_lambda to remove any precision loss
+            \\ if new elements found, regenerate lattice_lambda to remove precision loss
             lattice_lambda = log_lattice_from_compact_set(G, cpct_from_loglattice(G, lattice_lambda, eps));
             [avec, giant_sublattice, babystock_region] = get_giant_step_params(G,lattice_lambda, r, B, delta,REQ_BSGS);
             babystock_region = expand_babystock_region(babystock_region,S_radius );
