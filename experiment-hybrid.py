@@ -14,9 +14,15 @@ DEBUG_REDDIV = 0;
 
 
 OUTFILE1 = "data/tmp-experiment-hybrid.txt";
+sigstring = "2-2";
+outfilestring = concat(concat("data/tmp-experiment-data-hybrid-",sigstring),".txt");
+outfilestring;
+infilestring = concat(concat("input/test-poly-",sigstring),".gp");
+OUTFILE1 = outfilestring;
+read(infilestring)
 
 \\read("input/test-poly-1-1.gp");
-read("input/test-poly-3-0.gp");
+\\read("input/test-poly-3-0.gp");
 \\read("input/test-poly-4-0.gp");
 \\read("input/test-poly-2-1.gp");
 \\read("input/test-poly-0-2.gp");
@@ -34,7 +40,7 @@ read("input/test-poly-3-0.gp");
 
 {
 
-for(i=22, 23,
+for(i=15, 20,
 
     \\
     \\ INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
@@ -113,10 +119,15 @@ for(i=22, 23,
 
     balanceB = abs(log(reg1))*2^poldegree(K.pol)*reg1^(1/3);
     balanceB = min(reg1, balanceB);
+
+    last_vector_norm = sqrt( norml2(lglat_new[,length(lglat_new)]);
+    if(balanceB < last_vector_norm  ),
+        print("WARNING: B is being limited by the vector norm:");
+    );
     balanceB = min(balanceB, sqrt( norml2(lglat_new[,length(lglat_new)])  ) );
 
 
-    write(OUTFILE1, "Chosen bound B ", balanceB);
+    write(OUTFILE1, "Chosen bound B ", balanceB, "\nrth vector norm: ", precision(last_vector_norm,10));
 
     \\ Should define this based on the optimal balance of pohst and bsgs
     \\pohstB = 10000;
