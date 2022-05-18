@@ -289,7 +289,6 @@ reddiv_compact(y,u,G,M1, p_avoid=1)={
     LLLcoeffmat = y*LLL_change_of_basis;                                        \\ LLL basis, coords wrt the integral basis
 
     beta= LLLcoeffmat[,1];                                                      \\ beta holds coordinates of mu wrt the integral basis
-
     \\ need to scan to make sure the first basis vector is a shortest one
     real_mat_uY = embed_real(G, LLL_numerical_uY);
     enum_result = qfminim(real_mat_uY~*real_mat_uY, norml2(real_mat_uY[,1])-comp,,2 );
@@ -297,10 +296,12 @@ reddiv_compact(y,u,G,M1, p_avoid=1)={
     /* NOTE THIS CHECK IS SLOW IN FIELDS WITH LARGE DEGREE (see pohst example)
     \\
     */
-    if(length(enum_result[3])!=0 && !is_minimum(LLLcoeffmat,beta , G, comp),
-        short_index =1;
-        short_length = norml2(real_mat_uY[,1]);
+    \\boolA = (enum_result[1]!=2 && !is_minimum(LLLcoeffmat,beta , G, comp));
 
+    boolB = (length(enum_result[3])!=0 && !is_minimum(LLLcoeffmat,beta , G, comp));
+    if(boolB,
+        short_index =1;
+        short_length = norml2(real_mat_uY*enum_result[3][,1]);
         for(j=1, length(enum_result[3]),
             iter_length = norml2(real_mat_uY*enum_result[3][,j]);
             if(iter_length < short_length,
@@ -308,13 +309,14 @@ reddiv_compact(y,u,G,M1, p_avoid=1)={
             );
         );
         beta = LLLcoeffmat*enum_result[3][,short_index];
+        if(!is_minimum(LLLcoeffmat,beta , G, comp), print("new element is also not a minimum!!!!"); breakpoint() );
+        shortest_vec = LLL_numerical_uY*enum_result[3][,short_index];
+    , \\else
+        shortest_vec = LLL_numerical_uY[,1];                                        \\ vector of complex embeddings for the shortest vector of u*y, denoted mu
 
     );
 
-
     new_y = idealdiv(G,y,beta); new_y = idealhnf(G,new_y);                      \\ the reduced ideal y / mu, in hnf form
-
-    shortest_vec = LLL_numerical_uY[,1];                                        \\ vector of complex embeddings for the shortest vector of u*y, denoted mu
 
     nu=abs(shortest_vec)~;                                                      \\ nu is a t_VEC of dimension r, (complex coordinates are not squared)
 

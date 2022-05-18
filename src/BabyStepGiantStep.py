@@ -583,8 +583,6 @@ jump_giant_steps(G, lat_lambda, gs_sublattice, bstock, avec, eps)={
     );
     giant_coeffs[r] = 1;
     SCREEN(0, "Additional timing variables and file write in jump");
-    SCREEN(matsize(lat_lambda), "lambda dimensions");
-    SCREEN(matdet(lat_lambda), "lambda dimensions");breakpoint();
     my(giant_t1, giant_tn, giant_tmid, ctr);
     giant_t1 = getabstime();
     giant_tmid = giant_t1;
@@ -602,13 +600,9 @@ jump_giant_steps(G, lat_lambda, gs_sublattice, bstock, avec, eps)={
 
         if(mapisdefined(bstock, giant_divisor[1]),
             matches = mapget(bstock, giant_divisor[1]);                         \\ list of existing babystock matched elements
-            SCREEN(giant_divisor[1], "matched ideal");
-            SCREEN(length(matches), "size of elements");
             for(i=1, length(matches),
                 new_vec = giant_divisor[3][1..r] - matches[i];                  \\ compute difference
-                SCREEN(new_vec, "differences");
                 if(norml2(new_vec) > eps_sqr && is_vec_in_lattice(new_vec~,lat_lambda,eps)==0,
-                    print("new element detected");breakpoint();
                     lat_lambda = my_mlll( matconcat([lat_lambda, new_vec~]),eps);
                     if(1, print("New element found. New regulator = ", precision(matdet(lat_lambda),10)););
                 );
