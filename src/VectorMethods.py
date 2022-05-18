@@ -86,7 +86,7 @@ remove_last_coordinate(v) = {v[1..length(v)-1]};
 \\ INPUT: A vector v
 \\ OUTPUT: The sum of the elements of the vector v in R^n
 sumvec(v)= {
-    my(entry_sum = 0);
+    my(entry_sum:small = 0);
     for (i = 1,length(v),
         entry_sum += v[i]
     );
@@ -129,7 +129,7 @@ is_trace_zero(v,eps)={
     if(sumvec(v)<eps^2,
         1,
     0);       \\ else
-}
+}:bool
 
 /******************************************************************************/
 /*9. check that the coordinates of vector v in R^n are all abs. val. less than 1 or not (PRECISION for comparisons all coordinates of v with 1)*/
@@ -140,7 +140,7 @@ check0(v,eps) = {
         );
     );
     return(1);
-}
+}:bool;
 
 \\ Check whether two vectors are the same, up to some error
 \\ INPUT:

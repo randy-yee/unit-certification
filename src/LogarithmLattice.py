@@ -382,6 +382,7 @@ compute_sublattice(lglat, FILENAME ,extype = 0)={
 \\ eps is an error value
 is_vec_in_lattice(v,L,eps)={
     my(v_solution, round_solution);
+    GP_ASSERT_EQ(matsize(L)[1],matsize(L)[2]);
     v_solution=L^(-1)*v;                            \\ solves L*x = v for x.
     round_solution=round(v_solution);               \\ rounds the entries, this strategy is checking if x is an integer vector.
     \\

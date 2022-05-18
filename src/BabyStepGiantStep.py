@@ -57,21 +57,34 @@ minimum_check(ideal_matrix, elt)={
 \\ OUTPUT:
 \\ - a vector of integers of length = length(Lambda)
 \\ - The product of the integers is close to (detLambda/B)^(1-delta)
-get_subdivisions(G,lattice_lambda, dimensions, detLambda, B, delta,REQ_BSGS)={
-    my(smallsquare, sides, avec, a_product, ind=1, fullregion_to_babystock_ratio= 1);
+get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, delta, REQ_BSGS)={
+    my(smallsquare,
+        sides,
+        avec,
+        a_product,
+        g_n, b_n,
+        ind=1,
+        unit_rank = G.r1 + G.r2-1,
+        fullregion_to_babystock_ratio= 1);
     \\smallsquare = (abs(detLambda)/B)^(1-delta);                                 \\ target volume of our box
 
-    smallsquare = sqrt(  (abs(detLambda)/B)*giant_n(poldegree(G.pol), log(abs(G.disc)), REQ_BSGS,real(log(detLambda)))/baby_n( poldegree(G.pol),log(abs(G.disc)),REQ_BSGS,real(log(detLambda)) )  );
+    g_n = giant_n( poldegree(G.pol), log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
+    b_n =  baby_n( poldegree(G.pol), log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
 
+    \\ This is the basic calculation for the babystock region
+    smallsquare = sqrt(  (abs(detLambda)/B)*g_n/b_n  );
+    SCREEN(smallsquare, "smallsquare");
     if(DEBUG_BSGS, print("Expected babystock region size: ", precision(smallsquare,10) ););
 
     babystock_scale_factor =2;                               \\ increase this to make the babystock smaller
 
+    \\ Compute ratio of (full search region / babystock region)
+    \\ any modification of the scale factor will shrink the babystock region
     fullregion_to_babystock_ratio = (babystock_scale_factor)*abs(detLambda)/(smallsquare*B);
 
 
     if(DEBUG_BSGS,
-        print("G_n, B_n  ",ceil(giant_n(poldegree(G.pol), log(abs(G.disc)), REQ_BSGS,real(log(detLambda)))), "   ", precision(baby_n( poldegree(G.pol),log(abs(G.disc)),REQ_BSGS,real(log(detLambda)) ) ,10));
+        print("G_n, B_n  ",ceil(g_n), "   ", ceil(b_n));
         print("a_I product target: ", ceil(fullregion_to_babystock_ratio), "   " );
     );
 
@@ -201,7 +214,7 @@ get_axis_aligned_box(basismat)={
 \\ - avec is a r-vector of coefficient upperbounds for the giant steps
 \\ - giant_legs is a basis that determines the giant steps
 \\ - babystock_region is an axis aligned box that contains the babystock region. Given by two point vectors.
-get_giant_step_params(G,lattice_lambda, r,B, delta,REQ_BSGS)={
+get_giant_step_params(G, lattice_lambda, r, B, delta, REQ_BSGS)={
     my(det_lambda, giant_legs, babystock_region);
     det_lambda = matdet(lattice_lambda);
 
@@ -221,12 +234,12 @@ get_giant_step_params(G,lattice_lambda, r,B, delta,REQ_BSGS)={
     \\print("vectors only scaled by a", precision(norml2(giant_legs[,r]),10)); breakpoint();
     giant_legs = matconcat([giant_legs, -lattice_lambda[,r]/(avec[r]*B)] );     \\ column r is (-v_r /(a_r*B))
     if(DEBUG_BSGS,
-    print("- avec ", avec, "  ", B);
-    area = 1;
-    for(i=1, length(giant_legs),
-        print("Norms of scaled vectors (a_i, B) ", precision(sqrt(norml2(giant_legs[,i])),10));
-        area*=sqrt(norml2(giant_legs[,i])));
-    print("actual babystock area region (multiplying vector norms): ", precision(area,10),"\n \n");
+        print("- avec ", avec, "  ", B);
+        area = 1;
+        for(i=1, length(giant_legs),
+            print("Norms of scaled vectors (a_i, B) ", precision(sqrt(norml2(giant_legs[,i])),10));
+            area*=sqrt(norml2(giant_legs[,i])));
+        print("actual babystock area region (multiplying vector norms): ", precision(area,10),"\n \n");
     );
     babystock_region = get_axis_aligned_box(giant_legs);
 
@@ -589,9 +602,9 @@ jump_giant_steps(G, lat_lambda, gs_sublattice, bstock, avec, eps)={
             matches = mapget(bstock, giant_divisor[1]);                         \\ list of existing babystock matched elements
             for(i=1, length(matches),
                 new_vec = giant_divisor[3][1..r] - matches[i];                  \\ compute difference
-                if(norml2(new_vec) > eps_sqr && is_vec_in_lattice(new_vec~,lat_lambda,eps_sqr)==0,
+                if(norml2(new_vec) > eps_sqr && is_vec_in_lattice(new_vec~,lat_lambda,eps)==0,
                     lat_lambda = my_mlll( matconcat([lat_lambda, new_vec~]),eps);
-                    if(DEBUG_BSGS>0, print("New element found. New regulator = ", precision(matdet(lat_lambda),10)););
+                    if(1, print("New element found. New regulator = ", precision(matdet(lat_lambda),10)););
                 );
             );
         );
@@ -778,7 +791,7 @@ bsgs(G, cpct_reps, B, delta, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN"
     S_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));                     \\ get radius S (may not need)
     if(DEBUG_BSGS>0 , print("Bound B = ", B, "\nradius S = ", precision(S_radius,10) ); );
 
-    [avec, giant_sublattice, babystock_region] = get_giant_step_params(G,lattice_lambda, r, B, delta,REQ_BSGS);
+    [avec, giant_sublattice, babystock_region] = get_giant_step_params(G,lattice_lambda, r, B, delta, REQ_BSGS);
     babystock_region = expand_babystock_region(babystock_region,S_radius);
 
     tb = getabstime();
@@ -838,8 +851,6 @@ bsgs(G, cpct_reps, B, delta, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN"
     \\for(i=1, length(giant_sublattice), normproduct*=norml2(giant_sublattice[,i]) );
     \\print("normproduct  ", precision(normproduct,10));
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     \\ Jump method for computation of the giant steps
 
