@@ -41,23 +41,18 @@ DEBUG_BSGS = 0;
 \\ Below are all function primarily related to the babystep giant step algorithm
 \\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-minimum_check(ideal_matrix, elt)={
-
-
-}
-
-
 
 \\ Determines the size of the babystock area
 \\ INPUT:
 \\    dimensions, an integer equal to r, the rank of the lattice (in FJ, this is r1+r2-1)
 \\    detLambda, the determininant of the input lattice Lambda
 \\    B the prime search bound.
-\\    delta is a free variable used in the exponent of the runtime expression.
+\\    babystock_scale_factor is used as a coefficient to scale the babystock region.
+\\    A larger number means a smaller babystock region
 \\ OUTPUT:
 \\ - a vector of integers of length = length(Lambda)
-\\ - The product of the integers is close to (detLambda/B)^(1-delta)
-get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, delta, REQ_BSGS)={
+
+get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_factor, REQ_BSGS)={
     my(smallsquare,
         sides,
         avec,
@@ -65,23 +60,29 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, delta, REQ_BSGS)={
         g_n, b_n,
         ind=1,
         unit_rank = G.r1 + G.r2-1,
+        deg = poldegree(G.pol),
         fullregion_to_babystock_ratio= 1);
-    \\smallsquare = (abs(detLambda)/B)^(1-delta);                                 \\ target volume of our box
 
-    g_n = giant_n( poldegree(G.pol), log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
-    b_n =  baby_n( poldegree(G.pol), log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
+    g_n = giant_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
+    b_n =  baby_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
 
     \\ This is the basic calculation for the babystock region
     smallsquare = sqrt(  (abs(detLambda)/B)*g_n/b_n  );
-    SCREEN(smallsquare, "smallsquare");
+    \\SCREEN(smallsquare, "smallsquare");
     if(DEBUG_BSGS, print("Expected babystock region size: ", precision(smallsquare,10) ););
 
-    babystock_scale_factor =2;                               \\ increase this to make the babystock smaller
+    \\babystock_scale_factor =((2)^(unit_rank-1))*(log(abs(G.disc))/8)^(1/(2));              \\ increase this to make the babystock smaller
+    \\babystock_scale_factor = (2^unit_rank) * log(abs(G.disc)) / 32;
+    print("Scaling factor for BSGS: ", precision(babystock_scale_factor,10));
 
     \\ Compute ratio of (full search region / babystock region)
     \\ any modification of the scale factor will shrink the babystock region
-    fullregion_to_babystock_ratio = (babystock_scale_factor)*abs(detLambda)/(smallsquare*B);
+    \\fullregion_to_babystock_ratio = (babystock_scale_factor)*abs(detLambda)/(smallsquare*B);
 
+    \\ additive version below. This is a misnomer, we're just assigning a volume
+    smallsquare = babystock_scale_factor;
+    fullregion_to_babystock_ratio = abs(detLambda)/(smallsquare*B);
+    write(OUTFILE1, "region/babystock ratio: ", precision(fullregion_to_babystock_ratio,10), " babystock_vol = ", precision( smallsquare,10));
 
     if(DEBUG_BSGS,
         print("G_n, B_n  ",ceil(g_n), "   ", ceil(b_n));
@@ -214,36 +215,35 @@ get_axis_aligned_box(basismat)={
 \\ - avec is a r-vector of coefficient upperbounds for the giant steps
 \\ - giant_legs is a basis that determines the giant steps
 \\ - babystock_region is an axis aligned box that contains the babystock region. Given by two point vectors.
-get_giant_step_params(G, lattice_lambda, r, B, delta, REQ_BSGS)={
+get_giant_step_params(G, lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS)={
     my(det_lambda, giant_legs, babystock_region);
     det_lambda = matdet(lattice_lambda);
 
     originalarea = 1;
-    if(DEBUG_BSGS,
+    if(1,
         for(i=1, length(lattice_lambda),
             print("length of v_",i,"   ",  precision(sqrt(norml2(lattice_lambda[,i])),10));
             originalarea*=sqrt(norml2(lattice_lambda[,i]))
         );
         print("original area by multiplying norms: ", precision(originalarea,10), "  det_lambda: ", precision(det_lambda,10) );
     );
-    avec = get_subdivisions(G,lattice_lambda,r, det_lambda, B, delta,REQ_BSGS);
+    avec = get_subdivisions(G,lattice_lambda,r, det_lambda, B, babystock_scale_factor, REQ_BSGS);
 
     giant_legs = matrix(r, r-1, s,t, -lattice_lambda[s,t]/avec[t]);             \\ giant_legs is a matrix with columns (-v_i /a_i) for i =1 ..r-1
 
 
     \\print("vectors only scaled by a", precision(norml2(giant_legs[,r]),10)); breakpoint();
     giant_legs = matconcat([giant_legs, -lattice_lambda[,r]/(avec[r]*B)] );     \\ column r is (-v_r /(a_r*B))
-    if(DEBUG_BSGS,
-        print("- avec ", avec, "  ", B);
+    if(1,
+        \\print("- avec ", avec, "  ", B);
         area = 1;
         for(i=1, length(giant_legs),
-            print("Norms of scaled vectors (a_i, B) ", precision(sqrt(norml2(giant_legs[,i])),10));
+            \\print("Norms of scaled vectors (a_i, B) ", precision(sqrt(norml2(giant_legs[,i])),10));
             area*=sqrt(norml2(giant_legs[,i])));
         print("actual babystock area region (multiplying vector norms): ", precision(area,10),"\n \n");
     );
-    babystock_region = get_axis_aligned_box(giant_legs);
 
-    return([avec,giant_legs, babystock_region]);
+    return([avec,giant_legs]);
 }
 
 /******************************************************************************/
@@ -427,7 +427,7 @@ babystock_scan(y,L,babystock_box,G,eps)={
         print("max dist. betwn web points: ", precision(web_distance,10));
         print("1st web point in log lattice = ", precision(webpoint,10));
     );
-
+    scanball_ctr = 0;
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     \\ Begin scanning the points in the web of regularly distributed points
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -467,7 +467,8 @@ babystock_scan(y,L,babystock_box,G,eps)={
             babystock_box[1][1] += (web_coords[1]*web_increments[1]);
             return([L, baby_hashmap, babystock_box]);
         );
-
+        scanball_ctr+=1;
+        if(scanball_ctr%10 == 0, print(scanball_ctr, " scanballs performed"));
         \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
         \\ Take the elements found on the ball near the current point in the web, and enter them into the hash map
         \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -612,6 +613,7 @@ jump_giant_steps(G, lat_lambda, gs_sublattice, bstock, avec, eps)={
 
         ctr++;
         if(ctr %500 ==0,
+            print(ctr);
             giant_tn = getabstime();
             write("data/jump-timing.txt", ctr "jumps took: ", (giant_tn- giant_tmid), "milliseconds");
             giant_tmid = giant_tn;
@@ -620,6 +622,77 @@ jump_giant_steps(G, lat_lambda, gs_sublattice, bstock, avec, eps)={
     write("data/jump-timing.txt", "Total jump time: ", (giant_tn- giant_t1), "milliseconds\n");
     return(lat_lambda);
 };
+
+\\ used to compute the multiplying elements for the incremental giant steps
+\\ strategy. Obtains r 'forward' elements, and r 'backward' elements
+get_giant_step_increment_vectors(G, giant_sublattice, field_deg, eps)={
+    my(
+        field_deg = poldegree(G.pol),
+        giant_step_ideals = [],
+        giant_step_ideals_inverse = [],
+        new_vec, gstep_divisor,
+        new_alpha, new_denom, inverse_elt
+    );
+
+    \\ loop through each dimension of the lattice
+    for(j = 1, length(giant_sublattice),
+        new_vec = giant_sublattice[,j];
+        gstep_divisor = jump_compact(matid(field_deg), new_vec, G, field_deg, eps);
+        \\debug_compare(gstep_divisor, giantstep_high_precision(matid(field_deg), new_vec, G, field_deg, eps));
+
+        giant_step_ideals = concat(giant_step_ideals, [[gstep_divisor[1], gstep_divisor[2], gstep_divisor[3]]]);
+
+        for(k=1, length(gstep_divisor[3][1]),
+            inverse_elt = nfeltdiv(G, gstep_divisor[3][2][k], gstep_divisor[3][1][k]);
+            new_ideal = idealdiv(G, matid(field_deg), inverse_elt);
+            [gstep_divisor[3][1][k],gstep_divisor[3][2][k]] = get_alpha_and_d(G, new_ideal, inverse_elt);
+        );
+
+        giant_step_ideals_inverse = concat(giant_step_ideals_inverse, [[idealinv(G,gstep_divisor[1]), invert_coordinates(gstep_divisor[2]),-gstep_divisor[3]  ]] );
+    );
+
+    return([giant_step_ideals,giant_step_ideals_inverse]);
+}
+
+
+\\ This function is for performing the giant steps part of bsgs.
+\\ It differs from jump_giant_steps as it computes giant steps incrementally
+\\ using ideal multiplication to obtain adjacent elements.
+incremental_giant_steps(G, giant_sublattice, avec, eps)=
+{
+    my(
+        field_deg = poldegree(G.pol),
+        r = G.r1 + G.r2 -1,
+        zero_vec = vector(r, i , 0),
+        giant_coeffs = zero_vec,
+        giant_divisor,
+        current_giant_vec = zero_vec,
+        matches, new_vec,
+        identity = matid(field_deg)
+    );
+
+    giant_coeffs[r] = 1;    \\ variable to keep track of which giant element is being computed
+
+    my(
+        \\ vectors of length r which are used to compute an adjacent element in
+        \\ a particular direction in the logarithm lattice
+        \\ direction_elements[i] and inverse_direction_elements[i] are multiplicative inverses
+        direction_elements,
+        inverse_direction_elements
+    );
+    [direction_elements, inverse_direction_elements] =
+        get_giant_step_increment_vectors(G, giant_sublattice, field_deg, eps);
+
+    \\ increments are done modulo the product of vectorA, returns to zero when
+    \\ all elements have been visited
+    while(giant_coeffs != zero_vec,
+
+
+
+        \\ determine the next element to compute:
+        giant_coeffs = increment_coordinates(avec, giant_coeffs);
+    )
+}
 
 
 \\ gets a nearby reduced divisor to log_coordinates_Rn
@@ -768,7 +841,7 @@ one_massive_qfminim(G, giant_sublattice, S_radius)={
 \\ - eps is the error
 \\ - alg can be used to change the babystock search algorithm, So far only two options
 \\ - lattice scan (default), and neighbours ("NEIGHBOURS")
-bsgs(G, cpct_reps, B, delta, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN")={
+bsgs(G, cpct_reps, B, babystock_scale_factor, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN")={
 
     print("\nBSGS Algorithm Start"); bsgs_start = getabstime();
     my(S_radius, r = G.r1 + G.r2 -1,
@@ -788,11 +861,11 @@ bsgs(G, cpct_reps, B, delta, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN"
     lattice_lambda = log_lattice_from_compact_set(G, cpct_reps);
     if(alg != "NEIGHBOURS" && alg != "SCAN", print("Unknown algorithm specified, returning -1", return(-1) ));
 
-    S_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));                     \\ get radius S (may not need)
+    S_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));
     if(DEBUG_BSGS>0 , print("Bound B = ", B, "\nradius S = ", precision(S_radius,10) ); );
 
-    [avec, giant_sublattice, babystock_region] = get_giant_step_params(G,lattice_lambda, r, B, delta, REQ_BSGS);
-    babystock_region = expand_babystock_region(babystock_region,S_radius);
+    [avec, giant_sublattice, babystock_region] = get_giant_step_params(G,lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS);
+    \\babystock_region = expand_babystock_region(babystock_region,S_radius);
 
     tb = getabstime();
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -831,8 +904,8 @@ bsgs(G, cpct_reps, B, delta, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN"
         while(foundflag !=0,
             \\ if new elements found, regenerate lattice_lambda to remove precision loss
             lattice_lambda = log_lattice_from_compact_set(G, cpct_from_loglattice(G, lattice_lambda, eps));
-            [avec, giant_sublattice, babystock_region] = get_giant_step_params(G,lattice_lambda, r, B, delta,REQ_BSGS);
-            babystock_region = expand_babystock_region(babystock_region,S_radius );
+            [avec, giant_sublattice, babystock_region] = get_giant_step_params(G,lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS);
+            \\babystock_region = expand_babystock_region(babystock_region,S_radius );
 
             [lattice_lambda, babystock, num_elts_found] = babystock_scan_jump(matid(field_deg),lattice_lambda, giant_sublattice, G, eps);
             foundflag = length(num_elts_found);
@@ -840,17 +913,18 @@ bsgs(G, cpct_reps, B, delta, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN"
         );
     );
 
-    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     babytime = getabstime()-tb;
     write(FILE1, "Babystock time: ", precision(babytime, 10), "   ",  precision(babytime/60000.0, 15));
 
+    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+    \\ Begin giant step computations
+    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     print("\nGiant Loop\n");
     for(i=1, length(avec), avec[i] += 1);                                       \\ adjust avec to include boundaries.
 
-    \\normproduct = 1;
-    \\for(i=1, length(giant_sublattice), normproduct*=norml2(giant_sublattice[,i]) );
+    \\ Below is used to check the area of the region we are giant stepping over
+    \\normproduct = 1; for(i=1, length(giant_sublattice), normproduct*=norml2(giant_sublattice[,i]) );
     \\print("normproduct  ", precision(normproduct,10));
-    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     \\ Jump method for computation of the giant steps
 
@@ -858,7 +932,7 @@ bsgs(G, cpct_reps, B, delta, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN"
         lattice_lambda = jump_giant_steps(G, lattice_lambda, giant_sublattice, babystock, avec, eps);
         gianttime = getabstime() -tg;
     bsgs_end = getabstime();
-    write(FILE1,  "\nGiantstep time:  ", gianttime,  "   ",precision(gianttime/60000.0,15), "\nTotal: ",precision((bsgs_end-bsgs_start)/60000.0 ,15 ));
+    write(FILE1,  "Giantstep time:  ", gianttime,  "   ",precision(gianttime/60000.0,15));
 
     return(cpct_from_loglattice(G,lattice_lambda,eps));
 }
