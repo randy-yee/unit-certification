@@ -151,6 +151,96 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
         return(avec);
 }
 
+\\ Determines the size of the babystock area based in input
+\\ this version converts easily to pick the factor automatically
+\\ Similar to the one used for the paper submission
+\\ INPUT:
+\\    dimensions, an integer equal to r, the rank of the lattice (in FJ, this is r1+r2-1)
+\\    detLambda, the determininant of the input lattice Lambda
+\\    B the prime search bound.
+\\    babystock_scale_factor is used as a coefficient to scale the babystock region.
+\\    A larger number means a smaller babystock region
+\\ OUTPUT:
+\\ - a vector of integers of length = length(Lambda)
+
+get_subdivisions_auto(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_factor, REQ_BSGS)={
+    print("Scaling babystock region by input value. ");
+    my(smallsquare,
+        sides,
+        avec,
+        a_product,
+        g_n, b_n,
+        ind=1,
+        unit_rank = G.r1 + G.r2-1,
+        deg = poldegree(G.pol),
+        fullregion_to_babystock_ratio= 1);
+
+    g_n = giant_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
+    b_n =  baby_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
+
+    \\ This is the basic calculation for the babystock region
+    smallsquare = sqrt(  (abs(detLambda)/B)*g_n/b_n  );
+    if(DEBUG_BSGS, print("Expected babystock region size: ", precision(smallsquare,10) ););
+
+    \\babystock_scale_factor =((2)^(unit_rank-1))*(log(abs(G.disc))/8)^(1/(2));              \\ increase this to make the babystock smaller
+    \\babystock_scale_factor = (2^unit_rank) * log(abs(G.disc)) / 32;
+    print("Scaling factor for BSGS: ", precision(babystock_scale_factor,10));
+
+    \\ Compute ratio of (full search region / babystock region)
+    \\ any modification of the scale factor will shrink the babystock region
+    fullregion_to_babystock_ratio = (babystock_scale_factor)*abs(detLambda)/(smallsquare*B);
+
+
+    write(OUTFILE1, "region/babystock ratio: ", precision(fullregion_to_babystock_ratio,10), " babystock_vol = ", precision( smallsquare,10));
+
+    if(DEBUG_BSGS,
+        print("G_n, B_n  ",ceil(g_n), "   ", ceil(b_n));
+        print("a_I product target: ", ceil(fullregion_to_babystock_ratio), "   " );
+    );
+
+    norm_vr = ceil( sqrt(norml2(lattice_lambda[,dimensions] )) );
+    if(DEBUG_BSGS,print("norm of rth vector: ", norm_vr););
+
+    if(dimensions == 1,
+        avec = vector(dimensions, i , ceil(fullregion_to_babystock_ratio));
+    , \\else
+        sides = max(1,floor(sqrtn(fullregion_to_babystock_ratio, dimensions-1)));             \\ approximate the sides with integers
+
+        if(DEBUG_BSGS,print("(r-1)th root of target area  ", sides););
+        avec = [];
+        my(diffvector = [],
+            vecnorm =1,
+            ai_product=1,
+            areadiff = 0,
+            partialproduct = 1);
+
+        for(i=1, dimensions-1,
+            vecnorm =  floor( sqrt(norml2(lattice_lambda[,i] )) );
+            \\print(vecnorm , "  ", sides);
+            avec = concat(avec, min(vecnorm, sides));
+            \\print("vecnorm, sides ", vecnorm, "  ", sides );
+            diffvector = concat(diffvector, vecnorm - sides );
+            ai_product *= avec[i];
+        );
+        for(i=1, length(diffvector),
+
+            if(diffvector[i] >0,
+                \\print("considering increasing a_", i);
+                partialproduct = (ai_product/avec[i]);
+                areadiff = round((fullregion_to_babystock_ratio - ai_product)/(ai_product/avec[i]));
+                if(areadiff >= 1, avec[i] += min(areadiff, diffvector[i]); ai_product += partialproduct*min(areadiff, diffvector[i]) );
+            );
+        );
+
+        if(DEBUG_BSGS, print("product without  a_r ",ai_product); );
+        avec = concat(avec ,  min(max(1, round(norm_vr/B)  ), ceil(fullregion_to_babystock_ratio/ai_product ))  );
+    );
+
+    finalproduct =1; for(i=1, length(avec), finalproduct*=avec[i]); print(avec, " actual a_i product: ", finalproduct, " target: ", round(fullregion_to_babystock_ratio));
+    \\    print("vector of a_i ", avec);
+        return(avec);
+}
+
 
 \\ INPUT:
 \\ - A vector of integers A which defines the subdivision for the babystock
@@ -176,6 +266,32 @@ increment_coordinates(a_vec, current_vec)={
     );
 
     return(current_vec);
+}
+
+\\ INPUT:
+\\ - A vector of integers A which defines the subdivision for the babystock
+\\ - A vector of integers V that defines a particular 'giant step'
+\\   for all i, V[i] < A[i]
+\\ OUTPUT:
+\\ - The vector V 'incremented' by 1, similar to a number in which each digit
+\\  is a different base
+increment_with_place_marker(a_vec, current_vec)={
+    my(
+        place = length(current_vec),
+        carryflag = 0;
+    );
+    current_vec[place]+=1;
+    if(current_vec[place] >= a_vec[place], carryflag =1);
+
+    while(carryflag == 1,
+        current_vec[place] = 0; carryflag = 0;
+        if(place == 1, return([current_vec, place]));
+        place -= 1;
+        current_vec[place]+=1;
+        if(current_vec[place] >= a_vec[place], carryflag =1);
+    );
+
+    return([current_vec, place]);
 }
 
 \\ obtains an axis aligned box which contains the box generated by the columns of basismat
@@ -288,8 +404,8 @@ check_babystock_for_units(ball_minima,L,G,eps)={
 \\ OUTPUT:
 \\ - a Set of minima in B_D, each represented as a pair (ideal, logvector)
 /******************************************************************************/
-scanball(G, y,u,psimu,web,eps)={
-    my(n, ball_minima=[], x, scan_bound, vecholder, gram_mat, scan_elements, vec_numerical, LLL_reduced_yu, new_y);
+scanball(~G, y,u,psimu,web,eps)={
+    my(n, ball_minima=Set(), x, scan_bound, vecholder, gram_mat, scan_elements, vec_numerical, LLL_reduced_yu, new_y);
     n = poldegree(G.pol);
     x = G[5][1]*y;                                                              \\ numerical representation of y (complex)
     x = mulvec(x,u);                                                            \\ compute y*u
@@ -438,6 +554,9 @@ babystock_scan(y,L,babystock_box,G,eps)={
     region_minima = Set(concat(region_minima,ball_minima));
     \\ check for new elements in Lambda
 
+    scanIdeals = Map(); print("initializing scan ideal hash map");
+    repeat_counter = 0;
+    mapput(scanIdeals, ideal_J ,1);
     directions = vector(length(L), i , 1);                                              \\ initialize as all positive directions
 
     while(web_coords != zerovec || next_coords==[],                             \\ loops over all of the web points in the babystock region
@@ -458,6 +577,14 @@ babystock_scan(y,L,babystock_box,G,eps)={
         \\output = giantstep(y, webpoint, G, field_deg, eps);
         \\[ideal_J, nu, logdist, beta] = reddiv_compact(ideal_J, exp_webpoint, G, G[5][1]);
         [ideal_J, nu, logdist, beta] = reddiv_compact(y, exp_webpoint, G, G[5][1]);
+
+        if (mapisdefined(scanIdeals, ideal_J),
+            print("Repeat ideal"); repeat_counter+=1;
+            mapget(scanIdeals, ideal_J);
+        ,
+            mapput(scanIdeals, ideal_J ,1);
+        );
+
 
         ball_minima = scanball(G, ideal_J, nu, logdist[1..length(L)], web_distance, eps);
 
@@ -487,7 +614,7 @@ babystock_scan(y,L,babystock_box,G,eps)={
             );
         );
     );
-    print("Babysteps stored");
+    print("Babysteps stored"); print(repeat_counter);
     return([L,baby_hashmap, []]);
 }
 
@@ -519,6 +646,8 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
     \\ and some values that allow us to move easily between each of the points sucessively.
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
+    scanIdeals = Map();
+    repeat_counter = 0;
     \\ subdivide the babystock region based on the lengths of the defining vectors
     denoms = vector( length(L), i, ceil(norml2(giant_legs[,i])));
     babystock_t = giant_legs;
@@ -535,6 +664,15 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
         [ideal_J, nu, logdist] = giantstep(y, xvector, G, field_deg, eps);
 
         ball_minima = scanball(G, ideal_J, nu, logdist[1..length(L)], web_distance, eps);
+
+        if (mapisdefined(scanIdeals, ideal_J),
+            repeat_counter+=1;
+            mapget(scanIdeals, ideal_J);
+        ,
+            mapput(scanIdeals, ideal_J ,1);
+        );
+
+
         [L, newctr] = check_babystock_for_units(ball_minima,L,G,eps);
         if(newctr != 0,
             print("Found a unit in babystock. new reg =", precision(abs(matdet(L)),10) );
@@ -558,7 +696,7 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
             );
         );
     );
-    print("Babysteps stored");
+    print("Babysteps stored ", length(Mat(baby_hashmap)~), "  Number of times ideals were repeats: ", repeat_counter);
     return([L,baby_hashmap, []]);
 }
 
@@ -571,7 +709,7 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
 \\ - avec indicates the number of subdivisions of lat_lambda were taken in each coordinate to get gs_sublattice
 \\ - eps is an error value
 \\ RETURN: a potentially expanded unit_lattice.
-jump_giant_steps(G, lat_lambda, gs_sublattice, bstock, avec, eps)={
+jump_giant_steps(~G, lat_lambda, gs_sublattice, ~bstock, avec, eps)={
     my(
         field_deg = poldegree(G.pol),
         r = G.r1 + G.r2 -1,
@@ -644,8 +782,13 @@ get_giant_step_increment_vectors(G, giant_sublattice, field_deg, eps)={
 
         for(k=1, length(gstep_divisor[3][1]),
             inverse_elt = nfeltdiv(G, gstep_divisor[3][2][k], gstep_divisor[3][1][k]);
-            new_ideal = idealdiv(G, matid(field_deg), inverse_elt);
-            [gstep_divisor[3][1][k],gstep_divisor[3][2][k]] = get_alpha_and_d(G, new_ideal, inverse_elt);
+            denom_lcm =1;
+            for(t=1, length(inverse_elt),
+                denom_lcm= lcm(denom_lcm, denominator(inverse_elt[t]) );
+            );
+            gstep_divisor[3][1][k] = inverse_elt*denom_lcm;
+            gstep_divisor[3][2][k] = denom_lcm;
+            SCREEN(1, "TESTING REQUIRED");
         );
 
         giant_step_ideals_inverse = concat(giant_step_ideals_inverse, [[idealinv(G,gstep_divisor[1]), invert_coordinates(gstep_divisor[2]),-gstep_divisor[3]  ]] );
@@ -654,11 +797,19 @@ get_giant_step_increment_vectors(G, giant_sublattice, field_deg, eps)={
     return([giant_step_ideals,giant_step_ideals_inverse]);
 }
 
+updateDirections(directions_vec, place_marker)=
+{
+    for(i=place_marker+1, length(change_vec),
+        directions_vec[j] = (directions_vec[j] %2) +1;
+    );
+    return(directions_vec);
+}
+
 
 \\ This function is for performing the giant steps part of bsgs.
 \\ It differs from jump_giant_steps as it computes giant steps incrementally
 \\ using ideal multiplication to obtain adjacent elements.
-incremental_giant_steps(G, giant_sublattice, avec, eps)=
+incremental_giant_steps(G, lattice_lambda, giant_sublattice, ~babystock, avec, eps)=
 {
     my(
         field_deg = poldegree(G.pol),
@@ -668,10 +819,16 @@ incremental_giant_steps(G, giant_sublattice, avec, eps)=
         giant_divisor,
         current_giant_vec = zero_vec,
         matches, new_vec,
-        identity = matid(field_deg)
+        identity = matid(field_deg),
+        place_marker = r,
+        directions
     );
+    GP_ASSERT_EQUAL(r, length(giant_sublattice));
 
-    giant_coeffs[r] = 1;    \\ variable to keep track of which giant element is being computed
+    expected_position = vector(G.r1+G.r2-1, i, 0)~;
+
+    directions = vector(length(giant_sublattice), i , 1);
+    giant_coeffs[r] = 1;    \\ initialize variable to track giant elements
 
     my(
         \\ vectors of length r which are used to compute an adjacent element in
@@ -686,12 +843,39 @@ incremental_giant_steps(G, giant_sublattice, avec, eps)=
     \\ increments are done modulo the product of vectorA, returns to zero when
     \\ all elements have been visited
     while(giant_coeffs != zero_vec,
+        if(directions[place_marker] == 1,
+            giant_divisor = [idealmul(G, giant_divisor[1], direction_elements[k][1]),
+                pointwise_vector_mul(giant_divisor[2],direction_elements[k][2] )~,
+                mul_compact(giant_divisor[3],direction_elements[k][3])  ];
+            expected_position += giant_sublattice[place_marker];
+        ,\\else
+            giant_divisor = [idealmul(G, giant_divisor[1], inverse_direction_elements[k][1]),
+                pointwise_vector_mul(giant_divisor[2],inverse_direction_elements[k][2] )~,
+                mul_compact(giant_divisor[3], inverse_direction_elements[k][3])  ];
+            expected_position -= giant_sublattice[place_marker];
+        );
 
 
+        \\ use babystock hashmap to check for collisions and update as needed
+        if(mapisdefined(babystock, giant_divisor[1]),
+            \\if(DEBUG_BSGS>0 ,print("baby-giant match. checking for new vector:"););
+            matches = mapget(babystock, giant_divisor[1]);
+            for(i=1, length(matches),
+                new_vec = giant_divisor[3][1..r] - matches[i];
+                \\print("g = ", precision(giant_divisor[1],10), "  Difference: ", precision(new_vec,10));
+                if(norml2(new_vec) > (eps*10)^2 && is_vec_in_lattice(new_vec~,lattice_lambda,eps)==0,
 
-        \\ determine the next element to compute:
-        giant_coeffs = increment_coordinates(avec, giant_coeffs);
-    )
+                    if(DEBUG_BSGS>0, print("New vector found: Initial reg = ", precision(matdet(lattice_lambda),10)););
+                    lattice_lambda = my_mlll( matconcat([lattice_lambda, new_vec~]),eps);
+                    if(DEBUG_BSGS>0, print("new regulator = ", precision(matdet(lattice_lambda),10)););
+                );
+            );
+        );
+
+        \\ increase the tracking variable and update directions
+        [giant_coeffs,place_marker] = increment_with_place_marker(avec, giant_coeffs);
+        directions = updateDirections(directions, place_marker);
+    );
 }
 
 
@@ -864,8 +1048,8 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, eps, REQ_BSGS,FILE1="data/tmp-bsgs
     S_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));
     if(DEBUG_BSGS>0 , print("Bound B = ", B, "\nradius S = ", precision(S_radius,10) ); );
 
-    [avec, giant_sublattice, babystock_region] = get_giant_step_params(G,lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS);
-    \\babystock_region = expand_babystock_region(babystock_region,S_radius);
+    [avec, giant_sublattice] = get_giant_step_params(G,lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS);
+    \\babystock_region = expand_babystock_region(babystock_region,S_radius); \\ here babystock region was an old return value
 
     tb = getabstime();
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -904,7 +1088,7 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, eps, REQ_BSGS,FILE1="data/tmp-bsgs
         while(foundflag !=0,
             \\ if new elements found, regenerate lattice_lambda to remove precision loss
             lattice_lambda = log_lattice_from_compact_set(G, cpct_from_loglattice(G, lattice_lambda, eps));
-            [avec, giant_sublattice, babystock_region] = get_giant_step_params(G,lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS);
+            [avec, giant_sublattice] = get_giant_step_params(G,lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS);
             \\babystock_region = expand_babystock_region(babystock_region,S_radius );
 
             [lattice_lambda, babystock, num_elts_found] = babystock_scan_jump(matid(field_deg),lattice_lambda, giant_sublattice, G, eps);

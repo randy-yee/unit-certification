@@ -321,7 +321,7 @@ reddiv_compact(y,u,G,M1, p_avoid=1)={
     nu=abs(shortest_vec)~;                                                      \\ nu is a t_VEC of dimension r, (complex coordinates are not squared)
 
     lmu = log(nu)-log(u);                                                       \\ expect equal to log(nfeltembed(G, beta))
-
+    GP_ASSERT_VEC_NEAR(lmu,log(nfeltembed(G, beta) ),10);
     if(DEBUG_REDDIV && 0,
         \\print("REDDIV: shortvec=", precision(abs(shortest_vec),10));
         \\print("equal sv? ", precision(abs(pointwise_vector_mul(nfeltembed(G,beta), u)),10));
@@ -426,8 +426,6 @@ giantstep(y,v,G,n,eps)={
         shrunken_v, shrunken_target
     );
 
-
-
     shrunken_v=2^(-t)*v;                                                        \\ this is y_sigma
     shrunken_target = create_target(G, shrunken_v, 1);
     [idealB,u,log_distance,beta]=reddiv_compact(y,shrunken_target,G,G[5][1]);   \\ (Ideal, minimum, log distance)
@@ -455,7 +453,7 @@ if(type(v) == "t_COL", v = v~);
     if(complex ==1,
         complex_log = log(nfeltembed(G,beta));
     );
-    for(k=1,t,
+    for(k=1, t,
         shrunken_v*=2;
         idealB = idealsquare(idealB, G);
 
@@ -476,7 +474,118 @@ if(type(v) == "t_COL", v = v~);
 
 \\END GIANT STEP functions
 
+\\ INPUTS:
+\\ - y is an ideal
+\\ - v is a totally positive real vector of dimenension r+s-1
+\\ - G is the number field
+\\ - n is the degree of the field
+\\ - eps is the acceptable error
+\\ OUTPUT:
+\\ - a pair consisting of a reduced ideal J and a minimum beta satisfying
+\\ - J = (1/beta)*I
+\\ **Important** Compared to the previous version, the logarithm vector can be off by a sign
 
+/******************************************************************************/
+jump_compact(y,v,G,n,eps, complex = 0)={
+if(type(v) == "t_COL", v = v~);
+    my(
+        disc = abs(G.disc),
+        t = get_doubling_number(v, disc, n, eps),
+        idealB, u, log_distance, beta,
+        shrunken_v, shrunken_target,
+        complex_log,
+        alpha_vec= List([1]),                               \\ holds alpha_i
+        d_vec = [1],                                        \\ holds d_i
+        alpha_i, ideal_denom
+    );
+
+    shrunken_v=2^(-t)*v;                                                        \\ this is y_sigma
+    shrunken_target = create_target(G, shrunken_v, 1);
+    [idealB,u,log_distance,beta]=reddiv_compact(y,shrunken_target,G,G[5][1]);
+
+    \\ Get denominator of the new ideal and alpha_i = d/beta;
+    [alpha_i, ideal_denom]=get_alpha_and_d(G, idealB, beta);
+    d_vec = concat(d_vec,ideal_denom);
+    alpha_vec = concat(alpha_vec, alpha_i);
+
+
+    if(complex ==1,
+        complex_log = log(nfeltembed(G,beta));
+    );
+    for(k=1, t,
+        shrunken_v*=2;
+        idealB = idealsquare(idealB, G);
+
+        u_square = pointwise_vector_mul(u,u)~;
+
+        \\debug_compare(log(u_square), shrunken_v- 2*log_distance[1..G.r1+G.r2-1]);
+        \\debug_compare(u_square, abs(create_target(G, shrunken_v- 2*log_distance[1..G.r1+G.r2-1], 1)) );
+        [idealB,u,log_mu_k,beta] = reddiv_compact(idealB, u_square, G, G[5][1],avp);
+        GP_ASSERT_VEC_NEAR(log_mu_k,log(nfeltembed(G, beta) ),10);
+        [alpha_i, ideal_denom]=get_alpha_and_d(G, idealB, beta);
+        d_vec = concat(d_vec,ideal_denom);
+        alpha_vec = concat(alpha_vec, alpha_i);
+
+        log_distance = 2*log_distance+log_mu_k;
+        if(complex == 1, complex_log = 2*complex_log +log(nfeltembed(G,beta)) ;);
+    );
+    if(complex ==1,
+        \\print("giant step outputs: \n", precision(log_distance,10), "   ", precision(complex_log,10));
+        return([idealB,u,complex_log]);
+    );
+    myCompactRep = [alpha_vec, d_vec];
+    \\debug_print("A ", log_from_cpct(G, myCompactRep));
+    \\debug_print("B ", log_distance);
+    return( [idealB, u, myCompactRep] );
+}
+
+invert_compact(G, cpct_rep)=
+{
+    nf_argcheck(G);
+    my(n_terms = length(cpct_rep[1]),
+        inverse_elt,
+        denom_lcm,
+        inverse_rep = [vector(n_terms,t, 0),vector(n_terms,t, 0)]);
+    for(k=1, length(cpct_rep[1]),
+        inverse_elt = nfeltdiv(G, cpct_rep[2][k], cpct_rep[1][k]);
+        inverse_rep[1][k] = numerator(inverse_elt);
+        inverse_rep[2][k] = denominator(inverse_elt);
+    );
+    return(inverse_rep)
+}
+
+\\ accept a number field, two compact representations
+\\ return the product as a compact representation
+\\ Function does not check for redundant terms (leading powers of 1)
+mul_compact(~G, ~cpct1, ~cpct2)=
+{
+    nf_argcheck(G);
+    cpct_rep_argcheck(cpct1);
+    cpct_rep_argcheck(cpct2);
+
+    my(num_terms, len1, len2, product_numerator=[], product_denominator=[],
+        numer, denom, common);
+
+    if( length(cpct1[1]) >= length(cpct2[1]),
+        len1 = length(cpct1[1]);
+        len2 = length(cpct2[1]);
+        product_numerator=cpct1[1][1..(len1-len2)];
+        product_denominator=cpct1[2][1..(len1-len2)];
+    ,
+        len1 = length(cpct2[1]);
+        len2 = length(cpct1[1]);
+        product_numerator=cpct2[1][1..(len1-len2)];
+        product_denominator=cpct2[2][1..(len1-len2)];
+    );
+    for(i = 1, len2,
+        numer = nfeltmul(G, cpct1[1][length(cpct1[1])-len2+i ], cpct2[1][length(cpct1[1])-len2+i ]);
+        denom = cpct1[2][length(cpct1[1])-len2+i ]*cpct2[2][length(cpct1[1])-len2+i];
+        common = gcd(nfbasistoalg(G,numer), denom);
+        product_numerator = concat(product_numerator, numer/common);
+        product_denominator = concat(product_denominator, denom/common);
+    );
+    return([product_numerator, product_denominator]);
+}
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\

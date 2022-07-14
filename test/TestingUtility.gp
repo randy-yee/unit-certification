@@ -7,7 +7,7 @@ This file contains some helpful functions for testing to emulate
 assert statements.
 */
 
-SCREEN(arg1, info_string, prec =10)={
+SCREEN(arg1, info_string="", prec =10)={
   print(info_string, " ", precision(arg1,prec));
 }
 
@@ -28,7 +28,7 @@ GP_ASSERT_FALSE(arg1)={
 GP_ASSERT_EQ(arg1, arg2)={
   if(arg1 == arg2,
   ,
-  print("Assert failed. ", arg1, " is not equal to ", arg2);
+  print("Assert failed. ", arg1, " is not equal to ", arg2, "\n");
   breakpoint();
   );
 }
@@ -105,6 +105,18 @@ GP_ASSERT_VEC_LT(arg1, arg2,eps)={
   );
 }
 
+nf_argcheck(vec)={
+  if (type(vec) != "t_VEC" || length(vec) != 9 || type(vec[1]) != "t_POL",
+      print("expected number field argument \n");breakpoint();
+  );
+}
+cpct_rep_argcheck(vec)={
+  if ( (type(vec) != "t_VEC" && type(vec)    != "t_LIST") || length(vec) != 2 ||
+    (type(vec[1]) != "t_VEC" && type(vec[1]) != "t_LIST") ||
+    (type(vec[2]) != "t_VEC" && type(vec[2]) != "t_LIST"),
+      print("expected cpct rep argument \n");breakpoint();
+  );
+}
 
 \\ Shortcut function way to print values at a particular precision.
 debug_print(string, value, p_level = 10)={

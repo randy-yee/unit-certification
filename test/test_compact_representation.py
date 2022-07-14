@@ -106,6 +106,10 @@ read("src/CompactRepresentation.py");
     cpct_units = cpct_from_loglattice(G1, log_lattice, eps);
     GP_ASSERT_MAT_NEAR(log_lattice, log_lattice_from_compact_set(G1, cpct_from_loglattice(G1, log_lattice, eps)),eps);
     GP_ASSERT_MAT_NEAR(log_lattice, log_lattice_from_compact_set(G1, cpct_units), eps);
+    for(i=1, length(cpct_units[1]),
+        print(cpct_units[1][1][i], " / ", cpct_units[1][2][i]);
+        print(nfeltpow(G1, cpct_units[1][1][i],-1 ), " ", denominator(nfeltpow(G1, cpct_units[1][i][1],-1 )) ,"\n");
+    );
 
 }
 
@@ -122,6 +126,7 @@ read("src/CompactRepresentation.py");
     delta_K = ((2/Pi)^G1.r2)*abs(G1.disc)^(1/2);
 
     new_minima = giantstep(O_K, [1000,1000], G1, n ,eps);
+    jump_compact(O_K, [1000,1000], G1, n ,eps);
     GP_ASSERT_TRUE(norml2(new_minima[2]) <= delta_K);
 }
 
@@ -156,6 +161,80 @@ read("src/CompactRepresentation.py");
     \\reddiv_compact(idealmat, uvec, G1, G[5][1]);
 }
 
+{\\ test invert compact representation and multiply
 
+    my(G1, G2, O_K, cpct_rep, inverted, n, eps = 10^(-9));
+    G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
+    G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
+    n = poldegree(G1.pol);
+    O_K = matid(n);
+    logarithm_lattice = get_log_lattice_bnf(G2);
+
+    for(i = 1, 20,
+        cpct_rep = [[i],[1]];
+        invert = invert_compact(G1, cpct_rep);
+        GP_ASSERT_EQ(invert[1][1], 1);
+        GP_ASSERT_EQ(invert[2][1], i);
+        GP_ASSERT_EQ(mul_compact(G1, cpct_rep, invert) , [[1],[1]] );
+        GP_ASSERT_EQ(mul_compact(G1, invert, cpct_rep) , [[1],[1]] );
+        invert = invert_compact(G1, invert);
+        GP_ASSERT_EQ(invert, cpct_rep);
+    );
+
+    for(i=1, length(G2.fu),
+        cpct_rep = compact_rep_buchmann(G1, logarithm_lattice[,i]~, O_K , eps, avp=1);
+        GP_ASSERT_EQ(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2]), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
+
+        inverted = invert_compact(G1, cpct_rep);
+        product = mul_compact(G1, cpct_rep, inverted);
+        GP_ASSERT_EQ(compact_reconstruct(G1, product[1], product[2]), 1);
+    );
+}
+
+{ \\ test cases for compact_rep_buchmann and cpct_from_loglattice
+    my(G1, G2, O_K, n, logarithm_lattice, cpct_rep,cpct_list, eps = 10^(-9));
+    G1 = nfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
+    G2 = bnfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
+    n = poldegree(G1.pol);
+    O_K = matid(n);
+    logarithm_lattice = get_log_lattice_bnf(G2);
+
+    for(i = 1, 20,
+        cpct_rep = [[i],[1]];
+        invert = invert_compact(G1, cpct_rep);
+        GP_ASSERT_EQ(invert[1][1], 1);
+        GP_ASSERT_EQ(invert[2][1], i);
+        GP_ASSERT_EQ(mul_compact(G1, cpct_rep, invert) , [[1],[1]] );
+        GP_ASSERT_EQ(mul_compact(G1, invert, cpct_rep) , [[1],[1]] );
+        invert = invert_compact(G1, invert);
+        GP_ASSERT_EQ(invert, cpct_rep);
+    );
+
+    for(i=1, length(G2.fu),
+        cpct_rep = compact_rep_buchmann(G1, logarithm_lattice[,i]~, O_K , eps, avp=1);
+        inverted = invert_compact(G1, cpct_rep);
+        product = mul_compact(G1, cpct_rep, inverted);
+        GP_ASSERT_EQ(compact_reconstruct(G1, product[1], product[2]), 1);
+    );
+}
+
+
+{
+/*
+    a = [];
+    b = List();
+    t1 = getabstime();
+    for(i=1, 100000, listput(~b,1, length(b)+1));
+    print(getabstime()-t1);
+    t1 = getabstime();
+    for(i=1, 100000, a = concat([a, 1]));
+    print(getabstime()-t1);
+
+    A= Set();
+    t1 = getabstime();
+    for(i =1, 100000, A= setunion(A, Set(i)));
+    print(getabstime()-t1);
+*/
+}
 default(realprecision, 100);
 print("Testing compact representation functions complete")
