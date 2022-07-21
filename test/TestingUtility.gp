@@ -11,28 +11,28 @@ SCREEN(arg1, info_string="", prec =10)={
   print(info_string, " ", precision(arg1,prec));
 }
 
-GP_ASSERT_TRUE(arg1)={
+GP_ASSERT_TRUE(~arg1)={
   if(arg1,
   ,
   print("Assert failed. ", arg1, " does not evaluate to true");
   breakpoint();
   );
 }
-GP_ASSERT_FALSE(arg1)={
+GP_ASSERT_FALSE(~arg1)={
   if(!arg1,
   ,
   print("Assert failed. ", arg1, " does not evaluate to false");
   breakpoint();
   );
 }
-GP_ASSERT_EQ(arg1, arg2)={
+GP_ASSERT_EQ(~arg1, ~arg2)={
   if(arg1 == arg2,
   ,
   print("Assert failed. ", arg1, " is not equal to ", arg2, "\n");
   breakpoint();
   );
 }
-GP_ASSERT_NEQ(arg1, arg2)={
+GP_ASSERT_NEQ(~arg1, ~arg2)={
   if(arg1 != arg2,
   ,
   print("Assert failed. ", arg1, " is equal to ", arg2);
@@ -40,7 +40,7 @@ GP_ASSERT_NEQ(arg1, arg2)={
   );
 }
 
-GP_ASSERT_NEAR(arg1, arg2, eps)={
+GP_ASSERT_NEAR(~arg1, ~arg2, eps)={
   if(abs(arg1 - arg2) < eps,
   ,
     print("Assert failed. ", arg1, " is not within ", eps, " range of ", arg2);
@@ -48,7 +48,7 @@ GP_ASSERT_NEAR(arg1, arg2, eps)={
   );
 }
 
-GP_ASSERT_VEC_NEAR(arg1, arg2, eps)={
+GP_ASSERT_VEC_NEAR(~arg1, ~arg2, eps)={
   if(length(arg1) != length(arg2), print("Invalid Assert,
     vectors not the same length");breakpoint(); );
   for(i=1, length(arg1),
@@ -60,7 +60,7 @@ GP_ASSERT_VEC_NEAR(arg1, arg2, eps)={
   );
 }
 
-GP_ASSERT_MAT_NEAR(arg1, arg2, eps)={
+GP_ASSERT_MAT_NEAR(~arg1, ~arg2, eps)={
   if(matsize(arg1) != matsize(arg2),
     print("Invalid Assert,
     matrices not the same dimension");breakpoint();
@@ -77,7 +77,7 @@ GP_ASSERT_MAT_NEAR(arg1, arg2, eps)={
   );
 }
 
-GP_ASSERT_GT(arg1, arg2)={
+GP_ASSERT_GT(~arg1, ~arg2)={
   if( arg1 >arg2,
   ,
     print("Assert failed. ", arg1, " is not greater than ", arg2);
@@ -85,7 +85,7 @@ GP_ASSERT_GT(arg1, arg2)={
   );
 }
 
-GP_ASSERT_LT(arg1, arg2)={
+GP_ASSERT_LT(~arg1, ~arg2)={
   if( arg1 <arg2,
   ,
     print("Assert failed. ", arg1, " is not less than ", arg2);
@@ -93,7 +93,7 @@ GP_ASSERT_LT(arg1, arg2)={
   );
 }
 
-GP_ASSERT_VEC_LT(arg1, arg2,eps)={
+GP_ASSERT_VEC_LT(~arg1, ~arg2, eps)={
   if(length(arg1) != length(arg2), print("Invalid Assert,
     vectors not the same length");breakpoint(); );
   for(i=1, length(arg1),
@@ -105,12 +105,12 @@ GP_ASSERT_VEC_LT(arg1, arg2,eps)={
   );
 }
 
-nf_argcheck(vec)={
+nf_argcheck(~vec)={
   if (type(vec) != "t_VEC" || length(vec) != 9 || type(vec[1]) != "t_POL",
       print("expected number field argument \n");breakpoint();
   );
 }
-cpct_rep_argcheck(vec)={
+cpct_rep_argcheck(~vec)={
   if ( (type(vec) != "t_VEC" && type(vec)    != "t_LIST") || length(vec) != 2 ||
     (type(vec[1]) != "t_VEC" && type(vec[1]) != "t_LIST") ||
     (type(vec[2]) != "t_VEC" && type(vec[2]) != "t_LIST"),

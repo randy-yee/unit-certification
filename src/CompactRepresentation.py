@@ -274,7 +274,7 @@ find_coprime_divisor_neighbors(G, y, u, LLLcoeffmat, ideal_denom, p_avoid,eps)={
 
 /******************************************************************************/
 
-reddiv_compact(y,u,G,M1, p_avoid=1)={
+reddiv_compact(y,u,~G,~M1, p_avoid=1)={
 
     my(y1, ideal_uY, numerical_mat_Y, red1, shortest_vec, nu, lmu,
         ideal_denom,vec_ctr,beta_found =0,
@@ -361,7 +361,6 @@ reddiv_compact(y,u,G,M1, p_avoid=1)={
             [new_y, nu, lmu, beta, ideal_denom] = find_coprime_divisor_neighbors(G,y, u, LLLcoeffmat, ideal_denom, p_avoid,eps);
         );
     );
-
     return([new_y, nu, lmu, beta]);                                                     \\
 }
 
@@ -539,7 +538,7 @@ if(type(v) == "t_COL", v = v~);
     return( [idealB, u, myCompactRep] );
 }
 
-invert_compact(G, cpct_rep)=
+invert_compact(~G, ~cpct_rep)=
 {
     nf_argcheck(G);
     my(n_terms = length(cpct_rep[1]),
@@ -578,8 +577,8 @@ mul_compact(~G, ~cpct1, ~cpct2)=
         product_denominator=cpct2[2][1..(len1-len2)];
     );
     for(i = 1, len2,
-        numer = nfeltmul(G, cpct1[1][length(cpct1[1])-len2+i ], cpct2[1][length(cpct1[1])-len2+i ]);
-        denom = cpct1[2][length(cpct1[1])-len2+i ]*cpct2[2][length(cpct1[1])-len2+i];
+        numer = nfeltmul(G, cpct1[1][length(cpct1[1])-len2+i ], cpct2[1][length(cpct2[1])-len2+i ]);
+        denom = cpct1[2][length(cpct1[1])-len2+i ]*cpct2[2][length(cpct2[1])-len2+i];
         common = gcd(nfbasistoalg(G,numer), denom);
         product_numerator = concat(product_numerator, numer/common);
         product_denominator = concat(product_denominator, denom/common);
@@ -623,6 +622,8 @@ complex_log_from_cpct(G, cpct_rep)={
 
 log_from_cpct(G, cpct_rep)={
     my(intermediate, lvec_complex = vector(G.r1+G.r2,k,0) ) ;
+    nf_argcheck(G);
+    cpct_rep_argcheck(cpct_rep);
     for(j=1, length(cpct_rep[1]),
         lvec_complex*=2;
         intermediate = log(abs(nfeltembed(G, nfeltdiv(G, cpct_rep[1][j], cpct_rep[2][j]))));

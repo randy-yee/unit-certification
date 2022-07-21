@@ -54,22 +54,22 @@ printmat(M, digits=10) = {
 
 \\ Inverts the coordinates of a column vector y in the ring R^n.
 \\ Note that this can take in a row vector, but it makes more sense for columns
-invert_coordinates(y)=vector({length(y)},{i},{1/y[i]})~;
+invert_coordinates(~y)=vector({length(y)},{i},{1/y[i]})~;
 
 /* 2. Pointwise multiply each column vector of mat by vector vec. Essentially the matrix version of pointwise_vector_mul */
 /* Outputs a matrix with the same dimensions as mat. The rows of the new matrix are v[i]*row[i] */
-mulvec(mat,vec) = matrix({matsize(mat)[1],matsize(mat)[2]},{i},{j},{mat[i,j]*vec[i]});
+mulvec(~mat,~vec) = matrix({matsize(mat)[1],matsize(mat)[2]},{i},{j},{mat[i,j]*vec[i]});
 
 /*2b. multiply 2 vectors in the ring R^n (pointwise) */
 \\ Note that again, columns make more sense than row vectors, but both work
-pointwise_vector_mul(u1,u2) = vector(length(u1),{i},{u1[i]*u2[i]})~;
+pointwise_vector_mul(~u1, ~u2) = vector(length(u1),{i},{u1[i]*u2[i]})~;
 
 /*3. multiply a matrix y with the inverse of a vector v.
   Note that invert_coordinates(u) inverts entries coordinate wise, then apply mulvec */
 dividevector(y,u) = mulvec(y,invert_coordinates(u));
 
 /* Coordinate-wise multiply vector u1 with the inverse of vector u2 in R^n*/
-pointwise_vector_div(u1,u2) = pointwise_vector_mul(u1,invert_coordinates(u2));
+pointwise_vector_div(~u1,~u2) = pointwise_vector_mul(u1,invert_coordinates(u2));
 
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -85,7 +85,7 @@ remove_last_coordinate(v) = {v[1..length(v)-1]};
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ INPUT: A vector v
 \\ OUTPUT: The sum of the elements of the vector v in R^n
-sumvec(v)= {
+sumvec(~v)= {
     my(entry_sum:small = 0);
     for (i = 1,length(v),
         entry_sum += v[i]
@@ -96,7 +96,7 @@ sumvec(v)= {
 \\ INPUT: A vector v
 \\ OUTPUT: A vector [exp(-v[1]),exp(-v[2]), ... exp(sum)]
 \\ Note that the output has length one more than v
-expvec(v) = {
+expvec(~v) = {
     my(xn);
     xn = concat(v,-sumvec(v));                \\ compute the negative sum of x, concatenate to xn
     vector(length(xn), i, exp(-xn[i]) );    \\ create a vector [exp(-x[1]),exp(-x[2]), ... exp(sum)]
@@ -112,7 +112,7 @@ inverse_expvec(v) = {
 \\ INPUT: A vector v
 \\ OUTPUT: Vector with entries of [log(abs(v[i]))] as a column
 \\ Construct the log vector for x (coordinatewise). If length of x is r, then the logvector has length r-1 */
-logvector(v) = vector(length(v), {i}, {log(abs(v[i]))} )~;
+logvector(~v) = vector(length(v), {i}, {log(abs(v[i]))} )~;
 
 /******************************************************************************/
 /* Returns an approximation of the vector v */
@@ -147,7 +147,7 @@ check0(v,eps) = {
 \\ - v1 and v2 are both vectors, eps is the acceptable error
 \\ OUTPUT:
 \\ - 0 if the entries of v1 and v2 are not each within eps of each other, 1 otherwise.
-samevecs(v1,v2, eps)={
+samevecs(~v1,~v2, eps)={
   if(length(v1) != length(v2), return(0));
 
   for (i = 1, length(v1),
@@ -177,7 +177,7 @@ vec_flip_positive(v1)={
 \\ OUTPUT
 \\ - 0 if v1 equals or exceeds v2 on any coordinate (excluding axis)
 \\ - 1 if v1 is smaller than v2 on each coordinate (except possibly axis)
-vec_less_than(v1,v2, axis = 0)={
+vec_less_than(~v1,~v2, axis = 0)={
 		if(length(v1)!= length(v2), print("v1, v2 not the same length. Error."); return(-1));
 		for(i =1, length(v1),
 				if(i != axis,

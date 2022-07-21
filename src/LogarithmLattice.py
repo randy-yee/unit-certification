@@ -67,7 +67,7 @@ minkowski_absval(v, r1)={
 /* IMPORTANT to note the squares on the complex embeddings.
 
 /******************************************************************************/
-valuationvec(G,elt, column = 0)={
+valuationvec(~G,~elt, column = 0)={
 	my(embedvec, column_elt);
     \\ process input so that it is a column vector
     if((column == 0) || (column ==1 && type(elt)== "t_INT"), column_elt = nfalgtobasis(G,elt);, column_elt = elt );
@@ -85,7 +85,7 @@ valuationvec(G,elt, column = 0)={
 \\ then the conjugates in the same order. ie. [s1, s2, s_{r1+1}, ... s_{r1+r2}, conj(s_{r1+1}), conj(s_{r1+2}), ... conj(s_{r1+r2})]
 \\ OUTPUT:
 \\ A vector of length n consisting of the absolute value of each embedding.
-absoluteval_nvec(G, v, side = 2)={
+absoluteval_nvec(~G, ~v, side = 2)={
     my(embed_v, outvec);
     embed_v = abs(G[5][1]*v)~;                                                  \\ vector of length r1+r2 corresponding to valuations
 
@@ -178,7 +178,7 @@ nfeltpow_modp(G, p, elt, expo )={
 \\ - v a dimension G.r1+G.r2 vector
 \\ OUTPUT:
 \\ - the real vector of v having dimension R^n, n is the degree of the number field
-get_real_vec(G, v)={
+get_real_vec(~G, ~v)={
   my(vec1, realvec=[]);
   sqrt2 = sqrt(2);
   vec1 = v;
@@ -195,7 +195,7 @@ get_real_vec(G, v)={
 \\ - M a (complex) matrix of dimension (r x n), where r = r1 +r2
 \\ OUTPUT:
 \\ - A matrix M' which has dimension n x n, obtained by splitting complex rows into real and imag parts, scaling them by sqrt2
-embed_real(G,M)={
+embed_real(~G,~M)={
     my(
       outmatrix,                                                  \\ holder for the output matrix
       tempvec,                                                    \\ intermediate vector holder
@@ -380,7 +380,7 @@ compute_sublattice(lglat, FILENAME ,extype = 0)={
 
 \\ given a column vector v and a lattice L, check if v is contained in the lattice
 \\ eps is an error value
-is_vec_in_lattice(v,L,eps)={
+is_vec_in_lattice(~v,~L,eps)={
     my(v_solution, round_solution);
     GP_ASSERT_EQ(matsize(L)[1],matsize(L)[2]);
     v_solution=L^(-1)*v;                            \\ solves L*x = v for x.
