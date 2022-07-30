@@ -209,7 +209,8 @@ cubescan_unequal(idealmat, cvec, G, eps)={
 is_minimum(idealmat, v, G, eps)={
     my(normedbody);
     normedbody = cubescan_unequal(idealmat, valuationvec(G,v, column = 1), G, eps);
-    if (length(normedbody)!=0,
+    if (length(normedbody)!=0 && length(normedbody)!=1, \\sometimes accidentally captures itself
+        print(normedbody);
         return(0),
         return(1));
 };
