@@ -74,7 +74,7 @@ SCREEN("commented test");
     incremental_giant_steps(K1, L, glegs, ~hashboys, [10], eps);
 
 }
-
+/*
 {
 
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
@@ -88,7 +88,7 @@ SCREEN("commented test");
     reg1 = unscaled_determinant(K1, lglat);
 
     cpct_units = cpct_from_loglattice(K1, lglat, eps);
-    \\bsgs_output= bsgs(K1,cpct_units, B, 25, eps,20,"alltest.txt");
+    bsgs_output= bsgs(K1,cpct_units, B, 25, eps,20,"alltest.txt");
 
     y = [1, 0, 0; 0, 1, 0; 0, 0, 1];
     glegs = [4.619061865536216760, -16.675036477848972758, 14.169130776523246111;
@@ -96,4 +96,5 @@ SCREEN("commented test");
     -5.731205932306944782, -9.809986206492638008, -9.633237149198505804];
 
 }
+*/
 print("Testing baby step giant step functions complete");

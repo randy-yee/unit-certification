@@ -117,7 +117,7 @@ logvector(~v) = vector(length(v), {i}, {log(abs(v[i]))} )~;
 /******************************************************************************/
 /* Returns an approximation of the vector v */
 /******************************************************************************/
-vector_approximate(v,eps)= {
+vector_approximate(~v,eps)= {
     my( vn1=eps*round(v*1/(eps))*1.00 );
     vn1;
 }
