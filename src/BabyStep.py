@@ -82,13 +82,14 @@ scanball_map(~G, ~bmap, y, u, psimu, web, eps, ~repeated_minima)={
 \\ distingished from scanball_map as instead of one psimu, a list of them
 \\ is provided. In this way, when the ideal y is repeated, we can reduce overall
 \\ number of scans
-overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, web, eps, ~repeated_minima)={
+overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~repeated_minima)={
 
     my(
         n = poldegree(G.pol),
         x, scan_bound,
         vecholder, gram_mat,
         scan_elements,
+        scan_bound,
         LLL_reduced_yu
     );
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -98,7 +99,7 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, web, eps, ~repeated_mini
     x = embed_real(G,x);
     LLL_reduced_yu = x*qflll(x);                                                \\ lll reduce y*u
     vecholder = LLL_reduced_yu[,1];                                             \\ short vector, 1st element of LLL basis
-    scan_bound = sqrt(n)*exp(2*web)*sqrt(norml2(vecholder));                    \\ See schoof alg 10.7, e^(2*var_eps)*sqrt(n)*sqrt(norml2(col))
+    scan_bound = sqrt(n)*exp(2*ball_distance)*sqrt(norml2(vecholder));          \\ See schoof alg 10.7, e^(2*var_eps)*sqrt(n)*sqrt(norml2(col))
     gram_mat=LLL_reduced_yu~*LLL_reduced_yu;                                    \\ get the gram matrix
 
     scan_elements = qfminim(gram_mat,scan_bound^2,,2)[3];
@@ -128,10 +129,10 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, web, eps, ~repeated_mini
 
             if (FIRST, print("WARNING: confirm this ideal norm check is accurate"); FIRST =0);
             new_yLLL = real_y*qflll(real_y);
-            if(norml2(new_yLLL) > 1-eps,
+            if(1,
                 if(checkred_old(new_y,G,eps)==1,
                     vec_numerical = (G[5][1]*scan_elements[,ii])~;
-                    for(j = 1, length(log_distance_list),
+                    for(j = 2, length(log_distance_list),
                         psi_value = vector_approximate(log(abs(vec_numerical[1..G.r1+G.r2-1]))+log_distance_list[j][1..G.r1+G.r2-1],eps);
                         if(mapisdefined(bmap, new_y, &existing_entry),
                             repeatflag = is_repeat_babystock(existing_entry, psi_value, eps);
