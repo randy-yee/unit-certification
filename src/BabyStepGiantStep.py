@@ -646,7 +646,8 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
         existing_entry,
         field_deg = poldegree(G.pol),
         identity_n = matid(field_deg),
-        scan_radius = 0
+        scan_radius = 0,
+        scan_shrink_factor
     );
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     \\ Establish a number of parameters including the web of regularly distributed points,
@@ -656,11 +657,12 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
     repeat_counter = 0;
     \\ subdivide the babystock region based on the lengths of the defining vectors
     denoms = vector( length(L), i, ceil(norml2(giant_legs[,i])));
+    scan_shrink_factor = 1;
+    denoms*= scan_shrink_factor;
     babystock_t = giant_legs;
     for(i=1, length(babystock_t),
         babystock_t[,i]=babystock_t[,i]/denoms[i];
-        if (norml2(babystock_t[,i]) > scan_radius, scan_radius = norml2(babystock_t[,i]));
-        );
+    );
 
     xvector = vector(matsize(giant_legs)[2], i,0)~;
     increment_coordinates(denoms, web_coords);
@@ -672,7 +674,7 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
         scanIdealsMatrix
     );
     \\ #precomputation of ideals to scan plus log distances
-    /*
+
     time2 = getabstime();
     print("precompute all the y, nu pairs");
     while(web_coords != zerovec,
@@ -686,31 +688,29 @@ babystock_scan_jump(y,L,giant_legs,G,eps)={
                 mapput(scanIdeals, ideal_J, distanceList);
             );
         ,
-            mapput(scanIdeals, ideal_J ,List([logdist]));
+            mapput(scanIdeals, ideal_J ,List([nu, logdist]));
         );
     );
     print("ideal gather time: ", getabstime() - time2);
     scanIdealsMatrix = Mat(scanIdeals)[,1];
-    breakpoint();
-    for(i = 1, matsize(scanIdealsMatrix)[1],
+    print("Distinct ideals to scan: ", length(scanIdealsMatrix));
+    for(i = 1, length(scanIdealsMatrix),
         distanceList = mapget(scanIdeals, scanIdealsMatrix[i]);
-
-        overlap_scanball(G, baby_hashmap, ideal_J, nu, distanceList, 1, eps, repeated_minima);
-        print(i, "  ",(length(distanceList)));
-
+        nu = distanceList[1];
+        overlap_scanball(G, baby_hashmap, scanIdealsMatrix[i], nu, distanceList, scan_shrink_factor, eps, repeated_minima);
     );
     print("new method time ", getabstime() - time2);
-    \\breakpoint();
-    */
+    breakpoint();
+
 
     time1 = getabstime();increment_coordinates(denoms, web_coords);
     while(web_coords != zerovec,                                               \\ loops over all of the web points in the babystock region
 
         xvector = babystock_t*web_coords~;                                     \\ this holds the web point to be scanned
-        increment_coordinates(denoms, web_coords);                \\ compute the next point's coefficients
+        increment_coordinates(denoms, web_coords);
         [ideal_J, nu, logdist] = giantstep(y, xvector, G, field_deg, eps);
 
-        ball_minima = scanball_map(G, baby_hashmap, ideal_J, nu, logdist[1..length(L)], scan_radius, eps, repeated_minima);
+        ball_minima = scanball_map(G, baby_hashmap, ideal_J, nu, logdist[1..length(L)], scan_shrink_factor, eps, repeated_minima);
 
         if (mapisdefined(scanIdeals, ideal_J),
             repeat_counter+=1;
