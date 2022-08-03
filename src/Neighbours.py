@@ -210,11 +210,12 @@ is_minimum(idealmat, v, G, eps)={
     my(normedbody);
     normedbody = cubescan_unequal(idealmat, valuationvec(G,v, column = 1), G, eps);
     if (length(normedbody)!=0 && length(normedbody)!=1, \\sometimes accidentally captures itself
-        print(normedbody);
+        \\print(normedbody);
         return(0),
         return(1));
 };
-
+\\if (length(normedbody)!=0 && length(normedbody)!=1
+\\ tried using this condition, but I think should not
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ This function will take in a column vector which represent coefficients wrt the integral basis and check if it is a minimum in the given ideal
