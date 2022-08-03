@@ -89,7 +89,6 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~rep
         x, scan_bound,
         vecholder, gram_mat,
         scan_elements,
-        scan_bound,
         LLL_reduced_yu
     );
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -113,7 +112,6 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~rep
         psi_value,
         vec_numerical
     );
-    print("elements scanned: ", length(scan_elements));
     for(ii=1, length(scan_elements),
 
         \\\ #Easy necessary condition for minimum'''
@@ -132,6 +130,7 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~rep
             if(1,
                 if(checkred_old(new_y,G,eps)==1,
                     vec_numerical = (G[5][1]*scan_elements[,ii])~;
+                    \\ # Start at 2 because j=1 holds the nu value ( see babystock_scan_jump )
                     for(j = 2, length(log_distance_list),
                         psi_value = vector_approximate(log(abs(vec_numerical[1..G.r1+G.r2-1]))+log_distance_list[j][1..G.r1+G.r2-1],eps);
                         if(mapisdefined(bmap, new_y, &existing_entry),
