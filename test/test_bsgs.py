@@ -5,6 +5,18 @@ read("src/bounds.gp")
 
 }
 
+/*
+func(~map)={
+    mapput(map, 1,20);
+    print(mapget(map, 1), "  ", Mat(map));
+}
+{
+    testmap = Map();
+    func(~testmap);
+    print(Mat(testmap)); breakpoint();
+}
+*/
+
 {   \\\ TEST step incrementation
     my(avec, v, directions, counter = 1);
     avec = [10,10,10];
@@ -21,7 +33,7 @@ read("src/bounds.gp")
 }
 
 SCREEN("commented test");
-/*
+
 {
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
         lglat, eps = 10^(-20)
@@ -33,8 +45,8 @@ SCREEN("commented test");
     lglat = get_log_lattice_bnf(K2);
     reg1 = unscaled_determinant(K1, lglat);
     GP_ASSERT_NEAR(reg1, K2.reg, eps);
-
-    sumv = lglat[,1];
+    scaled_lglat =lglat*2;
+    sumv = scaled_lglat[,1];
     for(j=2, length(lglat), sumv+=lglat[,j]);
     X1 = prec_baby(poldegree(K1.pol), log(abs(K1.disc)), infinity_norm(sumv));
     X2 = prec_giant(poldegree(K1.pol), log(abs(K1.disc)),abs(reg1),infinity_norm(sumv) );
@@ -44,12 +56,14 @@ SCREEN("commented test");
     REQ_COMPARE = ceil((poldegree(K1.pol)^2 +2)*log(infinity_norm(sumv))+2*poldegree(K1.pol)^2 +5);
     eps = 2^(-REQ_COMPARE);
 
-    cpct_units = cpct_from_loglattice(K1, lglat, eps);
-    bsgs_out= bsgs(K1,cpct_units, B, 1/2, eps,REQ_BSGS);
+    cpct_units = cpct_from_loglattice(K1, scaled_lglat, eps);
+    bsgs_out= bsgs(K1,cpct_units, B, sqrt(abs(matdet(scaled_lglat))), eps,REQ_BSGS);
     bsgs_out_lattice = log_lattice_from_compact_set(K1,bsgs_out);
-    GP_ASSERT_MAT_NEAR(lglat,bsgs_out_lattice, eps );
+    GP_ASSERT_NEAR(reg1, unscaled_determinant(K1, bsgs_out_lattice), eps );
+    print(precision(lglat,10));
 }
-*/
+breakpoint();
+
 {
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
         lglat, eps = 10^(-20)
@@ -64,17 +78,23 @@ SCREEN("commented test");
     y = [1, 0, 0; 0, 1, 0; 0, 0, 1];
     L = Mat(-6970.84528270648362176158817493947745897457384631054091381075996);
     glegs = Mat(34.8542264135324181088079408746973872948728692315527045690537);
-    [L, hashboys] = babystock_scan_jump(y, L, glegs, K1, eps);
-    \\GP_ASSERT_EQ(length(Mat(hashboys)~), 209);
+    hashmap1 = Map();
+    hashmap2 = Map();
+    my(temp1, temp);
+    [L, temp] = babystock_scan_jump(y, L, glegs, ~hashmap1, K1, eps);
+    [L1, temp1] = incremental_baby_steps(y, L, glegs, ~hashmap2, K1, eps);
+    print("Compare babystock set sizes: ", matsize(Mat(hashmap1)), "  ",matsize(Mat(hashmap2))  );
+    \\GP_ASSERT_EQ(length(Mat(hashmap1)~), 209);
     \\babystock_scan_jump
 
     inc = get_giant_step_increment_vectors_compact(K1, glegs, n, eps);
 
 
-    incremental_giant_steps(K1, L, glegs, ~hashboys, [10], eps);
+    incremental_giant_steps(K1, L, glegs, hashmap1, [10], eps);
 
 }
-/*
+
+
 {
 
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
@@ -96,5 +116,5 @@ SCREEN("commented test");
     -5.731205932306944782, -9.809986206492638008, -9.633237149198505804];
 
 }
-*/
+
 print("Testing baby step giant step functions complete");

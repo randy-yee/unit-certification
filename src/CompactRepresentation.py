@@ -482,6 +482,7 @@ if(type(v) == "t_COL", v = v~);
 \\ - G is the number field
 \\ - n is the degree of the field
 \\ - eps is the acceptable error
+\\ - complex is a flag for if you want complex logs instead.
 \\ OUTPUT:
 \\ - a pair consisting of a reduced ideal J and a minimum beta satisfying
 \\ - J = (1/beta)*I
@@ -538,7 +539,7 @@ if(type(v) == "t_COL", v = v~);
     myCompactRep = [alpha_vec, d_vec];
     \\debug_print("A ", log_from_cpct(G, myCompactRep));
     \\debug_print("B ", log_distance);
-    return( [idealB, u, myCompactRep] );
+    return( [idealB, u, invert_compact(G, myCompactRep)] );
 }
 
 invert_compact(~G, ~cpct_rep)=
@@ -553,6 +554,7 @@ invert_compact(~G, ~cpct_rep)=
         inverse_rep[1][k] = numerator(inverse_elt);
         inverse_rep[2][k] = denominator(inverse_elt);
     );
+    inverse_rep[1] = List(inverse_rep[1]);
     return(inverse_rep)
 }
 
@@ -565,27 +567,32 @@ mul_compact(~G, ~cpct1, ~cpct2)=
     cpct_rep_argcheck(cpct1);
     cpct_rep_argcheck(cpct2);
 
-    my(num_terms, len1, len2, product_numerator=[], product_denominator=[],
+    my(num_terms, len1, len2, product_numerator=List(), product_denominator=[],
         numer, denom, common);
 
     if( length(cpct1[1]) >= length(cpct2[1]),
         len1 = length(cpct1[1]);
         len2 = length(cpct2[1]);
-        product_numerator=cpct1[1][1..(len1-len2)];
+        product_numerator=List(cpct1[1][1..(len1-len2)]);
         product_denominator=cpct1[2][1..(len1-len2)];
     ,
         len1 = length(cpct2[1]);
         len2 = length(cpct1[1]);
-        product_numerator=cpct2[1][1..(len1-len2)];
+        product_numerator=List(cpct2[1][1..(len1-len2)]);
         product_denominator=cpct2[2][1..(len1-len2)];
     );
     for(i = 1, len2,
         numer = nfeltmul(G, cpct1[1][length(cpct1[1])-len2+i ], cpct2[1][length(cpct2[1])-len2+i ]);
         denom = cpct1[2][length(cpct1[1])-len2+i ]*cpct2[2][length(cpct2[1])-len2+i];
         common = gcd(nfbasistoalg(G,numer), denom);
-        product_numerator = concat(product_numerator, numer/common);
+        listput(~product_numerator, numer/common);
         product_denominator = concat(product_denominator, denom/common);
     );
+
+    \\print("Expensive verification in mul_compact. Delete once confirmed");
+    \\GP_ASSERT_TRUE(compact_reconstruct(G, product_numerator, product_denominator) ==
+    \\nfeltmul(G, compact_reconstruct(G, cpct1[1], cpct1[2]), compact_reconstruct(G, cpct2[1], cpct2[2])));
+
     return([product_numerator, product_denominator]);
 }
 

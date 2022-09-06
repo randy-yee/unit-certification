@@ -24,13 +24,12 @@ read("test/test_log_lattice_functions.py");
 read("test/test_neighbours.py");
 read("test/test_compact_representation.py");
 
+
 read("test/test_lower_bound.py");
 read("test/test_pmax_normal.py");
 read("test/test_pmax_log.py");
 
 read("test/test_bsgs.py");
-
-
 
 \\read("test/test_pmax_log_pohst_example.py");
 }

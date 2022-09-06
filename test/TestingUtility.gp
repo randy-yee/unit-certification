@@ -70,13 +70,28 @@ GP_ASSERT_MAT_NEAR(~arg1, ~arg2, eps)={
     for(j=1, n_cols,
       if(abs(arg1[i,j] - arg2[i,j]) < eps,
       ,
-      print("Assert failed. ", arg1[i], " is not within ", eps, " range of ", arg2[i]);
+      print("Assert failed. ", arg1[i,j], " is not within ", eps, " range of ", arg2[i,j]);
       breakpoint();
       );
     );
   );
 }
-
+GP_ASSERT_MAT_ABS_NEAR(~arg1, ~arg2, eps)={
+  if(matsize(arg1) != matsize(arg2),
+    print("Invalid Assert,
+    matrices not the same dimension");breakpoint();
+  );
+  my(n_rows = matsize(arg1)[1], n_cols= matsize(arg1)[2]);
+  for(i=1, n_rows,
+    for(j=1, n_cols,
+      if(abs(abs(arg1[i,j]) - abs(arg2[i,j])) < eps,
+      ,
+      print("Assert failed. ", arg1[i,j], " is not within ", eps, " range of ", arg2[i,j]);
+      breakpoint();
+      );
+    );
+  );
+}
 GP_ASSERT_GT(~arg1, ~arg2)={
   if( arg1 >arg2,
   ,

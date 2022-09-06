@@ -212,6 +212,9 @@ is_minimum(idealmat, v, G, eps)={
     if (length(normedbody)!=0 && length(normedbody)!=1, \\sometimes accidentally captures itself
         \\print(normedbody);
         return(0),
+        if( (length(normedbody) == 1) && (normedbody[1]!=v),
+            return(0);
+        );
         return(1));
 };
 \\if (length(normedbody)!=0 && length(normedbody)!=1

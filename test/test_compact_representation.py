@@ -171,12 +171,12 @@ read("src/CompactRepresentation.py");
     logarithm_lattice = get_log_lattice_bnf(G2);
 
     for(i = 1, 20,
-        cpct_rep = [[i],[1]];
+        cpct_rep = [List([i]),[1]];
         invert = invert_compact(G1, cpct_rep);
         GP_ASSERT_EQ(invert[1][1], 1);
         GP_ASSERT_EQ(invert[2][1], i);
-        GP_ASSERT_EQ(mul_compact(G1, cpct_rep, invert) , [[1],[1]] );
-        GP_ASSERT_EQ(mul_compact(G1, invert, cpct_rep) , [[1],[1]] );
+        GP_ASSERT_EQ(mul_compact(G1, cpct_rep, invert) , [List([1]),[1]] );
+        GP_ASSERT_EQ(mul_compact(G1, invert, cpct_rep) , [List([1]),[1]] );
         invert = invert_compact(G1, invert);
         GP_ASSERT_EQ(invert, cpct_rep);
     );
@@ -200,12 +200,12 @@ read("src/CompactRepresentation.py");
     logarithm_lattice = get_log_lattice_bnf(G2);
 
     for(i = 1, 20,
-        cpct_rep = [[i],[1]];
+        cpct_rep = [List([i]),[1]];
         invert = invert_compact(G1, cpct_rep);
         GP_ASSERT_EQ(invert[1][1], 1);
         GP_ASSERT_EQ(invert[2][1], i);
-        GP_ASSERT_EQ(mul_compact(G1, cpct_rep, invert) , [[1],[1]] );
-        GP_ASSERT_EQ(mul_compact(G1, invert, cpct_rep) , [[1],[1]] );
+        GP_ASSERT_EQ(mul_compact(G1, cpct_rep, invert) , [List([1]),[1]] );
+        GP_ASSERT_EQ(mul_compact(G1, invert, cpct_rep) , [List([1]),[1]] );
         invert = invert_compact(G1, invert);
         GP_ASSERT_EQ(invert, cpct_rep);
     );
