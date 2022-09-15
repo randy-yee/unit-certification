@@ -2,8 +2,7 @@ read("src/VectorMethods.py");
 read("src/LogarithmLattice.py");
 FIRST = 1;
 VERIFY_GENERATORS = 1;
-
-
+adjusttime1 = 0;
 
 
 \\ INPUT:
@@ -13,7 +12,8 @@ VERIFY_GENERATORS = 1;
 \\      a compact representation
 \\ - expected position is the coordinates in R^r of your giant lattice element
 \\ - distance_ok is the limit of the acceptable distance from the divisor to the target position
-adjust_giant_step_cpct(~G, ~giant_divisor, ~expected_position, eps)={
+adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, ~expected_position, eps)={
+    a_time1 = getabstime();
     my(
         r = G.r1 + G.r2 -1,
         divisor_distance = expected_position - log_from_cpct(G, giant_divisor[3])[1..r]~,
@@ -21,11 +21,14 @@ adjust_giant_step_cpct(~G, ~giant_divisor, ~expected_position, eps)={
         new_distance,
         s_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));
     );
+    a_time2 = getabstime();
+    adjusttime1 += (a_time2 - a_time1);
     if(sqrt(norml2(divisor_distance)) < s_radius,
         return(giant_divisor);
     , \\else
         \\print("\ntarget position = ", precision(expected_position,10), "\nOriginal Distance from Target ", precision(norml2(divisor_distance),10) );
         for(i=1, 2,
+
             adjustment_divisor = get_nearby_rdivisor(G, matid(poldegree(G.pol)), divisor_distance, i%2);
             if (sqrt(norml2(adjustment_divisor[3])) < eps,
                 return(giant_divisor);
@@ -33,19 +36,23 @@ adjust_giant_step_cpct(~G, ~giant_divisor, ~expected_position, eps)={
                 new_divisor = [idealmul(G, giant_divisor[1], adjustment_divisor[1]),
                     pointwise_vector_mul(giant_divisor[2],adjustment_divisor[2] )~,
                     mul_compact(G, giant_divisor[3], [ [numerator(adjustment_divisor[4])],[denominator(adjustment_divisor[4])] ])  ];
+
                 reduced_product = reddiv_compact(new_divisor[1], new_divisor[2],G, G[5][1] );
                 reduced_product_cpct = mul_compact(G, new_divisor[3], [[numerator(reduced_product[4])],[denominator(reduced_product[4])]] );
+
                 new_divisor[3] = reduced_product_cpct;
                 new_distance = norml2(expected_position - (log_from_cpct(G,new_divisor[3])[1..r]~));
                 \\print("Adjusted distance from target = ", precision(new_distance, 10) );
                 if(new_distance < norml2(divisor_distance)+eps,
                     \\print("returning adjusted divisor");
+                    listput(~tracker, [nfeltmul(G, adjustment_divisor[4], reduced_product[4]), 1]);
                     return(new_divisor);
                 );
             );
         );
         \\ adjustment fails, so we should use jump to compute something close
         gstep_divisor = jump_compact(matid(length(G.zk)), expected_position, G, length(G.zk), eps);
+        print("WARNING: recomputing tracking divisor with jump. Reset the tracker also");
         return(gstep_divisor);
     );
 };
@@ -281,7 +288,8 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, eps)=
         scanIdealsMatrix,
         repeat_counter = 0,
         repeated_minima = 0,
-        logdist
+        logdist,
+        compactTracking = List()
     );
     \\ #for some reason I have to flip these. giantstep() may actually return an inverse
     [direction_elements, inverse_direction_elements] =
@@ -310,11 +318,11 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, eps)=
             expected_position -= babystock_t[,place_marker];
         );
 
-        baby_divisor = get_next_giant_divisor_cpct(G, baby_divisor);
-        baby_divisor = adjust_giant_step_cpct(G, baby_divisor, expected_position, eps);
+        baby_divisor = get_next_giant_divisor_cpct(G, ~baby_divisor, ~compactTracking);
+        baby_divisor = adjust_giant_step_cpct(~G, ~baby_divisor,~compactTracking, ~expected_position, eps);
         logdist = log_from_cpct(G, baby_divisor[3]);
 
-        verify_generator(G, baby_divisor[1], baby_divisor[3]);
+        \\verify_generator(G, baby_divisor[1], baby_divisor[3]);
 
         \\# identify all ideal to be scanned plus the corresponding u
         if (mapisdefined(scanIdeals, baby_divisor[1], &distanceList),
@@ -342,8 +350,9 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, eps)=
     );
 
     \\# go through each unique ideal and enumerate once. The results are multipled
-    \\# by each associated u to account for all the distinct minima  
+    \\# by each associated u to account for all the distinct minima
     print("Babystock: enumerating");
+    if (length(scanIdeals) < 1, return([lattice_lambda, []]); );
     scanIdealsMatrix = Mat(scanIdeals)[,1];
     for(i = 1, length(scanIdealsMatrix),
         distanceList = mapget(scanIdeals, scanIdealsMatrix[i]);
