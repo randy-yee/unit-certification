@@ -484,9 +484,9 @@ if(type(v) == "t_COL", v = v~);
 \\ - eps is the acceptable error
 \\ - complex is a flag for if you want complex logs instead.
 \\ OUTPUT:
-\\ - a pair consisting of a reduced ideal J and a minimum beta satisfying
-\\ - J = (1/beta)*I
-\\ **Important** Compared to the previous version, the logarithm vector can be off by a sign
+\\ - a triplet consisting of a reduced ideal J and a minimum beta satisfying
+\\ - J = (1/beta)*y, and also u which indicates the distance from the vector v
+\\ Here beta is a compact representation
 
 /******************************************************************************/
 jump_compact(y,v,G,n,eps, complex = 0)={
@@ -568,7 +568,9 @@ mul_compact(~G, ~cpct1, ~cpct2)=
     cpct_rep_argcheck(cpct2);
 
     my(num_terms, len1, len2, product_numerator=List(), product_denominator=[],
-        numer, denom, common);
+        numer, denom, common, numBound, denomBound);
+    numBound = G.disc^(3/4*(G.r1+G.r2+2));
+    denomBound = G.disc^(1/2);
 
     if( length(cpct1[1]) >= length(cpct2[1]),
         len1 = length(cpct1[1]);
@@ -589,6 +591,7 @@ mul_compact(~G, ~cpct1, ~cpct2)=
         product_denominator = concat(product_denominator, denom/common);
     );
 
+    recompactify(G, product_numerator, product_denominator);
     \\print("Expensive verification in mul_compact. Delete once confirmed");
     \\GP_ASSERT_TRUE(compact_reconstruct(G, product_numerator, product_denominator) ==
     \\nfeltmul(G, compact_reconstruct(G, cpct1[1], cpct1[2]), compact_reconstruct(G, cpct2[1], cpct2[2])));
@@ -596,6 +599,24 @@ mul_compact(~G, ~cpct1, ~cpct2)=
     return([product_numerator, product_denominator]);
 }
 
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+\\ check if terms of compact representation are small enough and shrink them
+\\ if needed
+\\ INPUT:
+\\ - G a number field
+\\ - numerator vector of compact representation
+\\ - denominator vector of compact representations
+\\ OUTPUT:
+\\ - A compact representation where all the terms are small
+\\\\\\\\\\\\\\\\\\\\\\\\\
+recompactify(G, cpctNum, cpctDenom)={
+    GP_ASSERT_EQ(length(cpctNum), length(cpctDenom));
+
+
+    \\print("Not written");breakpoint();
+}
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 

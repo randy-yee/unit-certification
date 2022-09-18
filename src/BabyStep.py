@@ -12,15 +12,18 @@ adjusttime1 = 0;
 \\      a compact representation
 \\ - expected position is the coordinates in R^r of your giant lattice element
 \\ - distance_ok is the limit of the acceptable distance from the divisor to the target position
-adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, ~expected_position, eps)={
+adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, ~trackerLog, ~expected_position, eps)={
     a_time1 = getabstime();
     my(
         r = G.r1 + G.r2 -1,
-        divisor_distance = expected_position - log_from_cpct(G, giant_divisor[3])[1..r]~,
+        divisor_distance = expected_position - trackerLog~,
         adjustment_divisor, new_divisor,
         new_distance,
+        newFactor,
         s_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));
     );
+
+
     a_time2 = getabstime();
     adjusttime1 += (a_time2 - a_time1);
     if(sqrt(norml2(divisor_distance)) < s_radius,
@@ -38,14 +41,20 @@ adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, ~expected_position, eps)={
                     mul_compact(G, giant_divisor[3], [ [numerator(adjustment_divisor[4])],[denominator(adjustment_divisor[4])] ])  ];
 
                 reduced_product = reddiv_compact(new_divisor[1], new_divisor[2],G, G[5][1] );
-                reduced_product_cpct = mul_compact(G, new_divisor[3], [[numerator(reduced_product[4])],[denominator(reduced_product[4])]] );
 
+                reduced_product_cpct = mul_compact(G, new_divisor[3], [[numerator(reduced_product[4])],[denominator(reduced_product[4])]] );
                 new_divisor[3] = reduced_product_cpct;
-                new_distance = norml2(expected_position - (log_from_cpct(G,new_divisor[3])[1..r]~));
+
+                newFactor = nfeltmul(G, adjustment_divisor[4], reduced_product[4]);
+                logNewFactor = log(abs(nfeltembed(G,newFactor) ))[1..r];
+
+                new_distance = norml2(expected_position - logNewFactor);
                 \\print("Adjusted distance from target = ", precision(new_distance, 10) );
                 if(new_distance < norml2(divisor_distance)+eps,
                     \\print("returning adjusted divisor");
-                    listput(~tracker, [nfeltmul(G, adjustment_divisor[4], reduced_product[4]), 1]);
+
+                    listput(~tracker, [newFactor, 1]);
+                    trackerLog += logNewFactor;
                     return(new_divisor);
                 );
             );
@@ -149,7 +158,7 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~rep
         LLL_reduced_yu
     );
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    \\\ #Use the y,u to define a lattice to scan for elements
+    \\\ #Use y,u to define a lattice to scan for elements
     x = G[5][1]*y;                                                              \\ numerical representation of y (complex)
     x = mulvec(x,u);                                                            \\ compute y*u
     x = embed_real(G,x);
@@ -272,7 +281,7 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, eps)=
     for(i=1, length(babystock_t),
         babystock_t[,i]=babystock_t[,i]/denoms[i];
     );
-    expected_position = vector(G.r1+G.r2-1, i, 0)~;
+    expected_position = vector(r, i, 0)~;
 
     directions = vector(length(giant_legs), i , 1);
     increment_coordinates(denoms, web_coords);
@@ -289,12 +298,16 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, eps)=
         repeat_counter = 0,
         repeated_minima = 0,
         logdist,
-        compactTracking = List()
+        compactTracking = List(),
+        trackingLog = vector(r, i, 0);
     );
     \\ #for some reason I have to flip these. giantstep() may actually return an inverse
     [direction_elements, inverse_direction_elements] =
         get_giant_step_increment_vectors_compact(G, babystock_t, field_deg, eps);
 
+    for( i=1, length(direction_elements),
+        listput(~compactTracking, [direction_elements[i][3], 0]);
+    );
     baby_divisor = [matid(field_deg), vector(r+1, i,1 ), [[1],[1]] ];
 
     SCREEN(0, "Additional timing variables and file write in jump");
@@ -311,17 +324,24 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, eps)=
                 pointwise_vector_mul(baby_divisor[2],direction_elements[place_marker][2] )~,
                 mul_compact(G, baby_divisor[3],direction_elements[place_marker][3])  ];
             expected_position += babystock_t[,place_marker];
+            compactTracking[place_marker][2] += 1;
+            trackingLog += log_from_cpct(G, direction_elements[place_marker][3])[1..r];
         ,\\else
             baby_divisor = [idealmul(G, baby_divisor[1], inverse_direction_elements[place_marker][1]),
                 pointwise_vector_mul(baby_divisor[2],inverse_direction_elements[place_marker][2] )~,
                 mul_compact(G, baby_divisor[3], inverse_direction_elements[place_marker][3])  ];
             expected_position -= babystock_t[,place_marker];
+            compactTracking[place_marker][2] -= 1;
+            trackingLog -= log_from_cpct(G, direction_elements[place_marker][3])[1..r];
         );
 
         baby_divisor = get_next_giant_divisor_cpct(G, ~baby_divisor, ~compactTracking);
-        baby_divisor = adjust_giant_step_cpct(~G, ~baby_divisor,~compactTracking, ~expected_position, eps);
-        logdist = log_from_cpct(G, baby_divisor[3]);
+        trackingLog += log(abs(nfeltembed(G, compactTracking[length(compactTracking)][1])))[1..r];
 
+        baby_divisor = adjust_giant_step_cpct(~G, ~baby_divisor,~compactTracking, ~trackingLog, ~expected_position, eps);
+        logdist = log_from_cpct(G, baby_divisor[3]);
+        \\GP_ASSERT_VEC_NEAR(logdist[1..r], trackerLogarithm(G, ~compactTracking, r)[1..r], 0.0000001);
+        \\print("Compare: \n", precision(logdist,10), "\n", precision(trackingLog,10));
         \\verify_generator(G, baby_divisor[1], baby_divisor[3]);
 
         \\# identify all ideal to be scanned plus the corresponding u
@@ -356,10 +376,11 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, eps)=
     scanIdealsMatrix = Mat(scanIdeals)[,1];
     for(i = 1, length(scanIdealsMatrix),
         distanceList = mapget(scanIdeals, scanIdealsMatrix[i]);
+        print("elements per ideal: ", length(distanceList));
         nu = distanceList[1];
         overlap_scanball(~G, ~baby_hashmap, ~scanIdealsMatrix[i], ~nu, ~distanceList, scan_shrink_factor, eps, ~repeated_minima);
     );
-    \\print("new method time ", getabstime() - time2);
+    print("scan time: ", getabstime() - baby_t1);
     [lattice_lambda, newctr] = check_units_bstock(~baby_hashmap,~lattice_lambda,~G,eps);
     if(newctr != 0,
         print("Found a unit in babystock. new reg =", precision(abs(matdet(lattice_lambda)),10) );

@@ -886,7 +886,8 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
         \\# direction_elements[i] and inverse_direction_elements[i] are multiplicative inverses
         direction_elements,
         inverse_direction_elements,
-        compactTracking = List()
+        compactTracking = List(),
+        trackingLog = vector(r, i, 0);
     );
     \\ #for some reason I have to flip these. giantstep() may actually return an inverse
     [direction_elements, inverse_direction_elements] =
@@ -919,44 +920,55 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
                 mul_compact(G, giant_divisor[3],direction_elements[place_marker][3])  ];
             expected_position += giant_sublattice[,place_marker];
             compactTracking[place_marker][2] += 1;
+            trackingLog += log_from_cpct(G, direction_elements[place_marker][3])[1..r];
         ,\\else
             giant_divisor = [idealmul(G, giant_divisor[1], inverse_direction_elements[place_marker][1]),
                 pointwise_vector_mul(giant_divisor[2],inverse_direction_elements[place_marker][2] )~,
                 mul_compact(G, giant_divisor[3], inverse_direction_elements[place_marker][3])  ];
             expected_position -= giant_sublattice[,place_marker];
             compactTracking[place_marker][2] -= 1;
+            trackingLog -= log_from_cpct(G, direction_elements[place_marker][3])[1..r];
         );
         tDR = getabstime();
         tDivisorCompute += (tDR-tDC);
+
         giant_divisor = get_next_giant_divisor_cpct(G, ~giant_divisor, ~compactTracking);
+        trackingLog += log(abs(nfeltembed(G, compactTracking[length(compactTracking)][1])))[1..r];
         t_half = getabstime();
         tNext += (t_half-tDR);
-        giant_divisor = adjust_giant_step_cpct(~G, ~giant_divisor, ~compactTracking, ~expected_position, eps);
+
+        giant_divisor = adjust_giant_step_cpct(~G, ~giant_divisor, ~compactTracking, ~trackingLog, ~expected_position, eps);
 
         tAdjust = getabstime();
         tDivisorReduce += (tAdjust - t_half);
         \\verify_generator(G, giant_divisor[1], giant_divisor[3]);
         \\print(precision(expected_position,10), "  ", precision(log_from_cpct(G, giant_divisor[3])[1..r]~,10) );
         \\print(precision(expected_position - log_from_cpct(G, giant_divisor[3])[1..r]~,10));
+        /*
+        if (norml2(log_from_cpct(G, giant_divisor[3])[1..r]- trackerLogarithm(G, compactTracking, r)) >0.0000001,
+            print("different log value than expected");
+            breakpoint();
+        );
+        */
         \\ use babystock hashmap to check for collisions and update as needed
-        
+
         if(mapisdefined(babystock, giant_divisor[1]),
             \\if(DEBUG_BSGS>0 ,print("baby-giant match. checking for new vector:"););
             matches = mapget(babystock, giant_divisor[1]);
             for(i=1, length(matches),
 
-                gd_log = log_from_cpct(G, giant_divisor[3])[1..r];
-
+                \\gd_log = log_from_cpct(G, giant_divisor[3])[1..r];
+                gd_log = trackerLogarithm(G, compactTracking, r);
                 new_vec = gd_log - matches[i];
                 \\print("g = ", precision(giant_divisor[1],10), "  Difference: ", precision(new_vec,10));
                 if(norml2(new_vec) > (eps*10)^2 && is_vec_in_lattice(new_vec~,lattice_lambda,eps)==0,
 
                     if(DEBUG_BSGS>0, print("New vector found: Initial reg = ", precision(matdet(lattice_lambda),10)););
 
-                    \\print("WARNING: Expensive verification. Remove after fixing");
+                    print("WARNING: Expensive verification. Remove after fixing");
                     \\bnflattice = get_log_lattice_bnf(bnfinit(G));
                     \\print(precision(bnflattice^(-1)*new_vec~,10));
-                    \\lattice_lambda_copy = lattice_lambda;
+                    lattice_lambda_copy = lattice_lambda;
                     lattice_lambda = my_mlll( matconcat([lattice_lambda, new_vec~]),eps);
                     if (matsize(lattice_lambda)[1] != matsize(lattice_lambda)[2],
                         print("ERROR: mlll failed to properly determine new basis in giant steps.");
@@ -993,6 +1005,7 @@ trackerLogarithm(~G, ~tracker, r)={
             logResult += tracker[i][2]*log_from_cpct(G, tracker[i][1])[1..r];
         ,\\else
             logResult+= tracker[i][2]*log(abs(nfeltembed(G, tracker[i][1])))[1..r];
+            \\logResult+= tracker[i][2]*log(abs(G[5][1]*(tracker[i][1])))[1..r]~;
         );
     );
     return(logResult);
