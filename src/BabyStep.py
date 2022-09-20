@@ -41,8 +41,8 @@ adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, ~trackerLog, ~expected_posi
                     mul_compact(G, giant_divisor[3], [ [numerator(adjustment_divisor[4])],[denominator(adjustment_divisor[4])] ])  ];
 
                 reduced_product = reddiv_compact(new_divisor[1], new_divisor[2],G, G[5][1] );
-
                 reduced_product_cpct = mul_compact(G, new_divisor[3], [[numerator(reduced_product[4])],[denominator(reduced_product[4])]] );
+
                 new_divisor[3] = reduced_product_cpct;
 
                 newFactor = nfeltmul(G, adjustment_divisor[4], reduced_product[4]);
@@ -339,15 +339,16 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, eps)=
         trackingLog += log(abs(nfeltembed(G, compactTracking[length(compactTracking)][1])))[1..r];
 
         baby_divisor = adjust_giant_step_cpct(~G, ~baby_divisor,~compactTracking, ~trackingLog, ~expected_position, eps);
-        logdist = log_from_cpct(G, baby_divisor[3]);
-        \\GP_ASSERT_VEC_NEAR(logdist[1..r], trackerLogarithm(G, ~compactTracking, r)[1..r], 0.0000001);
-        \\print("Compare: \n", precision(logdist,10), "\n", precision(trackingLog,10));
-        \\verify_generator(G, baby_divisor[1], baby_divisor[3]);
+        \\#logdist = log_from_cpct(G, baby_divisor[3]);
+        logdist = trackerLogarithm(G, ~compactTracking, r);
+        \\#print(precision(logdist,10), "   ", precision(trackerLogarithm(G, ~compactTracking, r)[1..r],10));
+        \\#GP_ASSERT_VEC_NEAR(logdist[1..r], trackerLogarithm(G, ~compactTracking, r)[1..r], 0.0000001);
+        \\#verify_generator(G, baby_divisor[1], baby_divisor[3]);
 
         \\# identify all ideal to be scanned plus the corresponding u
         if (mapisdefined(scanIdeals, baby_divisor[1], &distanceList),
             repeat_counter+=1;
-            if(!is_repeat_babystock(distanceList, logdist),
+            if(!is_repeat_babystock(distanceList, logdist, eps),
                 listput(~distanceList, logdist);
                 mapput(~scanIdeals, baby_divisor[1], distanceList);
             );
