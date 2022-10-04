@@ -153,8 +153,8 @@ mixed_quartic(magnitude)={
 
 /************************************************************/
 /************************************************************/
-\\ INCOMPLETE - This function should allow you to select a signature, and then produce an irreducible poly whose
-\\ 							discriminant is close to
+\\ This function should allow you to select a signature, and then produce an irreducible poly whose
+\\ 							discriminant is close to 10^magnitude
 \\ OUTPUT:
 random_poly(r,s, magnitude)={
 
@@ -233,7 +233,7 @@ random_poly(r,s, magnitude)={
       );
       candidate = round(candidate);
 
-      \\print(candidate, "  " , poldisc(candidate));
+			\\ verify the polynomial is irreducible and that it has the correct sig
       if (polisirreducible(candidate), flag = 1;);
       if(flag == 1 ,
           K = nfinit(candidate);
@@ -250,27 +250,26 @@ random_poly(r,s, magnitude)={
 
 {
 
-writefile = "stest-poly-4-1.gp";
-maxreal = 8;
-maxcomplex = 2;
+maxreal = 5;
+maxcomplex = 0;
 
 \\ testing new complex root choosing function
 \\for(i=1, 500, croot = random_croot_norm(10^10, 1.0); print(precision(croot,10), "  " round(norm(croot))) );
 
 
 print("Gathering polynomials");
-disc_cap = 35;
+disc_cap = 30;
 for(r =0, 0,
-	for(s = 5, 6,
-		writefile = concat(["test-poly-", Str(r),"-",Str(s)]);
+	for(s = 3, 3,
+		writefile = concat(["polynomial-", Str(r),"-",Str(s)]);
 		\\if(r+2*s < 7 || r+2*s > 14 || r+s-1 > 6, ,
 		if(0, ,
 				write(writefile, "\\\\ Signatures ", r, " ",s);
 				write(writefile, data," = [\\" );
-				discsize = 10;
+				discsize = 7;
 				while(discsize<disc_cap,
 						tally = 0;
-						while(tally < 10,
+						while(tally < 3,
 							pol1 = random_poly(r,s, discsize);
 							K1 = bnfinit(pol1, 1);
 							if( (  abs( log(abs( poldisc(pol1) ) )/log(10)-discsize )<1.1   )&& K1.clgp.no == 1,
@@ -278,7 +277,7 @@ for(r =0, 0,
 								write(writefile, "[" , pol1, ", " , poldisc(pol1), ", \\\n",  K1[3]  , "], \\" ); );
 						);
 
-						discsize+=5;
+						discsize+=3;
 				);
 				write(writefile, "];");
 		);
