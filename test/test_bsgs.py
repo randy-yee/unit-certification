@@ -32,8 +32,6 @@ func(~map)={
     GP_ASSERT_EQ(counter, 1000);
 }
 
-SCREEN("commented test");
-
 {
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
         lglat, eps = 10^(-20)
@@ -55,20 +53,21 @@ SCREEN("commented test");
     default(realprecision, ceil(REQ_BSGS));
     REQ_COMPARE = ceil((poldegree(K1.pol)^2 +2)*log(infinity_norm(sumv))+2*poldegree(K1.pol)^2 +5);
     eps = 2^(-REQ_COMPARE);
+    scanRadius = 1;
 
     cpct_units = cpct_from_loglattice(K1, scaled_lglat, eps);
-    bsgs_out= bsgs(K1,cpct_units, B, sqrt(abs(matdet(scaled_lglat))), eps,REQ_BSGS);
+    bsgs_out= bsgs(K1,cpct_units, B, sqrt(abs(matdet(scaled_lglat))), scanRadius, eps,REQ_BSGS);
     bsgs_out_lattice = log_lattice_from_compact_set(K1,bsgs_out);
     GP_ASSERT_NEAR(reg1, unscaled_determinant(K1, bsgs_out_lattice), eps );
     print(precision(lglat,10));
 }
-breakpoint();
 
 {
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
         lglat, eps = 10^(-20)
     );
     B = 1;
+    scan_ball_radius = 0.75;
     K1= nfinit(x^3 - 67*x^2 + 2032*x - 2053);
     K2= bnfinit(x^3 - 67*x^2 + 2032*x - 2053);
     n = poldegree(K1.pol);
@@ -81,8 +80,8 @@ breakpoint();
     hashmap1 = Map();
     hashmap2 = Map();
     my(temp1, temp);
-    [L, temp] = babystock_scan_jump(y, L, glegs, ~hashmap1, K1, eps);
-    [L1, temp1] = incremental_baby_steps(y, L, glegs, ~hashmap2, K1, eps);
+    [L, temp] = babystock_scan_jump(y, L, glegs, ~hashmap1, K1, scan_ball_radius, eps);
+    [L1, temp1] = incremental_baby_steps(y, L, glegs, ~hashmap2, K1, scan_ball_radius, eps);
     print("Compare babystock set sizes: ", matsize(Mat(hashmap1)), "  ",matsize(Mat(hashmap2))  );
     \\GP_ASSERT_EQ(length(Mat(hashmap1)~), 209);
     \\babystock_scan_jump
@@ -101,6 +100,7 @@ breakpoint();
         lglat, eps = 10^(-20)
     );
     B = 1;
+    scanRadius =1;
     \\ D = 3638703101
     K1= nfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
     K2= bnfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
@@ -108,7 +108,7 @@ breakpoint();
     reg1 = unscaled_determinant(K1, lglat);
 
     cpct_units = cpct_from_loglattice(K1, lglat, eps);
-    bsgs_output= bsgs(K1,cpct_units, B, 25, eps,20,"alltest.txt");
+    bsgs_output= bsgs(K1,cpct_units, B, 25, scanRadius, eps,20,"alltest.txt");
 
     y = [1, 0, 0; 0, 1, 0; 0, 0, 1];
     glegs = [4.619061865536216760, -16.675036477848972758, 14.169130776523246111;

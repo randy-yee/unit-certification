@@ -274,23 +274,22 @@ find_coprime_divisor_neighbors(G, y, u, LLLcoeffmat, ideal_denom, p_avoid,eps)={
 
 /******************************************************************************/
 
-reddiv_compact(y,u,~G,~M1, p_avoid=1)={
+reddiv_compact(~y,~u,~G,~M1, p_avoid=1)={
 
     my(y1, ideal_uY, numerical_mat_Y, red1, shortest_vec, nu, lmu,
         ideal_denom,vec_ctr,beta_found =0,
-        comp = 2^(-ceil((poldegree(G.pol)^2 +2)*log(infinity_norm(u))+2*poldegree(G.pol)^2 +5)),
-        EXPANSION_LIMIT = 9                                                     \\ used to limit the number of qfminim radius doublings
+        comp = 2^(-ceil((poldegree(G.pol)^2 +2)*log(infinity_norm(u))+2*poldegree(G.pol)^2 +5))
     );
 
     numerical_mat_Y = M1*y;                                                     \\ complex embedding matrix of y
-    ideal_uY = mulvec(numerical_mat_Y, u);                                      \\ ideal u*y
+    ideal_uY = mulvec(~numerical_mat_Y, ~u);                                    \\ ideal u*y
     LLL_change_of_basis = get_LLL_basis_change(G, ideal_uY);                    \\ qflll output has columns which are coords wrt the input matrix NOT the integral basis
     LLL_numerical_uY = ideal_uY*LLL_change_of_basis;                            \\ Obtain LLL basis of u*y in numerical form (possibly complex)
     LLLcoeffmat = y*LLL_change_of_basis;                                        \\ LLL basis, coords wrt the integral basis
 
     beta= LLLcoeffmat[,1];                                                      \\ beta holds coordinates of mu wrt the integral basis
     \\ need to scan to make sure the first basis vector is a shortest one
-    real_mat_uY = embed_real(G, LLL_numerical_uY);
+    real_mat_uY = embed_real(~G, ~LLL_numerical_uY);
     enum_result = qfminim(real_mat_uY~*real_mat_uY, norml2(real_mat_uY[,1])-comp,,2 );
     /* NOTE THIS CHECK IS SLOW IN FIELDS WITH LARGE DEGREE (see pohst example)
     \\

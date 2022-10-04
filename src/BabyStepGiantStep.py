@@ -8,6 +8,7 @@ read("src/BabyStep.py")
 \\ BSGS related routines
 get_subdivisions
 increment_coordinates
+increment_with_place_marker
 get_axis_aligned_box
 get_giant_step_params
 check_babystock_for_units
@@ -28,7 +29,7 @@ one_massive_qfminim
 
 bsgs
 */
-DEBUG_BSGS = 0;
+DEBUG_BSGS = 1;
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ BBBBBBB    SSSSSS    GGGGGG     SSSSSS
@@ -67,18 +68,18 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
     b_n =  baby_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
     \\ This is the basic calculation for the babystock region
     smallsquare = sqrt(  (abs(detLambda)/B)*g_n/b_n  );
-    \\SCREEN(smallsquare, "smallsquare");
+
     if(DEBUG_BSGS, print("Expected babystock region size: ", precision(smallsquare,10) ););
 
     \\babystock_scale_factor =((2)^(unit_rank-1))*(log(abs(G.disc))/8)^(1/(2));              \\ increase this to make the babystock smaller
     \\babystock_scale_factor = (2^unit_rank) * log(abs(G.disc)) / 32;
     print("BSGS: Babystock scaling factor ", precision(babystock_scale_factor,10));
 
-    \\ Compute ratio of (full search region / babystock region)
-    \\ any modification of the scale factor will shrink the babystock region
+    \\# Compute ratio of (full search region / babystock region)
+    \\# any modification of the scale factor will shrink the babystock region
     \\fullregion_to_babystock_ratio = (babystock_scale_factor)*abs(detLambda)/(smallsquare*B);
 
-    \\ additive version below. This is a misnomer, we're just assigning a volume
+    \\ assigning a volume of the babystock
     smallsquare = babystock_scale_factor;
     fullregion_to_babystock_ratio = abs(detLambda)/(smallsquare*B);
     write(OUTFILE1, "region/babystock ratio: ", precision(fullregion_to_babystock_ratio,10), " babystock_vol = ", precision( smallsquare,10));
@@ -105,7 +106,7 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
             partialproduct = 1);
 
         for(i=1, dimensions-1,
-            vecnorm =  floor( sqrt(norml2(lattice_lambda[,i] )) );
+            vecnorm =  max(1,floor( sqrt(norml2(lattice_lambda[,i] )) ));
             \\print(vecnorm , "  ", sides);
             avec = concat(avec, min(vecnorm, sides));
             \\print("vecnorm, sides ", vecnorm, "  ", sides );
@@ -115,7 +116,6 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
         for(i=1, length(diffvector),
 
             if(diffvector[i] >0,
-                \\print("considering increasing a_", i);
                 partialproduct = (ai_product/avec[i]);
                 areadiff = round((fullregion_to_babystock_ratio - ai_product)/(ai_product/avec[i]));
                 if(areadiff >= 1, avec[i] += min(areadiff, diffvector[i]); ai_product += partialproduct*min(areadiff, diffvector[i]) );
@@ -147,8 +147,7 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
 
     finalproduct =1; for(i=1, length(avec), finalproduct*=avec[i]);
     print("BSGS: Babystock a_i=",avec, ". a_i product=", finalproduct, " target=", round(fullregion_to_babystock_ratio));
-    \\    print("vector of a_i ", avec);
-        return(avec);
+    return(avec);
 }
 
 \\ Determines the size of the babystock area based in input
@@ -314,10 +313,12 @@ get_axis_aligned_box(basismat)={
 \\ subroutine of the bsgs method.
 \\ Determines a basis for the giant steps (coefficients limited by avec)
 \\ INPUT:
+\\ - G is the number field
 \\ - lattice_lambda is the current log lattice
 \\ - r is the unit rank
 \\ - B defines the fraction of the fundamental region F to search, 1/B
-\\ - delta determines how big the babystep region is in relation to the search region
+\\ - babystock_scale_factor defines the volume of the babystock
+\\ - REQ_BSGS is the precision used for comparison
 \\ OUTPUT:
 \\ - avec is a r-vector of coefficient upperbounds for the giant steps
 \\ - giant_legs is a basis that determines the giant steps
@@ -334,11 +335,12 @@ get_giant_step_params(G, lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS)
         );
         print("- product: ", precision(originalarea,10), "\n- det_lambda: ", precision(det_lambda,10) );
     );
-    avec = get_subdivisions(G,lattice_lambda,r, det_lambda, B, babystock_scale_factor, REQ_BSGS);
 
+    \\\# determine r independent vectors that will define the giant steps
+    \\\# note that the fundamental region of these vectors is the babystock
+    avec = get_subdivisions(G,lattice_lambda,r, det_lambda, B, babystock_scale_factor, REQ_BSGS);
     giant_legs = matrix(r, r-1, s,t, -lattice_lambda[s,t]/avec[t]);             \\ giant_legs is a matrix with columns (-v_i /a_i) for i =1 ..r-1
 
-    \\print("vectors only scaled by a", precision(norml2(giant_legs[,r]),10)); breakpoint();
     giant_legs = matconcat([giant_legs, -lattice_lambda[,r]/(avec[r]*B)] );     \\ column r is (-v_r /(a_r*B))
     if(1,
         \\print("- avec ", avec, "  ", B);
@@ -352,10 +354,6 @@ get_giant_step_params(G, lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS)
     return([avec,giant_legs]);
 }
 
-is_stock_element_unit(~G, ~bstock_element, ~L, ~eps)={
-
-
-}
 /******************************************************************************/
 /*28. Find a new vector v \in \Lambda_K\Lambda' where (O_K, v) \in \ep_B: norml2, fun. in 13 (is_vec_in_lattice),  fun. in 11 (updatelamda)*/
 \\ Check the set ball_minima for a new vector in Lambda not already in Lambda'
@@ -462,6 +460,10 @@ update_directions(change_vec , directions_vec)={
     return(directions_vec);
 }
 
+\\# used to determine if an element's real embedding has already been encountered
+\\# existing_entry is a list of embeddings
+\\# candidate embedding is the embedding we wish to check is repeated
+\\# eps is the precision for comparison
 is_repeat_babystock(~existing_entry, ~candidate_embedding, eps)={
     my(repeatflag = 0);
     for(t=1, length(existing_entry),
@@ -470,6 +472,7 @@ is_repeat_babystock(~existing_entry, ~candidate_embedding, eps)={
     return(repeatflag);
 }
 
+\\# computes the length of the longest vector
 compute_max_point_distance(G, unit_rank, webpoint)={
     my(web_distance);
     web_distance = vector(unit_rank, i,if(i <= G.r1, webpoint[i], 2*webpoint[i]););     \\ length r vector, scale complex entries
@@ -594,7 +597,7 @@ babystock_scan(y,L,babystock_box,G,eps)={
 
         ball_minima = scanball(G, ideal_J, nu, logdist[1..length(L)], web_distance, eps);
 
-        [L, newctr] = check_babystock_for_units(ball_minima,L,G,eps);
+        [L, newctr] = check_babystock_for_units(ball_minima, L, G, eps);
         if(newctr != 0,
             print("Found a unit in babystock. new reg =", precision(abs(matdet(L)),10) );
             babystock_box[1][1] += (web_coords[1]*web_increments[1]);
@@ -625,7 +628,7 @@ babystock_scan(y,L,babystock_box,G,eps)={
 }
 
 
-babystock_scan_jump(y,~L,~giant_legs,~baby_hashmap,G,eps)={
+babystock_scan_jump(y,~L,~giant_legs,~baby_hashmap,G, scanballRadius, eps)={
     print("Babystock: jump version");
     my(next_coords = [],
         zerovec = vector(length(L), i, 0),
@@ -655,7 +658,7 @@ babystock_scan_jump(y,~L,~giant_legs,~baby_hashmap,G,eps)={
     repeat_counter = 0;
     \\ subdivide the babystock region based on the lengths of the defining vectors
     denoms = vector( length(L), i, ceil(norml2(giant_legs[,i])));
-    scan_shrink_factor = 1;
+    scan_shrink_factor = scanballRadius;
     denoms*= scan_shrink_factor;
     babystock_t = giant_legs;
     for(i=1, length(babystock_t),
@@ -876,7 +879,6 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
     GP_ASSERT_EQ(r, length(giant_sublattice));
 
     expected_position = vector(G.r1+G.r2-1, i, 0)~;
-
     directions = vector(length(giant_sublattice), i , 1);
     giant_coeffs[r] = 1;    \\# initialize variable to track giant elements at 1
 
@@ -887,8 +889,15 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
         direction_elements,
         inverse_direction_elements,
         compactTracking = List(),
-        trackingLog = vector(r, i, 0);
+        trackingLog = vector(r, i, 0),
+        s_radius
     );
+
+    mainbitprecision = default(realbitprecision);
+
+    default(realbitprecision, localbitprecision);
+    s_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));
+    default(realbitprecision, mainbitprecision);
     \\ #for some reason I have to flip these. giantstep() may actually return an inverse
     [direction_elements, inverse_direction_elements] =
         get_giant_step_increment_vectors_compact(G, giant_sublattice, field_deg, eps);
@@ -909,6 +918,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
     tCompare = 0;
     tNext = 0;
 
+
     SCREEN("Consider checking for inverses when comparing giant step divisors");
     \\ #increments are done modulo the product of avec, returns to zero when
     \\ #all elements have been visited
@@ -916,59 +926,63 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
         tDC = getabstime();
         if(directions[place_marker] == 1,
             giant_divisor = [idealmul(G, giant_divisor[1], direction_elements[place_marker][1]),
-                pointwise_vector_mul(giant_divisor[2],direction_elements[place_marker][2] )~,
-                mul_compact(G, giant_divisor[3],direction_elements[place_marker][3])  ];
-            expected_position += giant_sublattice[,place_marker];
+                pointwise_vector_mul(giant_divisor[2],direction_elements[place_marker][2] )~];
+
             compactTracking[place_marker][2] += 1;
+            default(realbitprecision, localbitprecision);
+            expected_position += giant_sublattice[,place_marker];
             trackingLog += log_from_cpct(G, direction_elements[place_marker][3])[1..r];
+            default(realbitprecision, mainbitprecision);
         ,\\else
             giant_divisor = [idealmul(G, giant_divisor[1], inverse_direction_elements[place_marker][1]),
-                pointwise_vector_mul(giant_divisor[2],inverse_direction_elements[place_marker][2] )~,
-                mul_compact(G, giant_divisor[3], inverse_direction_elements[place_marker][3])  ];
-            expected_position -= giant_sublattice[,place_marker];
+                pointwise_vector_mul(giant_divisor[2],inverse_direction_elements[place_marker][2] )~];
+
             compactTracking[place_marker][2] -= 1;
+            default(realbitprecision, localbitprecision);
+            expected_position -= giant_sublattice[,place_marker];
             trackingLog -= log_from_cpct(G, direction_elements[place_marker][3])[1..r];
+            default(realbitprecision, mainbitprecision);
         );
         tDR = getabstime();
         tDivisorCompute += (tDR-tDC);
-
-        giant_divisor = get_next_giant_divisor_cpct(G, ~giant_divisor, ~compactTracking);
-        trackingLog += log(abs(nfeltembed(G, compactTracking[length(compactTracking)][1])))[1..r];
+        get_next_giant_divisor_cpct(~G, ~giant_divisor, ~compactTracking);
         t_half = getabstime();
         tNext += (t_half-tDR);
 
-        giant_divisor = adjust_giant_step_cpct(~G, ~giant_divisor, ~compactTracking, ~trackingLog, ~expected_position, eps);
+        default(realbitprecision, localbitprecision);
+        trackingLog += log(abs(nfeltembed(G, compactTracking[length(compactTracking)][1])))[1..r];
+        default(realbitprecision, mainbitprecision);
+
+
+        giant_divisor = adjust_giant_step_cpct(~G, ~giant_divisor, ~compactTracking, ~trackingLog, ~expected_position, s_radius, eps);
 
         tAdjust = getabstime();
         tDivisorReduce += (tAdjust - t_half);
-        \\verify_generator(G, giant_divisor[1], giant_divisor[3]);
-        \\print(precision(expected_position,10), "  ", precision(log_from_cpct(G, giant_divisor[3])[1..r]~,10) );
-        \\print(precision(expected_position - log_from_cpct(G, giant_divisor[3])[1..r]~,10));
+
         /*
         if (norml2(log_from_cpct(G, giant_divisor[3])[1..r]- trackerLogarithm(G, compactTracking, r)) >0.0000001,
             print("different log value than expected");
             breakpoint();
         );
         */
-        \\ use babystock hashmap to check for collisions and update as needed
 
+        \\ use babystock hashmap to check for collisions and update as needed
         if(mapisdefined(babystock, giant_divisor[1]),
             \\if(DEBUG_BSGS>0 ,print("baby-giant match. checking for new vector:"););
             matches = mapget(babystock, giant_divisor[1]);
             for(i=1, length(matches),
 
                 \\gd_log = log_from_cpct(G, giant_divisor[3])[1..r];
-                gd_log = trackerLogarithm(G, compactTracking, r);
+                gd_log = trackerLogarithm(G, ~compactTracking, r);
                 new_vec = gd_log - matches[i];
-                \\print("g = ", precision(giant_divisor[1],10), "  Difference: ", precision(new_vec,10));
+
                 if(norml2(new_vec) > (eps*10)^2 && is_vec_in_lattice(new_vec~,lattice_lambda,eps)==0,
 
-                    if(DEBUG_BSGS>0, print("New vector found: Initial reg = ", precision(matdet(lattice_lambda),10)););
+                    if(DEBUG_BSGS>1,
+                        lattice_lambda_copy = lattice_lambda;
+                        verify_lattice_containment(~G, ~new_vec);
+                    );
 
-                    print("WARNING: Expensive verification. Remove after fixing");
-                    \\bnflattice = get_log_lattice_bnf(bnfinit(G));
-                    \\print(precision(bnflattice^(-1)*new_vec~,10));
-                    lattice_lambda_copy = lattice_lambda;
                     lattice_lambda = my_mlll( matconcat([lattice_lambda, new_vec~]),eps);
                     if (matsize(lattice_lambda)[1] != matsize(lattice_lambda)[2],
                         print("ERROR: mlll failed to properly determine new basis in giant steps.");
@@ -986,14 +1000,16 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
 
         ctr++;
         if(ctr %1000 ==0,
-            print(ctr);
+            print(ctr, " giant steps completed");
             print("Compute: ", tDivisorCompute, " Reduce1 ", tNext," Adjust ", tDivisorReduce, " Compare: ", tCompare);
-            print("Adjust log: ", adjusttime1);
+            \\print("Adjust log: ", adjusttime1);
             giant_tn = getabstime();
             write("data/jump-timing.txt", ctr, " jumps took: ", (giant_tn- giant_tmid), "milliseconds");
             giant_tmid = giant_tn;
         );
     );
+    print("Compute: ", tDivisorCompute, " Reduce1 ", tNext," Adjust ", tDivisorReduce, " Compare: ", tCompare);
+
     return(lattice_lambda);
 }
 
@@ -1095,9 +1111,6 @@ get_giant_step_increment_vectors(G, giant_sublattice, field_deg, eps)={
         gstep_divisor = giantstep(matid(field_deg), new_vec, G, field_deg, eps);
         \\debug_compare(gstep_divisor, giantstep_high_precision(matid(field_deg), new_vec, G, field_deg, eps));
 
-        \\current_giant_vec = create_target(G, new_vec);                                    \\ when do I use the argument 1 here? Used in giantstep function: create_target(G, new_vec,1);
-        \\gstep_divisor = reddiv_compact(matid(field_deg), current_giant_vec, G, G[5][1]);
-
         giant_step_ideals = concat(giant_step_ideals, [[gstep_divisor[1], gstep_divisor[2], gstep_divisor[3]]]);
         giant_step_ideals_inverse = concat(giant_step_ideals_inverse, [[idealinv(G,gstep_divisor[1]), invert_coordinates(gstep_divisor[2]),-gstep_divisor[3]  ]] );
     );
@@ -1107,16 +1120,17 @@ get_giant_step_increment_vectors(G, giant_sublattice, field_deg, eps)={
 
 get_next_giant_divisor(G, giant_divisor)={
     my(new_divisor);
-    new_divisor = reddiv_compact(giant_divisor[1], giant_divisor[2], G,G[5][1]);
+    new_divisor = reddiv_compact(~giant_divisor[1], ~giant_divisor[2], ~G,~G[5][1]);
     if(type(new_divisor[3])== "t_COL", new_divisor[3] = new_divisor[3]~);
     return([new_divisor[1], new_divisor[2], giant_divisor[3]+new_divisor[3]]);
 }
-get_next_giant_divisor_cpct(G, ~giant_divisor, ~tracker)={
-    my(new_divisor, beta);
-    new_divisor = reddiv_compact(giant_divisor[1], giant_divisor[2], G,G[5][1]);
-    beta = [[numerator(new_divisor[4])],[denominator(new_divisor[4])]];
+
+get_next_giant_divisor_cpct(~G, ~giant_divisor, ~tracker)={
+    my(new_divisor);
+    new_divisor = reddiv_compact(~giant_divisor[1], ~giant_divisor[2], ~G,~G[5][1]);
     listput(~tracker, [new_divisor[4], 1]);
-    return([new_divisor[1], new_divisor[2], mul_compact(G, giant_divisor[3], beta)]);
+    giant_divisor[1] = new_divisor[1];
+    giant_divisor[2] = new_divisor[2];
 }
 
 \\ Alternate method to compute the babystock, just using one huge ass qfminim, unit rank 1 only
@@ -1164,7 +1178,7 @@ one_massive_qfminim(G, giant_sublattice, S_radius)={
 \\ - eps is the error
 \\ - alg can be used to change the babystock search algorithm, So far only two options
 \\ - lattice scan (default), and neighbours ("NEIGHBOURS")
-bsgs(G, cpct_reps, B, babystock_scale_factor, eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN")={
+bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", alg="SCAN")={
 
     print("\nBSGS Algorithm Start"); bsgs_start = getabstime();
     my(S_radius, r = G.r1 + G.r2 -1,
@@ -1219,9 +1233,8 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, eps, REQ_BSGS,FILE1="data/tmp-bsgs
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     if(alg == "SCAN",
         my(foundflag = 1, num_elts_found = []);
-        SCREEN("WARNING: Testing - Reenable the line below");
-        [lattice_lambda, num_elts_found] = incremental_baby_steps(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, eps);
-        \\[lattice_lambda, num_elts_found] = babystock_scan_jump(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, eps);
+        [lattice_lambda, num_elts_found] = incremental_baby_steps(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps);
+        \\[lattice_lambda, num_elts_found] = babystock_scan_jump(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps);
         \\babystock = Map(); num_elts_found = 0; SCREEN("WARNING: Testing - Reenable the line above");
         foundflag = length(num_elts_found);
         print("babystock size: ", length(babystock));
@@ -1231,8 +1244,8 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, eps, REQ_BSGS,FILE1="data/tmp-bsgs
             [avec, giant_sublattice] = get_giant_step_params(G,lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS);
             \\babystock_region = expand_babystock_region(babystock_region,S_radius );
 
-            [lattice_lambda, num_elts_found] = incremental_baby_steps(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, eps);
-            \\[lattice_lambda, num_elts_found] = babystock_scan_jump(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, eps);
+            [lattice_lambda, num_elts_found] = incremental_baby_steps(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps);
+            \\[lattice_lambda, num_elts_found] = babystock_scan_jump(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps);
             GP_ASSERT_EQ(matsize(lattice_lambda)[1], matsize(lattice_lambda)[2]);
             foundflag = length(num_elts_found);
             if(DEBUG_BSGS>0 ,print("FoundFlag ",foundflag););
@@ -1260,5 +1273,6 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, eps, REQ_BSGS,FILE1="data/tmp-bsgs
         gianttime = getabstime() -tg;
     bsgs_end = getabstime();
     write(FILE1,  "Giantstep time:  ", gianttime,  "   ",precision(gianttime/60000.0,15), " . Giant steps computed: ", aProduct);
+
     return(cpct_from_loglattice(G,lattice_lambda,eps));
 }

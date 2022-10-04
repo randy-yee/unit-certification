@@ -25,6 +25,7 @@ get_log_lattice_bnf
 get_unscaled_determinant
 
 is_in_axis_box
+verify_lattice_containment
 */
 
 
@@ -402,4 +403,14 @@ is_in_axis_box(element_logvec, box_corners)={
         )
     );
     return(1);
+}
+
+verify_lattice_containment(~G, ~new_vec)=
+{
+print("New vector found: Initial reg = ", precision(matdet(lattice_lambda),10));
+print("WARNING: Expensive verification. Check if new found vector is truly a unit");
+bnflattice = get_log_lattice_bnf(bnfinit(G));
+print(precision(bnflattice^(-1)*new_vec~,10));
+
+breakpoint();
 }
