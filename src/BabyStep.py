@@ -21,6 +21,7 @@ adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, ~trackerLog, ~expected_posi
         new_distance,
         newFactor
     );
+
     mainbitprecision = default(realbitprecision);
 
     default(realbitprecision, localbitprecision);
@@ -167,11 +168,13 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~rep
     x = embed_real(G,x);
     LLL_reduced_yu = x*qflll(x);                                                \\ lll reduce y*u
     vecholder = LLL_reduced_yu[,1];                                             \\ short vector, 1st element of LLL basis
+    \\# ensure that this is actually the shortest vector
+    \\# or just determine the length of the shortest vector
     scan_bound = sqrt(n)*exp(2*ball_distance)*sqrt(norml2(vecholder));          \\ See schoof alg 10.7, e^(2*var_eps)*sqrt(n)*sqrt(norml2(col))
     gram_mat=LLL_reduced_yu~*LLL_reduced_yu;                                    \\ get the gram matrix
     print("scan bound: ", precision(scan_bound,10), "  ", precision(sqrt(norml2(vecholder)),10));
     scan_elements = qfminim(gram_mat,scan_bound^2,,2)[3];
-    print("scan complete");
+
     scan_elements = y*scan_elements;                                            \\ get scanned elements wrt integral basis
     my(
         norm_deltaK = ceil(((2/Pi)^(G.r2))*abs(G.disc)^(1/2)*idealnorm(G,y)),

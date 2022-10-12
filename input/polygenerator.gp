@@ -256,12 +256,16 @@ maxcomplex = 0;
 \\ testing new complex root choosing function
 \\for(i=1, 500, croot = random_croot_norm(10^10, 1.0); print(precision(croot,10), "  " round(norm(croot))) );
 
-
 print("Gathering polynomials");
+
+file_prefix = "polynomial-new-";
+fields_per_magnitude = 3;
+magnitude_jump = 3;
+
 disc_cap = 30;
-for(r =0, 0,
-	for(s = 3, 3,
-		writefile = concat(["polynomial-", Str(r),"-",Str(s)]);
+for(r =1, 1,
+	for(s = 1, 1,
+		writefile = concat([file_prefix, Str(r),"-",Str(s)]);
 		\\if(r+2*s < 7 || r+2*s > 14 || r+s-1 > 6, ,
 		if(0, ,
 				write(writefile, "\\\\ Signatures ", r, " ",s);
@@ -269,7 +273,7 @@ for(r =0, 0,
 				discsize = 7;
 				while(discsize<disc_cap,
 						tally = 0;
-						while(tally < 3,
+						while(tally < fields_per_magnitude,
 							pol1 = random_poly(r,s, discsize);
 							K1 = bnfinit(pol1, 1);
 							if( (  abs( log(abs( poldisc(pol1) ) )/log(10)-discsize )<1.1   )&& K1.clgp.no == 1,
@@ -277,7 +281,7 @@ for(r =0, 0,
 								write(writefile, "[" , pol1, ", " , poldisc(pol1), ", \\\n",  K1[3]  , "], \\" ); );
 						);
 
-						discsize+=3;
+						discsize += magnitude_jump;
 				);
 				write(writefile, "];");
 		);

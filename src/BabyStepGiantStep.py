@@ -1231,6 +1231,18 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
     \\
     \\ THIS SECTION SEARCHES USING THE SCAN ALGORITHM
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+    minimal_vec_length = norml2(giant_sublattice[,1]);
+    for(ii = 1, length(giant_sublattice),
+        if (norml2(giant_sublattice[,ii]) < minimal_vec_length, minimal_vec_length = norml2(giant_sublattice[,ii]));
+    );
+    minimal_vec_length = sqrt(minimal_vec_length);
+    if(minimal_vec_length < scanBallRadius,
+        scanBallRadius = minimal_vec_length;
+        write(FILE1,"Adjusted scan radius: ", precision(scanBallRadius,10));
+        ,
+        write(FILE1, "Scan radius: ", precision(scanBallRadius,10));
+    );
     if(alg == "SCAN",
         my(foundflag = 1, num_elts_found = []);
         [lattice_lambda, num_elts_found] = incremental_baby_steps(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps);
