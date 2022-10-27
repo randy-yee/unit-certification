@@ -55,7 +55,6 @@ adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, ~trackerLog, ~expected_posi
                 default(realbitprecision, mainbitprecision);
 
                 if(new_distance < norml2(divisor_distance)+eps,
-                    \\print("returning adjusted divisor");
 
                     listput(~tracker, [newFactor, 1]);
                     trackerLog += logNewFactor;
@@ -172,7 +171,7 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~rep
     \\# or just determine the length of the shortest vector
     scan_bound = sqrt(n)*exp(2*ball_distance)*sqrt(norml2(vecholder));          \\ See schoof alg 10.7, e^(2*var_eps)*sqrt(n)*sqrt(norml2(col))
     gram_mat=LLL_reduced_yu~*LLL_reduced_yu;                                    \\ get the gram matrix
-    print("scan bound: ", precision(scan_bound,10), "  ", precision(sqrt(norml2(vecholder)),10));
+
     scan_elements = qfminim(gram_mat,scan_bound^2,,2)[3];
 
     scan_elements = y*scan_elements;                                            \\ get scanned elements wrt integral basis
@@ -261,9 +260,19 @@ check_units_bstock(~bmap,~L,~G,eps)={
 \\ #Subalgorithm of bsgs. computes baby steps incrementally using ideal
 \\ #multiplication to obtain adjacent elements.
 \\ #Compact Represenation Version
-incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, scanballRadius, eps)=
+incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
+                        ~baby_hashmap, G, scanballRadius, eps, outFileInfo=[]) =
 {
+    my(timeout, OUTFILE_BS);
+    if(length(outFileInfo) == 2,
+        timeout = outFileInfo[2];
+        OUTFILE_BS = outFileInfo[1];
+    ,
+        timeout = 0;
+        OUTFILE_BS = 0;
+    );
     print("baby steps using increments");
+    GP_ASSERT_TRUE(eps > 0);
     my(
         field_deg = poldegree(G.pol),
         r = G.r1 + G.r2 -1,
@@ -276,10 +285,11 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, scanba
         denoms,
         scan_shrink_factor,
         babystock_t,
-        expected_position
+        expected_position,
+        start_time
     );
     GP_ASSERT_EQ(r, length(giant_legs));
-
+    start_time = getabstime();
     \\ # setup up baby stock scanning region
     denoms = vector( length(lattice_lambda), i, ceil(norml2(giant_legs[,i])));
     scan_shrink_factor = scanballRadius;
@@ -346,7 +356,8 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, scanba
 
         baby_divisor = adjust_giant_step_cpct(~G, ~baby_divisor,~compactTracking, ~trackingLog, ~expected_position, s_radius, eps);
         \\#logdist = log_from_cpct(G, baby_divisor[3]);
-        logdist = trackerLogarithm(G, ~compactTracking, r);
+        \\#logdist = trackerLogarithm(G, ~compactTracking, r);
+        logdist = trackingLog;
         \\#print(precision(logdist,10), "   ", precision(trackerLogarithm(G, ~compactTracking, r)[1..r],10));
         \\#GP_ASSERT_VEC_NEAR(logdist[1..r], trackerLogarithm(G, ~compactTracking, r)[1..r], 0.0000001);
         \\#verify_generator(G, baby_divisor[1], baby_divisor[3]);
@@ -369,10 +380,13 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, scanba
         updateDirections(~directions, ~place_marker);
 
         ctr++;
-        if((ctr % 1000) == 0,
+        if((ctr % 2000) == 0,
             print(ctr);
             baby_tn = getabstime();
             baby_tmid = baby_tn;
+            if((timeout > 0)&&(baby_tn - start_time > timeout),
+                write(OUTFILE_BS, "babystock computation ", (baby_tn - start_time)/60000.0, " mins. Exceeds timeout.");quit;
+            );
         );
     );
 
@@ -380,6 +394,7 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, scanba
     \\# by each associated u to account for all the distinct minima
     print("Babystock: enumerating");
     if (length(scanIdeals) < 1, return([lattice_lambda, []]); );
+
     scanIdealsMatrix = Mat(scanIdeals)[,1];
     for(i = 1, length(scanIdealsMatrix),
         distanceList = mapget(scanIdeals, scanIdealsMatrix[i]);
@@ -387,7 +402,11 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs, ~baby_hashmap, G, scanba
         if (length(distanceList) > 2, print("Warning collision found within babystocks"););
         nu = distanceList[1];
         overlap_scanball(~G, ~baby_hashmap, ~scanIdealsMatrix[i], ~nu, ~distanceList, scan_shrink_factor, eps, ~repeated_minima);
+        if ((timeout > 0) && getabstime() > timeout,
+
+        )
     );
+
     print("scan time: ", getabstime() - baby_t1);
     [lattice_lambda, newctr] = check_units_bstock(~baby_hashmap,~lattice_lambda,~G,eps);
     if(newctr != 0,
