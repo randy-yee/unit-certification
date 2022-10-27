@@ -96,8 +96,8 @@ get_scaled_basis(G, v, videal)={
 check_in_unitlattice(G, v, eps)={
     if(type(v) == "t_COL", v = v~);
     if(norml2(v)<eps^2,
-        return(1),                          \\ v is zero, automatically return 1
-    \\else
+        return(1);                          \\ v is zero, automatically return 1
+    ,\\else
 
         my(
             m1=G[5][1], n=poldegree(G.pol), r=G.r1+G.r2-1,
@@ -128,7 +128,8 @@ check_in_unitlattice(G, v, eps)={
 
         exp_log_mu_p = create_target(G, log_mu_p); \\print(" l2norm of log_mu' = ", precision(norml2(exp_log_mu_p),10));
 
-        \\ Ha's new method: Feb 2021, combines Pohst and Fontein methods
+        \\ compute the reduced ideal I in the pth root test and obtain the corresponding
+        \\ lattice so we can use qfminim
         [scaled_basis, change_of_basis] = get_scaled_basis(G, exp_log_mu_p, new_y);
         quadform = scaled_basis~*scaled_basis;
 
