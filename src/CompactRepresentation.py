@@ -324,10 +324,6 @@ reddiv_compact(~y,~u,~G,~M1, p_avoid=1)={
 
     lmu = log(nu)-log(u);                                                       \\ expect equal to log(nfeltembed(G, beta))
     GP_ASSERT_VEC_NEAR(lmu,log(nfeltembed(G, beta) ),10);
-    if(DEBUG_REDDIV && 0,
-        \\print("REDDIV: shortvec=", precision(abs(shortest_vec),10));
-        \\print("equal sv? ", precision(abs(pointwise_vector_mul(nfeltembed(G,beta), u)),10));
-    );
 
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     \\ If p_avoid is not equal to 1, then we need to find an ideal with coprime denominator
@@ -631,7 +627,6 @@ compact_reconstruct(G, vec_alpha, vec_d)={
 my(alphafinal = 1, intermediate);
 for(j=1, length(vec_alpha),
     intermediate = nfeltdiv(G, vec_alpha[j], vec_d[j]);
-    \\print("************** Loop ", j, " **************\n  alpha/d: ", intermediate);
 
     intermediate = nfeltpow(G, intermediate, 2^(length(vec_alpha)-j));
     alphafinal = nfeltmul(G,alphafinal, intermediate);
