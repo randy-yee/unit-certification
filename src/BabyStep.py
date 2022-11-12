@@ -26,9 +26,8 @@ adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, ~trackerLog, ~expected_posi
 
     default(realbitprecision, localbitprecision);
     divisor_distance = expected_position - trackerLog~;
-
-
     default(realbitprecision, mainbitprecision);
+    divisor_distance = bitprecision(divisor_distance, mainbitprecision);
 
     a_time2 = getabstime();
     adjusttime1 += (a_time2 - a_time1);
@@ -53,6 +52,7 @@ adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, ~trackerLog, ~expected_posi
                 new_distance = norml2(expected_position - logNewFactor);
                 \\print("Adjusted distance from target = ", precision(new_distance, 10) );
                 default(realbitprecision, mainbitprecision);
+                new_distance = bitprecision(new_distance, mainbitprecision);
 
                 if(new_distance < norml2(divisor_distance)+eps,
 
@@ -235,17 +235,17 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~rep
 check_units_bstock(~bmap,~L,~G,eps)={
 
     my(
-        ideal_identity = matid(n),
         n:small = poldegree(G.pol),
+        ideal_identity = matid(n),
         new_counter:small,
         candidate, eps_sqr = eps^2,
         minlist
     );
     new_counter = 0;
     if (mapisdefined(bmap, ideal_identity, &minlist),
-        for(i=1,length(minlist),                                       \\ if the ideal (1/mu)*O_k = O_k then check further
-            candidate=minlist[i][2];                                                \\ candidate = log(mu)
-            if(norml2(candidate)>eps_sqr&&is_vec_in_lattice(candidate~,L,eps_sqr)==0,           \\ if nonzero and v is not already in L, then
+        for(i=1,length(minlist),                                                               \\ if the ideal (1/mu)*O_k = O_k then check further
+            candidate=minlist[i];                                                              \\ candidate = log(mu)
+            if(norml2(candidate)>eps_sqr&&is_vec_in_lattice(candidate~,L,eps_sqr)==0,          \\ if nonzero and v is not already in L, then
                 new_counter+=1;
                 print("Babystock unit found, " precision(L,10), "  ", precision(candidate,10));
                 L = my_mlll(matconcat([L, candidate~]), eps);
@@ -256,7 +256,12 @@ check_units_bstock(~bmap,~L,~G,eps)={
     return([L,new_counter]);        \\ modifed to return new_counter as well
 }
 
-
+babystockPrecision(G, sublatticeBasis)={
+    my(X2,sumv = sublatticeBasis[,1]);
+    for(j=2, length(sublatticeBasis), sumv+=sublatticeBasis[,j]);
+    X2 = prec_baby(poldegree(G.pol), log(abs(G.disc)), infinity_norm(sumv));
+    return(X2);
+}
 \\ #Subalgorithm of bsgs. computes baby steps incrementally using ideal
 \\ #multiplication to obtain adjacent elements.
 \\ #Compact Represenation Version
@@ -278,7 +283,6 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
         r = G.r1 + G.r2 -1,
         zero_vec = vector(r, i , 0),
         web_coords = zero_vec,
-        current_giant_vec = zero_vec,
         identity = matid(field_deg),
         place_marker = r,
         directions,
@@ -290,16 +294,20 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
     );
     GP_ASSERT_EQ(r, length(giant_legs));
     start_time = getabstime();
+
+    REQ_BS = babystockPrecision(G, giant_legs); print(REQ_BSGS, "  ", default(realbitprecision)); breakpoint();
+
     \\ # setup up baby stock scanning region
-    denoms = vector( length(lattice_lambda), i, ceil(norml2(giant_legs[,i])));
+    denoms = vector( r, i, ceil(sqrt(norml2(giant_legs[,i]))));
     scan_shrink_factor = scanballRadius;
     denoms/= scan_shrink_factor;
+    denoms = ceil(denoms);
     babystock_t = giant_legs;
     for(i=1, length(babystock_t),
         babystock_t[,i]=babystock_t[,i]/denoms[i];
     );
-    expected_position = vector(r, i, 0)~;
 
+    expected_position = vector(r, i, 0)~;
     directions = vector(length(giant_legs), i , 1);
     increment_coordinates(denoms, web_coords);
 
@@ -385,7 +393,7 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
             baby_tn = getabstime();
             baby_tmid = baby_tn;
             if((timeout > 0)&&(baby_tn - start_time > timeout),
-                write(OUTFILE_BS, "babystock computation ", (baby_tn - start_time)/60000.0, " mins. Exceeds timeout.");quit;
+                write(OUTFILE_BS, "babystock computation ", (baby_tn - start_time)/60000.0, " mins. Exceeds timeout.");return([lattice_lambda, []]);
             );
         );
     );
@@ -402,12 +410,10 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
         if (length(distanceList) > 2, print("Warning collision found within babystocks"););
         nu = distanceList[1];
         overlap_scanball(~G, ~baby_hashmap, ~scanIdealsMatrix[i], ~nu, ~distanceList, scan_shrink_factor, eps, ~repeated_minima);
-        if ((timeout > 0) && getabstime() > timeout,
-
-        )
     );
-
-    print("scan time: ", getabstime() - baby_t1);
+    my(denom_product = 1);
+    for(i=1, r, denom_product*=denoms[i]);
+    print("scan time: ", getabstime() - baby_t1, "  ", denom_product);
     [lattice_lambda, newctr] = check_units_bstock(~baby_hashmap,~lattice_lambda,~G,eps);
     if(newctr != 0,
         print("Found a unit in babystock. new reg =", precision(abs(matdet(lattice_lambda)),10) );

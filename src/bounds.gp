@@ -61,7 +61,7 @@ jump_complexity(n,q, loginfv) = {
 
 
 prec_compact(n, logdisc,loginfv)={
-  expression = (4*n^2+1)*logdisc + 2*n^4 -(n^3 -24*n^2 -3)*log(n) + (n^2+2)*loginfv+2;
+  expression = (4*n^2)*logdisc + 2*n^4 -(n^3 -24*n^2 -6)*log(n) + 7 + (n^2+2)*loginfv;
   return(expression);
 }
 

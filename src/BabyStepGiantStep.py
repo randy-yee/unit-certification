@@ -43,6 +43,60 @@ DEBUG_BSGS = 1;
 \\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
+
+compute_vector_norm(i, lattice_lambda, unit_rank, B)=
+{
+    my(vecnorm);
+    vecnorm =  max(1,floor( sqrt(norml2(lattice_lambda[,i] )) ));
+    if (i == unit_rank, vecnorm = vecnorm/B);
+    return(vecnorm);
+}
+
+selectBStockSideLengths(lattice_lambda, fullregion_to_babystock_ratio, hybridB)=
+{
+    my(
+        avec,
+        dimensions = length(lattice_lambda),
+        norm_vr = sqrt(norml2(lattice_lambda[,dimensions] ));
+    );
+
+    if(dimensions == 1,
+        avec = vector(dimensions, i , ceil(fullregion_to_babystock_ratio));
+    , \\else
+        if (norm_vr/hybridB > 2, dimensions++);
+        sides = max(1,floor(sqrtn(fullregion_to_babystock_ratio, dimensions-1)));             \\ approximate the sides with integers
+
+        my(diffvector = [],
+            vecnorm =1,
+            ai_product=1,
+            areadiff = 0,
+            partialproduct = 1);
+
+        \\# adjust in case the r-1 th root is larger than the vector's norm
+        for(i=1, dimensions-1,
+            vecnorm =  compute_vector_norm(i, lattice_lambda, unit_rank, B);
+            avec = concat(avec, min(vecnorm, sides));
+            diffvector = concat(diffvector, vecnorm - sides );
+            ai_product *= avec[i];
+        );
+        for(i=1, length(diffvector),
+            if(diffvector[i] > 0,
+                partialproduct = (ai_product/avec[i]);
+                areadiff = round((fullregion_to_babystock_ratio - ai_product)/(ai_product/avec[i]));
+                if(areadiff >= 1,
+                    avec[i] += min(areadiff, diffvector[i]);
+                    ai_product += partialproduct*min(areadiff, diffvector[i]) );
+            );
+        );
+
+        if(DEBUG_BSGS, print("product without  a_r ",ai_product); );
+        if (dimensions !=unit_rank+1,
+            avec = concat(avec ,  min(max(1, round(norm_vr/B)  ), round(fullregion_to_babystock_ratio/ai_product ))  );
+        );
+    );
+    return(avec);
+}
+
 \\ Determines the size of the babystock area
 \\ INPUT:
 \\    dimensions, an integer equal to r, the rank of the lattice (in FJ, this is r1+r2-1)
@@ -52,7 +106,6 @@ DEBUG_BSGS = 1;
 \\    A larger number means a smaller babystock region
 \\ OUTPUT:
 \\ - a vector of integers of length = length(Lambda)
-
 get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_factor, REQ_BSGS)={
     my(smallsquare,
         sides,
@@ -68,8 +121,8 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
     b_n =  baby_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
     \\ This is the basic calculation for the babystock region
     smallsquare = sqrt(  (abs(detLambda)/B)*g_n/b_n  );
-
-    if(DEBUG_BSGS, print("Expected babystock region size: ", precision(smallsquare,10) ););
+    print("Old babystock volume value:  ", precision(smallsquare));
+    if(DEBUG_BSGS, print("Default babystock region size: ", precision(smallsquare,10) ););
 
     \\babystock_scale_factor =((2)^(unit_rank-1))*(log(abs(G.disc))/8)^(1/(2));              \\ increase this to make the babystock smaller
     \\babystock_scale_factor = (2^unit_rank) * log(abs(G.disc)) / 32;
@@ -82,7 +135,7 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
     \\ assigning a volume of the babystock
     smallsquare = babystock_scale_factor;
     fullregion_to_babystock_ratio = abs(detLambda)/(smallsquare*B);
-    breakpoint();
+
     write(OUTFILE1, " babystock_vol = ", precision( smallsquare,10),".  Region/babystock ratio: ", strprintf("%10.5f",fullregion_to_babystock_ratio) );
 
     if(DEBUG_BSGS,
@@ -96,6 +149,7 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
     if(dimensions == 1,
         avec = vector(dimensions, i , ceil(fullregion_to_babystock_ratio));
     , \\else
+        if (norm_vr/B > 2, dimensions++);
         sides = max(1,floor(sqrtn(fullregion_to_babystock_ratio, dimensions-1)));             \\ approximate the sides with integers
 
         if(DEBUG_BSGS,print("(r-1)th root of target area  ", sides););
@@ -106,45 +160,34 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
             areadiff = 0,
             partialproduct = 1);
 
+        \\# adjust in case the r-1 th root is larger than the vector's norm
         for(i=1, dimensions-1,
-            vecnorm =  max(1,floor( sqrt(norml2(lattice_lambda[,i] )) ));
+            vecnorm =  compute_vector_norm(i, lattice_lambda, unit_rank, B);
             avec = concat(avec, min(vecnorm, sides));
             diffvector = concat(diffvector, vecnorm - sides );
             ai_product *= avec[i];
         );
         for(i=1, length(diffvector),
-
-            if(diffvector[i] >0,
+            if(diffvector[i] > 0,
                 partialproduct = (ai_product/avec[i]);
                 areadiff = round((fullregion_to_babystock_ratio - ai_product)/(ai_product/avec[i]));
-                if(areadiff >= 1, avec[i] += min(areadiff, diffvector[i]); ai_product += partialproduct*min(areadiff, diffvector[i]) );
+                if(areadiff >= 1,
+                    avec[i] += min(areadiff, diffvector[i]);
+                    ai_product += partialproduct*min(areadiff, diffvector[i]) );
             );
         );
 
         if(DEBUG_BSGS, print("product without  a_r ",ai_product); );
-        avec = concat(avec ,  min(max(1, round(norm_vr/B)  ), ceil(fullregion_to_babystock_ratio/ai_product ))  );
+        breakpoint();
+        if (dimensions !=unit_rank+1,
+            avec = concat(avec ,  min(max(1, round(norm_vr/B)  ), round(fullregion_to_babystock_ratio/ai_product ))  );
+        );
     );
 
-
-
-    \\ This is a special fix for a particular rank 2 example from Ha, try to generalize later!
-    \\    if(G.r1 +G.r2-1 == 2,
-    \\        avec = vector(dimensions, i , sides);
-    \\        avec[1]=round(sqrt(fullregion_to_babystock_ratio*sqrt(norml2(lattice_lambda[,1]))/(sqrt(norml2(lattice_lambda[,2]))/B ) ));
-    \\        avec[2]=ceil(1/(fullregion_to_babystock_ratio/avec[1]));
-    \\        print("new avec ", avec[1], "  ", avec[2]); breakpoint();
-    \\        ,
-    \\        avec[1] = ceil(fullregion_to_babystock_ratio);
-    \\        avec[2] =1;
-    \\        while(a_product < fullregion_to_babystock_ratio,
-    \\            avec[ind]+=1;
-    \\            a_product/= sides;
-    \\            a_product *= (sides+1);
-    \\            ind += 1;
-    \\        );
-    \\    );
-
     finalproduct =1; for(i=1, length(avec), finalproduct*=avec[i]);
+    for(i=1, length(avec),
+        if(avec[i] == 0, avec[i]+=1);
+    );
     print("BSGS: Babystock a_i=",avec, ". a_i product=", finalproduct, " target=", round(fullregion_to_babystock_ratio));
     return(avec);
 }
@@ -907,6 +950,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
     default(realbitprecision, localbitprecision);
     s_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));
     default(realbitprecision, mainbitprecision);
+    s_radius = bitprecision(s_radius, mainbitprecision);
     \\ #for some reason I have to flip these. giantstep() may actually return an inverse
     [direction_elements, inverse_direction_elements] =
         get_giant_step_increment_vectors_compact(G, giant_sublattice, field_deg, eps);
@@ -953,6 +997,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
             trackingLog -= log_from_cpct(G, direction_elements[place_marker][3])[1..r];
             default(realbitprecision, mainbitprecision);
         );
+        bitprecision(expected_position, mainbitprecision);
         tDR = getabstime();
         tDivisorCompute += (tDR-tDC);
         get_next_giant_divisor_cpct(~G, ~giant_divisor, ~compactTracking);
@@ -962,19 +1007,13 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
         default(realbitprecision, localbitprecision);
         trackingLog += log(abs(nfeltembed(G, compactTracking[length(compactTracking)][1])))[1..r];
         default(realbitprecision, mainbitprecision);
+        trackingLog = bitprecision(trackingLog, mainbitprecision);
 
-
-        giant_divisor = adjust_giant_step_cpct(~G, ~giant_divisor, ~compactTracking, ~trackingLog, ~expected_position, s_radius, eps);
+        giant_divisor = adjust_giant_step_cpct(~G, ~giant_divisor, ~compactTracking, bitprecision(trackingLog,REQ_BSGS), ~expected_position, bitprecision(s_radius, REQ_BSGS), eps);
 
         tAdjust = getabstime();
         tDivisorReduce += (tAdjust - t_half);
 
-        /*
-        if (norml2(log_from_cpct(G, giant_divisor[3])[1..r]- trackerLogarithm(G, compactTracking, r)) >0.0000001,
-            print("different log value than expected");
-            breakpoint();
-        );
-        */
 
         \\ use babystock hashmap to check for collisions and update as needed
         if(mapisdefined(babystock, giant_divisor[1]),
@@ -1009,7 +1048,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
         updateDirections(~directions, ~place_marker);
 
         if((timeout > 0)&&(tEnd - giant_t1 > timeout),
-            write(OUTFILE_GS, "gstep computation ", precision((tEnd - giant_t1)/60000.0,10), " mins exceeds timeout. Quitting");quit;
+            write(OUTFILE_GS, "gstep computation ", precision((tEnd - giant_t1)/60000.0,10), " mins exceeds timeout. Halting gsteps");return(lattice_lambda);
         );
         ctr++;
         if(ctr %1000 ==0,
@@ -1140,10 +1179,13 @@ get_next_giant_divisor(G, giant_divisor)={
 
 get_next_giant_divisor_cpct(~G, ~giant_divisor, ~tracker)={
     my(new_divisor);
+    \\print("b ", giant_divisor[2]);
     new_divisor = reddiv_compact(~giant_divisor[1], ~giant_divisor[2], ~G,~G[5][1]);
+    \\print("a ", new_divisor[2]);
     listput(~tracker, [new_divisor[4], 1]);
     giant_divisor[1] = new_divisor[1];
     giant_divisor[2] = new_divisor[2];
+
 }
 
 \\ Alternate method to compute the babystock, just using one huge ass qfminim, unit rank 1 only
@@ -1242,7 +1284,8 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
     );
 
     if(alg != "NEIGHBOURS" && alg != "SCAN", print("Unknown algorithm specified, returning -1", return(-1) ));
-    if(DEBUG_BSGS>0 , print("Bound B = ", B); );
+    if(DEBUG_BSGS>0 , print("Bound B = ", precision(B,10)); );
+
 
     lattice_lambda = log_lattice_from_compact_set(G, cpct_reps);
     S_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));
@@ -1269,11 +1312,11 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
         if (norml2(giant_sublattice[,ii]) < minimal_vec_length, minimal_vec_length = norml2(giant_sublattice[,ii]));
     );
     minimal_vec_length = sqrt(minimal_vec_length);
-    if(minimal_vec_length < scanBallRadius,
-        scanBallRadius = minimal_vec_length;
-        write(FILE1,"Adjusted scan radius: ", precision(scanBallRadius,10));
+    if(minimal_vec_length < scanballRadius,
+        scanballRadius = minimal_vec_length;
+        write(FILE1,"Adjusted scan radius: ", precision(scanballRadius,10));
         ,
-        write(FILE1, "Scan radius: ", precision(scanBallRadius,10));
+        write(FILE1, "Scan radius: ", precision(scanballRadius,10));
     );
     if(alg == "SCAN",
         my(foundflag = 1, num_elts_found = []);

@@ -275,7 +275,6 @@ find_coprime_divisor_neighbors(G, y, u, LLLcoeffmat, ideal_denom, p_avoid,eps)={
 /******************************************************************************/
 
 reddiv_compact(~y,~u,~G,~M1, p_avoid=1)={
-
     my(y1, ideal_uY, numerical_mat_Y, red1, shortest_vec, nu, lmu,
         ideal_denom,vec_ctr,beta_found =0,
         comp = 2^(-ceil((poldegree(G.pol)^2 +2)*log(infinity_norm(u))+2*poldegree(G.pol)^2 +5))
@@ -320,10 +319,13 @@ reddiv_compact(~y,~u,~G,~M1, p_avoid=1)={
 
     new_y = idealdiv(G,y,beta); new_y = idealhnf(G,new_y);                      \\ the reduced ideal y / mu, in hnf form
 
-    nu=abs(shortest_vec)~;                                                      \\ nu is a t_VEC of dimension r, (complex coordinates are not squared)
-
+    \\\#Ran into trouble using abs(shortest_vec) with massive precision loss
+    \\\# instead use alternate formula u*psi(beta)
+    \\nu=abs(shortest_vec)~;                                                      \\ nu is a t_VEC of dimension r, (complex coordinates are not squared)
+    nu = pointwise_vector_mul(abs(M1*beta),u)~;
+    \\GP_ASSERT_VEC_NEAR(nu,abs(shortest_vec), comp  );
     lmu = log(nu)-log(u);                                                       \\ expect equal to log(nfeltembed(G, beta))
-    GP_ASSERT_VEC_NEAR(lmu,log(nfeltembed(G, beta) ),10);
+    \\GP_ASSERT_VEC_NEAR(lmu,log(nfeltembed(G, beta) ),10);
 
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     \\ If p_avoid is not equal to 1, then we need to find an ideal with coprime denominator
