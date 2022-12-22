@@ -18,6 +18,7 @@ func(~map)={
 */
 
 {   \\\ TEST step incrementation
+    print("Test 1 - incrementer ");
     my(avec, v, directions, counter = 1);
     avec = [10,10,10];
     directions = [1,1,1];
@@ -33,6 +34,8 @@ func(~map)={
 }
 
 {
+    print("Test 2 - BSGS on complex cubic ");
+
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
         lglat, eps = 10^(-20)
     );
@@ -63,6 +66,7 @@ func(~map)={
 }
 
 {
+    print("\nTest 3 - BSGS on complex cubic ");
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
         lglat, eps = 10^(-20)
     );
@@ -80,17 +84,17 @@ func(~map)={
     hashmap1 = Map();
     hashmap2 = Map();
     my(temp1, temp);
-    [L, temp] = babystock_scan_jump(y, L, glegs, ~hashmap1, K1, scan_ball_radius, eps);
+    \\[L, temp] = babystock_scan_jump(y, L, glegs, ~hashmap1, K1, scan_ball_radius, eps);
     [L1, temp1] = incremental_baby_steps(y, L, glegs, ~hashmap2, K1, scan_ball_radius, eps);
     print("Compare babystock set sizes: ", matsize(Mat(hashmap1)), "  ",matsize(Mat(hashmap2))  );
-    \\GP_ASSERT_EQ(length(Mat(hashmap1)~), 209);
+
     \\babystock_scan_jump
 
     inc = get_giant_step_increment_vectors_compact(K1, glegs, n, eps);
 
 
-    incremental_giant_steps(K1, L, glegs, hashmap1, [10], eps);
-
+    incremental_giant_steps(K1, L1, glegs, hashmap2, [10], eps);
+    print("TEST 3 Succeeds")
 }
 
 
