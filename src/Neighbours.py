@@ -533,7 +533,6 @@ increase_collection(G, minima_set,check_element, boundary, region_type, adjusted
 \\ OUTPUT:
 \\ - the set of minima in the ideal J which lie in the box defined by Bvec
 COLLECT(G, idealmat, Bvec, eps, sphere = 0, target = 0)={
-
     my( Bvec_error,
         onevec=nfalgtobasis(G, 1),
         minima_collection = Set(),                                              \\ hold all minima in the cube defined by Bvec
