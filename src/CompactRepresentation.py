@@ -81,6 +81,24 @@ create_target(G, s_term, inverse= 0)={
     return(exponentiated_s);
 }
 
+\\ assuming we have r+1 terms already. No extra factor of 2 on complex coords
+exponentiate_logvec(r, s_term, inverse = 0)={
+    my(exponentiated_s, a = (-1)^inverse);
+    GP_ASSERT_TRUE(length(s_term) == r+1);
+    exponentiated_s = vector(r+1, i, exp(a*s_term[i]));
+    return(exponentiated_s);
+}
+
+extra_log_coordinate(r1, r2, s_term)={
+    my(new_coord = 0);
+    GP_ASSERT_TRUE(length(s_term) == r1+r2-1);
+    for(i=1, length(s_term),
+        if(i <= r1, new_coord-=s_term[i], new_coord-=2*s_term[i]);
+    );
+    if( (length(s_term)+1) > r1, new_coord = new_coord/2);
+    return(new_coord);
+}
+
 \\ Input: number field G and an ideal represented by columns of embeddings
 \\ of the basis elements
 \\ Output: the change of basis matrix that transforms the representation
@@ -724,18 +742,21 @@ cpct_rep_final_collect(G, idealB, log_beta, desired_betalog, eps)={
     if(DEBUG_CPCT >0, print("USING COLLECT\nFinal Beta is not equal to the desired value. Using NEIGHBOURS Function"););
 
     boundary_vector = vector(unit_rank, j, 4* sqrt(abs(G.disc)));
-    boundary_vector =concat(Bvec,(2*4*abs(G.disc))^(G.r1+G.r2/2));
+    boundary_vector =concat(boundary_vector,(4*abs(G.disc))^((G.r1+G.r2)/2));
 
     neighbours_output = COLLECT(G, idealB, boundary_vector, eps);               \\ is a list of distinct neighbors of 1, as column vectors
     if(DEBUG_CPCT >0, print("OUTPUT of COLLECT ", neighbours_output););
 
+    checkvec = vector(length(desired_betalog),j, log(abs( nfeltembed(G,neighbours_output[ctr]) ))[j]);
+    if(DEBUG_CPCT >0, print(ctr ," minima ", precision(checkvec,10)););
+    print(ctr ," match vec ", precision(desired_betalog,10));
+    checkvec += log_beta[1..unit_rank];
     while(!samevecs(desired_betalog, checkvec, eps),
-        checkvec = vector(length(desired_betalog),j, log(abs( nfeltembed(G,neighbours_output[ctr]) ))[j]);
-        if(DEBUG_CPCT >0, print(ctr ," minima ", precision(checkvec,10)););
-        checkvec += log_beta[1..unit_rank];
-
         ctr += 1;
         if(ctr > length(neighbours_output), print("No neighbours of 1 satisfy the condition. Error."); return(-1));
+        checkvec = vector(length(desired_betalog),j, log(abs( nfeltembed(G,neighbours_output[ctr]) ))[j]);
+        if(1, print(ctr ," minima ", precision(checkvec,10)););
+        checkvec += log_beta[1..unit_rank];
     );
 
     idealB = idealdiv(G, idealB, neighbours_output[ctr]);
@@ -751,8 +772,8 @@ cpct_rep_final_collect(G, idealB, log_beta, desired_betalog, eps)={
 \\ - G a number field
 \\ - eps some error
 \\ - avp a prime for which we want all denominators to be coprime to
-\\ - if arith_prog is nonzero, then makes it so if a denom >=2, then it is not 1 mod p.
-\\ - see Thiel's description of compact representation
+\\ - see Thiel's description of compact representation. This implementation is applicable as long as
+\\   alphaOK is reduced.
 /******************************************************************************/
 compact_rep_buchmann(G, alpha, alphaOK , eps, avp=1)={
 
@@ -775,9 +796,10 @@ compact_rep_buchmann(G, alpha, alphaOK , eps, avp=1)={
   if(type(alpha) == "t_COL", alpha = alpha~);
   kbound = log(sqrt( abs(G.disc) ))/log(2)/2;                 \\ defines the boundary of the area W
 
-  \\ MAIN LOOP: following the algorithm of Thiel, under the assumption alpha is a unit.
+  \\# MAIN LOOP: following the algorithm of Thiel, under the assumption alpha is a unit.
   \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-  \\ Note: In this case, gamma = 1, and beta1 = 1 also. This means we can skip iteration 1
+  \\# Note: In this case, gamma = 1, and beta1 = 1 also. This means we can skip iteration 1
+  \\# If alphaOK is reduced, we should always be able to pick gamma = 1
 
   [s_term, kprime] = compute_initial_s(alpha, kbound);                                     \\ This is technically the value -s1, since Log(rho) = -alpha
   exp_s = create_target(G, 2*s_term);
@@ -795,7 +817,7 @@ compact_rep_buchmann(G, alpha, alphaOK , eps, avp=1)={
     print(" - ROUND ", 2, ": beta close enough?: ", check_closeness(log_beta[1..unit_rank], s_term, kbound), ": NORMCHECK: ", intermediate_check(G, alpha_vec, d_vec, idealB) );
     );
 
-  \\ TRIVIAL CASE HANDLING
+  \\# TRIVIAL CASE HANDLING
   if (kprime == 1, return([ alpha_vec,d_vec ]));
 
   for(i=3, kprime,
@@ -844,7 +866,97 @@ compact_rep_buchmann(G, alpha, alphaOK , eps, avp=1)={
 } \\ end compact_rep_buchmann
 
 
+\\ This is just compact_rep_buchmann, but it assumes we have r+1 coordinates
+compact_rep_full_input(G, alpha, alphaOK , eps, avp=1)={
 
+  my(
+    unit_rank = G.r1 +G.r2 -1,
+    kprime = 1,                                               \\ determines no. steps the algorithm runs for
+    kbound,                                                   \\ holds the boundary of the area W
+    idealB = alphaOK,                                         \\ variable for the ideal B
+    beta = 1,                                                 \\ holds the beta
+    d_vec = [1],                                              \\ holds the d_i values
+    ideal_denom = 1,                                          \\ used to determine d_i
+    alpha_vec= List([1]),                                     \\ holds the alpha_i
+    alpha_i = 1,                                              \\ used to determine alpha_i
+    log_rho = vector(length(alpha), j, 0),                    \\ holds log of rho_i
+    s_term,
+    target,
+    desired_betalog,
+    exp_s
+  );
+  GP_ASSERT_EQ(length(alpha), unit_rank+1);
+  if(type(alpha) == "t_COL", alpha = alpha~);
+  kbound = log(sqrt( abs(G.disc) ))/log(2)/2;                 \\ defines the boundary of the area W
+
+  \\# MAIN LOOP: following the algorithm of Thiel, under the assumption alpha is a unit.
+  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+  \\# Note: In this case, gamma = 1, and beta1 = 1 also. This means we can skip iteration 1
+  \\# If alphaOK is reduced, we should always be able to pick gamma = 1
+
+  [s_term, kprime] = compute_initial_s(alpha, kbound);                                     \\ This is technically the value -s1, since Log(rho) = -alpha
+  exp_s = exponentiate_logvec(unit_rank, 2*s_term);
+  [idealB, target, log_beta, beta] = reddiv_compact(idealB, exp_s, G, G[5][1],avp);        \\ reddiv_compact computes A_2, target, Log(beta_2), beta2
+
+  s_term = -2*s_term;                                                                      \\ this is s2
+  log_rho = log_beta;                                                                      \\ rho2 = beta2
+
+  [alpha_i, ideal_denom]=get_alpha_and_d(G, idealB, beta);
+  d_vec = concat(d_vec,ideal_denom);                                                       \\ Get d_i= d(A) and append to tracking vector
+  alpha_vec = concat(alpha_vec, alpha_i);                                                  \\ compute alpha_i = d/beta and append to tracking vector
+
+  if(DEBUG_CPCT >0,
+    print("log beta and s: ", precision(log_beta,10), "   ", precision(s_term,10));
+    print(" - ROUND ", 2, ": beta close enough?: ", check_closeness(log_beta, s_term, kbound), ": NORMCHECK: ", intermediate_check(G, alpha_vec, d_vec, idealB) );
+    );
+
+  \\# TRIVIAL CASE HANDLING
+  if (kprime == 1, return([ alpha_vec,d_vec ]));
+
+  for(i=3, kprime,
+      [s_term, desired_betalog] = update_tracking_values(s_term, log_rho);  \\s_i and the target beta
+      [idealB, target, log_rho, beta] = double_and_reduce(G, idealB, target,log_rho,avp);
+
+      log_beta= log(abs(G[5][1]*beta));
+
+      [alpha_i, ideal_denom]=get_alpha_and_d(G, idealB, beta);
+      d_vec = concat(d_vec,ideal_denom);
+      alpha_vec = concat(alpha_vec, alpha_i);
+
+      if(DEBUG_CPCT,
+        print("logbeta and s: ", precision(log_beta,10), "   ", precision(s_term,10));
+        print(" - ROUND ", i, ": beta close enough?: ", check_closeness(log_beta, desired_betalog, kbound), ".\nNORMCHECK: ", intermediate_check(G, alpha_vec, d_vec, idealB) );
+      );
+
+  ); \\ end main for loop
+
+    \\\  ENTER THE FINAL ITERATION OF THE ALGORITHM, WHICH IS SPECIAL
+    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+    s_term = 2*s_term;                                                          \\ this is s_{k'+1} = log rho
+    desired_betalog = (-alpha) - (2*log_rho);                     \\ this equation is "rho - 2*rho_{k'}"
+    [idealB, target, log_rho, beta] = double_and_reduce(G, idealB, target,log_rho);
+    log_beta= log(abs(G[5][1]*beta))~;
+
+    if(DEBUG_CPCT >0,
+        print(" - PRIOR TO COLLECT:\n -  rho_i ", precision(log_rho,10), " -  alpha ", precision(-alpha, 10));
+        debug_print(" -  log of needed minimum ",-alpha-log_rho);
+    );
+
+    \\ LAGRANGE PART: idealB is reduced and we have a minimum beta which may or may not have the correct log vector
+    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+    if(!samevecs(abs(desired_betalog), abs(log_beta),eps),
+        [idealB, log_beta, beta] = cpct_rep_final_collect(G, idealB, log_beta, desired_betalog, eps);
+    );
+
+    [alpha_i, ideal_denom]=get_alpha_and_d(G, idealB, beta);
+    d_vec = concat(d_vec,ideal_denom);
+    alpha_vec = concat(alpha_vec, alpha_i);
+
+    if(DEBUG_CPCT >0, print(" - ROUND ", kprime+1, ": NORMCHECK: ", intermediate_check(G, alpha_vec, d_vec, idealB)););
+    if(DEBUG_CPCT, print(" -- final rho_i ", precision(2*log_rho[1..length(log_beta)] + log_beta,10)););
+
+    return( [alpha_vec, d_vec] );
+} \\ end compact_rep_buchmann
 
 
 \\ INPUT:
@@ -861,6 +973,12 @@ cpct_from_loglattice(G, lglat, eps, avp=1)={
     for (i=1, length(lglat),
         cr_i = compact_rep_buchmann(G,lglat[,i]~,aOK, eps, avp);
         c_rep_list = concat(c_rep_list, [cr_i]);
+
+        extended_log = concat(lglat[,i], extra_log_coordinate(G.r1, G.r2, lglat[,i]));
+        crnew = compact_rep_full_input(G, extended_log, aOK, eps, avp);
+        print("old cr log ", precision(log_from_cpct(G, cr_i),15));
+        print("new cr log ", precision(log_from_cpct(G, crnew),15));
+        breakpoint();
     );
     return(c_rep_list);
 }
