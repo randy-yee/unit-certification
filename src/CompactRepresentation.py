@@ -971,14 +971,9 @@ cpct_from_loglattice(G, lglat, eps, avp=1)={
         cr_i = [];
     );
     for (i=1, length(lglat),
-        cr_i = compact_rep_buchmann(G,lglat[,i]~,aOK, eps, avp);
-        c_rep_list = concat(c_rep_list, [cr_i]);
-
         extended_log = concat(lglat[,i], extra_log_coordinate(G.r1, G.r2, lglat[,i]));
         crnew = compact_rep_full_input(G, extended_log, aOK, eps, avp);
-        print("old cr log ", precision(log_from_cpct(G, cr_i),15));
-        print("new cr log ", precision(log_from_cpct(G, crnew),15));
-        breakpoint();
+        c_rep_list = concat(c_rep_list, [crnew]);
     );
     return(c_rep_list);
 }
