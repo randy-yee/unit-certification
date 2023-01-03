@@ -81,6 +81,7 @@ func(~map)={
     y = [1, 0, 0; 0, 1, 0; 0, 0, 1];
     L = Mat(-6970.84528270648362176158817493947745897457384631054091381075996);
     glegs = Mat(34.8542264135324181088079408746973872948728692315527045690537);
+    glegs = matconcat([glegs; extra_log_coordinate(K1.r1, K1.r2, glegs[,1])]);
     hashmap1 = Map();
     hashmap2 = Map();
     my(temp1, temp);
@@ -99,7 +100,6 @@ func(~map)={
 
 
 {
-
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
         lglat, eps = 10^(-20)
     );
