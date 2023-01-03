@@ -217,7 +217,6 @@ is_minimum(idealmat, v, G, eps)={
         );
         return(1));
 };
-\\if (length(normedbody)!=0 && length(normedbody)!=1
 \\ tried using this condition, but I think should not
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
