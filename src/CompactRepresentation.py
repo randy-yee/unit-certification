@@ -517,8 +517,15 @@ if(type(v) == "t_COL", v = v~);
         alpha_i, ideal_denom
     );
 
+
     shrunken_v=2^(-t)*v;                                                        \\ this is y_sigma
-    shrunken_target = create_target(G, shrunken_v, 1);
+    if(length(v) == G.r1+G.r2,
+        shrunken_target = exponentiate_logvec(G.r1+G.r2-1, shrunken_v, 1);
+    ,
+        shrunken_target = create_target(G, shrunken_v, 1);
+        print("Jump was only given an r-vec, make sure it's a unit!");
+    );
+
     [idealB,u,log_distance,beta]=reddiv_compact(y,shrunken_target,G,G[5][1]);
 
     \\ Get denominator of the new ideal and alpha_i = d/beta;

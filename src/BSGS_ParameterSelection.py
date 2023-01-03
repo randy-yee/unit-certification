@@ -2,6 +2,10 @@ read("src/VectorMethods.py");
 read("src/LogarithmLattice.py");
 read("src/bounds.gp")
 
+/*
+get_giant_step_params
+
+*/
 
 \\ Determines the size of the babystock area
 \\ INPUT:
@@ -199,7 +203,7 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
 \\ - giant_legs is a basis that determines the giant steps
 \\ - babystock_region is an axis aligned box that contains the babystock region. Given by two point vectors.
 get_giant_step_params(G, lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS)={
-    my(det_lambda, giant_legs, babystock_region);
+    my(det_lambda, giant_legs, extra_log_coords, babystock_region);
     det_lambda = unscaled_determinant(G, lattice_lambda);
 
     originalarea = 1;
@@ -213,19 +217,25 @@ get_giant_step_params(G, lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS)
 
     \\\# determine r independent vectors that will define the giant steps
     \\\# note that the fundamental region of these vectors is the babystock
-    avec = get_subdivisions(G,lattice_lambda,r, det_lambda, B, babystock_scale_factor, REQ_BSGS);
+    \\avec = get_subdivisions(G,lattice_lambda,r, det_lambda, B, babystock_scale_factor, REQ_BSGS);
+    print("Using non-integer values for a-vector");
     avec = non_integral_subdivisions(G,lattice_lambda,r, det_lambda, B, babystock_scale_factor, REQ_BSGS);
     print(precision(non_integral_subdivisions(G,lattice_lambda,r, det_lambda, B, babystock_scale_factor, REQ_BSGS),10));
-    \\breakpoint();
-    giant_legs = matrix(r, r-1, s,t, -lattice_lambda[s,t]/avec[t]);             \\ giant_legs is a matrix with columns (-v_i /a_i) for i =1 ..r-1
 
-    giant_legs = matconcat([giant_legs, -lattice_lambda[,r]/(avec[r]*B)] );     \\ column r is (-v_r /(a_r*B))
+    extra_log_coords = vector(r, i, extra_log_coordinate(G.r1, G.r2, lattice_lambda[,i]));
+    giant_legs = matconcat([lattice_lambda; extra_log_coords]);
+    for (i=1, r-1, giant_legs[,i] = -giant_legs[,i]/avec[i]);
+    giant_legs[,r] = -giant_legs[,r]/(avec[r]*B);
+
+    \\giant_legs = matrix(r, r-1, s,t, -lattice_lambda[s,t]/avec[t]);             \\ giant_legs is a matrix with columns (-v_i /a_i) for i =1 ..r-1
+    \\giant_legs = matconcat([giant_legs, -lattice_lambda[,r]/(avec[r]*B)] );     \\ column r is (-v_r /(a_r*B))
+
     if(1,
         \\print("- avec ", avec, "  ", B);
         area = 1;
         for(i=1, length(giant_legs),
-            \\print("Norms of scaled vectors (a_i, B) ", precision(sqrt(norml2(giant_legs[,i])),10));
-            area*=sqrt(norml2(giant_legs[,i])));
+            \\print("Norms of scaled vectors (a_i, B) ", precision(sqrt(norml2(giant_legs[,i][1..r])),10));
+            area*=sqrt(norml2(giant_legs[,i][1..r])));
         print("actual babystock area region (multiplying vector norms): ", precision(area,10),"\n \n");
     );
 

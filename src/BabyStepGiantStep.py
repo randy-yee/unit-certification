@@ -12,7 +12,6 @@ get_subdivisions
 increment_coordinates
 increment_with_place_marker
 get_axis_aligned_box
-get_giant_step_params
 check_babystock_for_units
 scanball
 update_directions
@@ -500,7 +499,7 @@ get_giant_step_increment_vectors_compact(G, giant_sublattice, field_deg, eps)={
         gstep_divisor = jump_compact(matid(field_deg), new_vec, G, field_deg, eps);
         listput(~giant_step_ideals, gstep_divisor);
         \\debug_compare(idealdiv(G, matid(field_deg), compact_reconstruct(G,giant_step_ideals[j][3][1], giant_step_ideals[j][3][2])), giant_step_ideals[j][1]);
-        GP_ASSERT_TRUE(sqrt(norml2(log_from_cpct(G, gstep_divisor[3])[1..urank]~-giant_sublattice[,j]))<log(abs(G.disc)^(1/2)) );
+        GP_ASSERT_TRUE(sqrt(norml2(log_from_cpct(G, gstep_divisor[3])~-giant_sublattice[,j]))<log(abs(G.disc)^(1/2)) );
         gstep_divisor[3] = invert_compact(G, gstep_divisor[3]);
         listput(~giant_step_ideals_inverse, [idealinv(G,gstep_divisor[1]), invert_coordinates(gstep_divisor[2]),gstep_divisor[3] ] );
 
@@ -530,7 +529,7 @@ collision_check_cpct(G, ~lattice_lambda, r, eps,\
         baby_log = trackerLogarithm(G, ~matches_cpct[i], r);
         new_vec = gd_log - baby_log;
         print("match[i] ", precision(matches_cpct[i],10));
-        if(norml2(new_vec) > (eps*10)^2 && is_vec_in_lattice(new_vec~,lattice_lambda,eps)==0,
+        if(norml2(new_vec) > (eps*10)^2 && is_vec_in_lattice(new_vec[1..r]~,lattice_lambda,eps)==0,
 
             if(DEBUG_BSGS>1,
                 lattice_lambda_copy = lattice_lambda;
@@ -554,7 +553,7 @@ collision_check1(G, ~lattice_lambda, r, eps,\
     for(i=1, length(matches),
         \\gd_log = log_from_cpct(G, giant_divisor[3])[1..r];
         gd_log = trackerLogarithm(G, ~compactTracking, r);
-        new_vec = gd_log - matches[i];
+        new_vec = (gd_log - matches[i])[1..r];
         \\print("match[i] ", precision(matches[i],10));
         if(norml2(new_vec) > (eps*10)^2 && is_vec_in_lattice(new_vec~,lattice_lambda,eps)==0,
 
@@ -601,7 +600,7 @@ collision_check2(G, ~lattice_lambda, r, eps,\
         gd_log = trackerLogarithm(G, ~compactTracking, r);
         new_vec = gd_log - psi_baby;
 
-        if(norml2(new_vec) > (eps*10)^2 && is_vec_in_lattice(new_vec~,lattice_lambda,eps)==0,
+        if(norml2(new_vec) > (eps*10)^2 && is_vec_in_lattice(new_vec[1..r]~,lattice_lambda,eps)==0,
 
             if(DEBUG_BSGS>1,
                 lattice_lambda_copy = lattice_lambda;
@@ -644,7 +643,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
     );
     GP_ASSERT_EQ(r, length(giant_sublattice));
 
-    expected_position = vector(G.r1+G.r2-1, i, 0)~;
+    expected_position = vector(G.r1+G.r2, i, 0)~;
     directions = vector(length(giant_sublattice), i , 1);
     giant_coeffs[r] = 1;    \\# initialize variable to track giant elements at 1
 
@@ -655,7 +654,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
         direction_elements,                 \\# set of corresponding to a giant step in each lattice dimension
         inverse_direction_elements,         \\# inverse elements of the above
         compactTracking = List(),           \\# list of cpct reps corresponding to current giant step
-        trackingLog = vector(r, i, 0),      \\# log corresponding to current giant step. Precision drops fast
+        trackingLog = vector(r+1, i, 0),    \\# log corresponding to current giant step. Precision drops fast
         s_radius                            \\# max acceptable distance from expected position in log lattice
     );
 
@@ -702,7 +701,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
             compactTracking[place_marker][2] += 1;
             default(realbitprecision, localbitprecision);
             expected_position += giant_sublattice[,place_marker];
-            trackingLog += log_from_cpct(G, direction_elements[place_marker][3])[1..r];
+            trackingLog += log_from_cpct(G, direction_elements[place_marker][3]);
             default(realbitprecision, mainbitprecision);
         ,\\else
             giant_divisor = [idealmul(G, giant_divisor[1], inverse_direction_elements[place_marker][1]),
@@ -711,7 +710,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
             compactTracking[place_marker][2] -= 1;
             default(realbitprecision, localbitprecision);
             expected_position -= giant_sublattice[,place_marker];
-            trackingLog -= log_from_cpct(G, direction_elements[place_marker][3])[1..r];
+            trackingLog -= log_from_cpct(G, direction_elements[place_marker][3]);
             default(realbitprecision, mainbitprecision);
         );
         bitprecision(expected_position, mainbitprecision);
@@ -722,7 +721,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
         tNext += (t_half-tDR);
 
         default(realbitprecision, localbitprecision);
-        trackingLog += log(abs(nfeltembed(G, compactTracking[length(compactTracking)][1])))[1..r];
+        trackingLog += log(abs(nfeltembed(G, compactTracking[length(compactTracking)][1])));
         default(realbitprecision, mainbitprecision);
         trackingLog = bitprecision(trackingLog, mainbitprecision);
 
@@ -799,7 +798,7 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
     );
     GP_ASSERT_EQ(r, length(giant_sublattice));
 
-    expected_position = vector(G.r1+G.r2-1, i, 0)~;
+    expected_position = vector(G.r1+G.r2, i, 0)~;
     directions = vector(length(giant_sublattice), i , 1);
     giant_coeffs[r] = 1;    \\# initialize variable to track giant elements at 1
 
@@ -859,7 +858,7 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
             if(storage == "LOG",
                 default(realbitprecision, localbitprecision);
                 expected_position += giant_sublattice[,place_marker];
-                trackingLog += log_from_cpct(G, direction_elements[place_marker][3])[1..r];
+                trackingLog += log_from_cpct(G, direction_elements[place_marker][3]);
                 default(realbitprecision, mainbitprecision);
             );
 
@@ -873,7 +872,7 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
             if(storage == "LOG",
                 default(realbitprecision, localbitprecision);
                 expected_position -= giant_sublattice[,place_marker];
-                trackingLog -= log_from_cpct(G, direction_elements[place_marker][3])[1..r];
+                trackingLog -= log_from_cpct(G, direction_elements[place_marker][3]);
                 default(realbitprecision, mainbitprecision);
             );
         );
@@ -886,7 +885,7 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
 
         if(storage == "LOG",
             default(realbitprecision, localbitprecision);
-            trackingLog += log(abs(nfeltembed(G, compactTracking[length(compactTracking)][1])))[1..r];
+            trackingLog += log(abs(nfeltembed(G, compactTracking[length(compactTracking)][1])));
             default(realbitprecision, mainbitprecision);
             trackingLog = bitprecision(trackingLog, mainbitprecision);
         );
@@ -950,13 +949,13 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
 
 
 trackerLogarithm(~G, ~tracker, r)={
-    logResult = vector(r,j,0);
+    logResult = vector(r+1,j,0);
     for(i=1, length(tracker),
         if(i <= r,
-            logResult += tracker[i][2]*log_from_cpct(G, tracker[i][1])[1..r];
+            logResult += tracker[i][2]*log_from_cpct(G, tracker[i][1]);
         ,\\else
-            logResult+= tracker[i][2]*log(abs(nfeltembed(G, tracker[i][1])))[1..r];
-            \\logResult+= tracker[i][2]*log(abs(G[5][1]*(tracker[i][1])))[1..r]~;
+            logResult+= tracker[i][2]*log(abs(nfeltembed(G, tracker[i][1])));
+            \\logResult+= tracker[i][2]*log(abs(G[5][1]*(tracker[i][1])))~;
         );
     );
     return(logResult);
@@ -1067,13 +1066,11 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
     print("\nBSGS Algorithm Start"); bsgs_start = getabstime();
     my(S_radius, r = G.r1 + G.r2 -1,
         field_deg = poldegree(G.pol),
-        zero_vec = vector(r, i , 0),                                            \\ length r zero vector, used to check when giantsteps are done
-        int_ring_real = embed_real(G, G[5][1]),
+        zero_vec = vector(r, i , 0),
         avec,
         giant_coeffs,                                                           \\ holds numerator of coefficients for the giant steps
-        giant_sublattice,                                                             \\ matrix of columns of lambda, each scaled by a_i
+        giant_sublattice,                                                       \\ matrix of columns of lambda, each scaled by a_i
         current_giant_vec,
-        babystock_region,
         babystock = Map(),
         giant_divisor,
         matches,
@@ -1099,7 +1096,6 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
     S_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));
     [avec, giant_sublattice] = get_giant_step_params(G,lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS);
 
-
     tb = getabstime();
 
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -1121,9 +1117,9 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
     minimal_vec_length = sqrt(minimal_vec_length);
     if(minimal_vec_length < scanballRadius,
         scanballRadius = minimal_vec_length;
-        write(FILE1,"Adjusted scan radius: ", precision(scanballRadius,10), "  aVec =", avec);
+        write(FILE1,"Adjusted scan radius: ", precision(scanballRadius,10), "  aVec =", precision(avec, 10));
         ,
-        write(FILE1, "Scan radius: ", precision(scanballRadius,10), "  aVec =", avec);
+        write(FILE1, "Scan radius: ", precision(scanballRadius,10), "  aVec =", precision(avec, 10));
     );
     if(alg == "SCAN",
         my(foundflag = 1, num_elts_found = []);
@@ -1131,7 +1127,6 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
         if (storage == "COMPACT",
             [lattice_lambda, num_elts_found] =
                 incremental_baby_steps_storage(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps, storage, ~cpct_bstock, [FILE1, timeout]);
-                breakpoint();
         ,
                 [lattice_lambda, num_elts_found] =
                     incremental_baby_steps(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps, [FILE1, timeout]);
@@ -1162,7 +1157,7 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     \\ #Begin giant step computations
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    print("\nGiant Loop\n");
+    print("\nGiant Loop\n", matsize(lattice_lambda));
     my(aProduct = 1);
     for(i=1, length(avec), avec[i] += 1; aProduct*=avec[i];);                                       \\ adjust avec to include boundaries.
     avec = round(avec);
