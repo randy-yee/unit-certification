@@ -9,31 +9,38 @@ read("src/CompactRepresentation.py");
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ test cases for compact_rep_buchmann and compact_reconstruct
 {
+    print("test case 1");
     my(G1, G2, O_K, n, eps = 10^(-9));
     G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     n = poldegree(G1.pol);
     O_K = matid(n);
     logarithm_lattice = get_log_lattice_bnf(G2);
+    extra_log_coords = vector(length(logarithm_lattice), i, extra_log_coordinate(G1.r1, G1.r2, logarithm_lattice[,i]));
+    logarithm_lattice = matconcat([logarithm_lattice; extra_log_coords]);
+
     for(i=1, length(G2.fu),
-        cpct_rep = compact_rep_buchmann(G1, logarithm_lattice[,i]~, O_K , eps, avp=1);
+        cpct_rep = compact_rep_full_input(G1, logarithm_lattice[,i]~, O_K , eps, avp=1);
         GP_ASSERT_EQ(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2]), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
     );
 }
 
 { \\ test cases for compact_rep_buchmann and cpct_from_loglattice
+    print("test case 2");
     my(G1, G2, O_K, n, logarithm_lattice, cpct_rep,cpct_list, eps = 10^(-9));
     G1 = nfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
     G2 = bnfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
     n = poldegree(G1.pol);
     O_K = matid(n);
     logarithm_lattice = get_log_lattice_bnf(G2);
+    extra_log_coords = vector(length(logarithm_lattice), i, extra_log_coordinate(G1.r1, G1.r2, logarithm_lattice[,i]));
+    logarithm_lattice = matconcat([logarithm_lattice; extra_log_coords]);
     for(i=1, length(G2.fu),
-        cpct_rep = compact_rep_buchmann(G1, logarithm_lattice[,i], O_K , eps, avp=1);
+        cpct_rep = compact_rep_full_input(G1, logarithm_lattice[,i], O_K , eps, avp=1);
         GP_ASSERT_EQ(vec_flip_positive(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2])), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
     );
 
-    cpct_list = cpct_from_loglattice(G1, logarithm_lattice, eps);
+    cpct_list = cpct_from_loglattice(G1, logarithm_lattice[1..G1.r1+G1.r2-1, ], eps);
     for(i=1, length(G2.fu),
         GP_ASSERT_EQ(vec_flip_positive(compact_reconstruct(G1, cpct_list[i][1], cpct_list[i][2])), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
     );
@@ -44,6 +51,7 @@ read("src/CompactRepresentation.py");
 \\ Testing conversion from logarithm to compact representation
 \\ with large-ish values
 {
+    print("Cpct representation with large-ish value");
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep,
         log_lattice, cpct_units, eps = 10^(-20)
     );
@@ -59,15 +67,20 @@ read("src/CompactRepresentation.py");
 
     \\ test a larger multiple
     power = 50000;
-    large_unit = power*log_lattice[,1];
-    cpct_rep = compact_rep_buchmann(G1, large_unit, O_K, eps);
-    GP_ASSERT_VEC_NEAR(log_from_cpct(G1, cpct_rep)[1..r], large_unit, eps);
+    large_unit = concat(log_lattice[,1], extra_log_coordinate(G1.r1, G1.r2, log_lattice[,1]));
+    large_unit = power*large_unit;
+    \\cpct_rep = compact_rep_buchmann(G1, large_unit, O_K, eps);
+    cpct_rep = compact_rep_full_input(G1, large_unit, O_K, eps);
+
+    GP_ASSERT_VEC_NEAR(log_from_cpct(G1, cpct_rep)[1..r], large_unit[1..r], eps);
+
 }
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ testing computation of logarithm lattice from set of compact representations
 \\ and back: log_lattice_from_compact_set  cpct_from_loglattice
 {
+    print("Test: Compact reps from lattice and back");
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep,
         log_lattice, cpct_units, eps = 10^(-20)
     );
@@ -80,9 +93,13 @@ read("src/CompactRepresentation.py");
     log_lattice = process_complex_loglattice(G1, logarithm_lattice_c);
 
     delta_K = ((2/Pi)^G1.r2)*abs(G1.disc)^(1/2);
-    cpct_rep= compact_rep_buchmann(G1, log_lattice[,1], O_K, eps);
+
+    extra_log_coords = vector(length(log_lattice), i, extra_log_coordinate(G1.r1, G1.r2, log_lattice[,i]));
+    extended_llattice = matconcat([log_lattice; extra_log_coords]);
+
+    cpct_rep= compact_rep_full_input(G1, extended_llattice[,1], O_K, eps);
     GP_ASSERT_VEC_NEAR(log_from_cpct(G1, cpct_rep)[1..r], log_lattice[,1], eps);
-    cpct_rep= compact_rep_buchmann(G1, log_lattice[,2], O_K, eps);
+    cpct_rep= compact_rep_full_input(G1, extended_llattice[,2], O_K, eps);
     GP_ASSERT_VEC_NEAR(log_from_cpct(G1, cpct_rep)[1..r], log_lattice[,2], eps);
 
     cpct_units = cpct_from_loglattice(G1, log_lattice, eps);
@@ -116,6 +133,7 @@ read("src/CompactRepresentation.py");
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 {\\ test giantstep function
+    print("Testing giantstep");
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep, delta_K,
         log_lattice, cpct_units, eps = 10^(-20)
     );
@@ -126,7 +144,7 @@ read("src/CompactRepresentation.py");
     delta_K = ((2/Pi)^G1.r2)*abs(G1.disc)^(1/2);
 
     new_minima = giantstep(O_K, [1000,1000], G1, n ,eps);
-    jump_compact(O_K, [1000,1000], G1, n ,eps);
+    jump_compact(O_K, [1000,1000,1000], G1, n ,eps);
     GP_ASSERT_TRUE(norml2(new_minima[2]) <= delta_K);
 }
 
@@ -162,7 +180,7 @@ read("src/CompactRepresentation.py");
 }
 
 {\\ test invert compact representation and multiply
-
+    print("Test: Cpct rep, inversion and multiplication");
     my(G1, G2, O_K, cpct_rep, inverted, n, eps = 10^(-9));
     G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
@@ -181,8 +199,11 @@ read("src/CompactRepresentation.py");
         GP_ASSERT_EQ(invert, cpct_rep);
     );
 
+    extra_log_coords = vector(length(logarithm_lattice), i, extra_log_coordinate(G1.r1, G1.r2, logarithm_lattice[,i]));
+    extended_llattice = matconcat([logarithm_lattice; extra_log_coords]);
+
     for(i=1, length(G2.fu),
-        cpct_rep = compact_rep_buchmann(G1, logarithm_lattice[,i]~, O_K , eps, avp=1);
+        cpct_rep = compact_rep_full_input(G1, extended_llattice[,i]~, O_K , eps, avp=1);
         GP_ASSERT_EQ(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2]), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
 
         inverted = invert_compact(G1, cpct_rep);
@@ -209,16 +230,58 @@ read("src/CompactRepresentation.py");
         invert = invert_compact(G1, invert);
         GP_ASSERT_EQ(invert, cpct_rep);
     );
-
+    extra_log_coords = vector(length(logarithm_lattice), i, extra_log_coordinate(G1.r1, G1.r2, logarithm_lattice[,i]));
+    extended_llattice = matconcat([logarithm_lattice; extra_log_coords]);
     for(i=1, length(G2.fu),
-        cpct_rep = compact_rep_buchmann(G1, logarithm_lattice[,i]~, O_K , eps, avp=1);
+        cpct_rep = compact_rep_full_input(G1, extended_llattice[,i]~, O_K , eps, avp=1);
         inverted = invert_compact(G1, cpct_rep);
         product = mul_compact(G1, cpct_rep, inverted);
         GP_ASSERT_EQ(compact_reconstruct(G1, product[1], product[2]), 1);
     );
 }
 
+{
+    print("Test 1000 compact representations in a degree 6 field");
+    my(G1, G2, O_K, n, logarithm_lattice, cpct_rep,cpct_list, eps = 10^(-9));
+    G1 = nfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31); \\ signature 2,2
+    G2 = bnfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
+    n = poldegree(G1.pol);
+    O_K = matid(n);
+    rank = G1.r1+G1.r2-1;
+    logarithm_lattice = get_log_lattice_bnf(G2);
+    extra_log_coords = vector(length(logarithm_lattice), i, extra_log_coordinate(G1.r1, G1.r2, logarithm_lattice[,i]));
+    extended_llattice = matconcat([logarithm_lattice; extra_log_coords]);
 
+
+    zerovec = vector(rank, i, 0);
+    capvec = vector(rank, i, 10);
+    countervec = zerovec; increment_coordinates(~capvec, ~countervec);
+    total_time = 0;
+
+
+    while(countervec != zerovec,
+
+        increment_coordinates(~capvec, ~countervec);
+        log_vector = column_lin_comb(extended_llattice, countervec);
+        time_start = getabstime();
+        compact_rep_full_input(G1, log_vector, O_K, eps, 1,1);
+        time_end = getabstime();
+        total_time += (time_end - time_start);
+    );
+
+    print("Cpct computation time: ",total_time);
+    \\GP_ASSERT_LT(abs(total_time-9900)/9900, 0.1);
+
+
+    big_unit = (11^(200))*extended_llattice[,2];
+    print("big unit", precision(big_unit,10));
+    time_start = getabstime();
+
+    compact_rep_full_input(G1, big_unit, O_K, eps, 1, 1);
+    time_end = getabstime();
+    total_time += (time_end - time_start);
+    print("Cpct computation time: ",total_time);
+}
 {
 /*
     a = [];
@@ -237,4 +300,4 @@ read("src/CompactRepresentation.py");
 */
 }
 default(realprecision, 100);
-print("Testing compact representation functions complete")
+print("--Testing compact representation functions complete\n")

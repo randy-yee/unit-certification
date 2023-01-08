@@ -6,6 +6,7 @@ read("src/bounds.gp")
 }
 
 {
+    print("Testing minima functions:");
     print("Test 1 - Gram-schmidt and reduced lattice test");
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
         lglat, eps = 10^(-20)
@@ -41,4 +42,14 @@ read("src/bounds.gp")
     get_enumeration_bounds(poldegree(K1.pol), lll_lat);
 
     check_ideal_reduced(K1, divisor[1]);
+}
+
+{
+    eps = eps = 10^(-20);
+    K1 = nfinit(x^3 - x^2 - 10*x + 13);
+    ideal = [1, 0,  694/1483; 0, 1, 1201/1483;0, 0,1/1483];
+
+    print("ideal test check on ideal with norm ", idealnorm(K1, ideal));
+    print(check_ideal_reduced(K1, ideal));
+    print(checkred_old(ideal, K1, eps));
 }
