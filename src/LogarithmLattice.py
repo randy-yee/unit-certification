@@ -338,8 +338,8 @@ checkred_old(y,G,eps)={
             y1 = y1*qflll(y1);                                                  \\ return LLL reduced y1, coeffs in terms of integral basis
             gramy = y1~*y1;
             lisy=qfminim(gramy,n,,2)[3];                                        \\ This function uses qfminim with radius n
-
             for (i = 1, length(lisy),
+                \\print("embedding value: ",precision(y1*lisy[,i],10), "  ", lisy[,i]);
                 if ( check0(y1*lisy[,i],eps) != 0, return(0))
             );
             return(1),
