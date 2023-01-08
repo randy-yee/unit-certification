@@ -42,7 +42,6 @@ read("src/VectorMethods.py");
 read("src/LogarithmLattice.py");
 read("src/Neighbours.py");
 DEBUG_CPCT=0;
-
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -748,19 +747,82 @@ cpct_rep_final_collect(G, idealB, log_beta, desired_betalog, eps)={
     my(neighbours_output, checkvec, boundary_vector, ctr=1, unit_rank = G.r1+G.r2-1);
     if(DEBUG_CPCT >0, print("USING COLLECT\nFinal Beta is not equal to the desired value. Using NEIGHBOURS Function"););
 
-    boundary_vector = vector(unit_rank, j, 4* sqrt(abs(G.disc)));
-    boundary_vector =concat(boundary_vector,(4*abs(G.disc))^((G.r1+G.r2)/2));
+    if(length(log_beta) == G.r1+G.r2,
+        boundary_vector = abs(desired_betalog - log_beta);
+        bv2 = vector(unit_rank, j, 4* sqrt(abs(G.disc)));
+        bv2 =concat(bv2,(4*abs(G.disc))^((G.r1+G.r2)/2));
+        print("search bound: ", precision(boundary_vector,10), "\n", precision(bv2,10));
+    ,
+        print("WARNING: Using generic boundary vector in cpct rep final step");
+        boundary_vector = vector(unit_rank, j, 4* sqrt(abs(G.disc)));
+        boundary_vector =concat(boundary_vector,(4*abs(G.disc))^((G.r1+G.r2)/2));
+    );
 
     neighbours_output = COLLECT(G, idealB, boundary_vector, eps);               \\ is a list of distinct neighbors of 1, as column vectors
     if(DEBUG_CPCT >0, print("OUTPUT of COLLECT ", neighbours_output););
 
+    if(length(neighbours_output) == 0, print("No neighbours of 1 satisfy the condition. Error."); return(-1));
     checkvec = vector(length(desired_betalog),j, log(abs( nfeltembed(G,neighbours_output[ctr]) ))[j]);
     if(DEBUG_CPCT >0, print(ctr ," minima ", precision(checkvec,10)););
-    print(ctr ," match vec ", precision(desired_betalog,10));
+
     checkvec += log_beta[1..unit_rank];
     while(!samevecs(desired_betalog, checkvec, eps),
         ctr += 1;
+
         if(ctr > length(neighbours_output), print("No neighbours of 1 satisfy the condition. Error."); return(-1));
+        print("target: ", precision(desired_betalog, 10), "  ",
+            precision(log_beta+log(abs( nfeltembed(G,neighbours_output[ctr]))), 10), "  ",
+            precision(log(abs( nfeltembed(G,neighbours_output[ctr]) ))));
+        checkvec = vector(length(desired_betalog),j, log(abs( nfeltembed(G,neighbours_output[ctr]) ))[j]);
+        if(1, print(ctr ," minima ", precision(checkvec,10)););
+        checkvec += log_beta[1..unit_rank];
+    );
+
+    idealB = idealdiv(G, idealB, neighbours_output[ctr]);
+    beta = nfeltmul(G, beta, neighbours_output[ctr]);
+    log_beta = checkvec;
+
+    return([idealB, log_beta, beta]);
+}
+
+cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, eps, testFlag = 0)={
+    if (type(testFlag) == "t_INT" && (testFlag == 1),
+        print("final enum");
+    );
+    my(neighbours_output, boundary_vector, ctr=1, unit_rank = G.r1+G.r2-1,
+        exp_boundary, latticeB, lll_basis_change_matrix, latticeB_lll, scan_elements);
+    GP_ASSERT_EQ(length(log_beta), G.r1+G.r2);
+
+    boundary_vector = abs(desired_betalog - log_beta);
+    boundary_vector += vector(G.r1+G.r2, i, eps);       \\# increase boundary for error
+    exp_boundary = exponentiate_logvec(G.r1+G.r2-1, boundary_vector);
+    exp_boundary = norml2(exp_boundary); print(precision(exp_boundary,10));
+    \\#setup ideal for qfminim
+    latticeB = embed_real(G, G[5][1]*idealB);
+    lll_basis_change_matrix = qflll(latticeB);
+    latticeB_lll = latticeB*lll_basis_change_matrix;
+    scan_elements = qfminim((latticeB_lll~*latticeB_lll),exp_boundary^2,,2)[3]; \\#check all elements within the bound
+    if (samevecs(desired_betalog, log_beta, eps),  return([idealB, log_beta, beta] ) );
+    my(check_beta, checkvec);
+    for(i=1, length(scan_elements),
+        check_beta = idealB*scan_elements[,i];          \\# beta wrt integral basis
+        checkvec = log_beta + log(abs( nfeltembed(G, check_beta)));
+        if(samevecs(desired_betalog, checkvec, eps),
+            idealB = idealdiv(G, idealB, check_beta);
+            return([idealB, checkvec, nfeltmul(G,beta,check_beta)]);
+        );
+    );
+
+    print("No elements satisfy the condition. Error.");
+    return(-1);
+
+    while(!samevecs(desired_betalog, checkvec, eps),
+        ctr += 1;
+
+        if(ctr > length(neighbours_output), print("No neighbours of 1 satisfy the condition. Error."); return(-1));
+        print("target: ", precision(desired_betalog, 10), "  ",
+            precision(log_beta+log(abs( nfeltembed(G,neighbours_output[ctr]))), 10), "  ",
+            precision(log(abs( nfeltembed(G,neighbours_output[ctr]) ))));
         checkvec = vector(length(desired_betalog),j, log(abs( nfeltembed(G,neighbours_output[ctr]) ))[j]);
         if(1, print(ctr ," minima ", precision(checkvec,10)););
         checkvec += log_beta[1..unit_rank];
@@ -802,7 +864,7 @@ compact_rep_buchmann(G, alpha, alphaOK , eps, avp=1)={
   );
   if(type(alpha) == "t_COL", alpha = alpha~);
   kbound = log(sqrt( abs(G.disc) ))/log(2)/2;                 \\ defines the boundary of the area W
-
+  print("This is the old compact representation algorithm!"); breakpoint();
   \\# MAIN LOOP: following the algorithm of Thiel, under the assumption alpha is a unit.
   \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   \\# Note: In this case, gamma = 1, and beta1 = 1 also. This means we can skip iteration 1
@@ -874,7 +936,7 @@ compact_rep_buchmann(G, alpha, alphaOK , eps, avp=1)={
 
 
 \\ This is just compact_rep_buchmann, but it assumes we have r+1 coordinates
-compact_rep_full_input(G, alpha, alphaOK , eps, avp=1)={
+compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
 
   my(
     unit_rank = G.r1 +G.r2 -1,
@@ -914,7 +976,8 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1)={
 
   if(DEBUG_CPCT >0,
     print("log beta and s: ", precision(log_beta,10), "   ", precision(s_term,10));
-    print(" - ROUND ", 2, ": beta close enough?: ", check_closeness(log_beta, s_term, kbound), ": NORMCHECK: ", intermediate_check(G, alpha_vec, d_vec, idealB) );
+    print(" - ROUND ", 2, ": beta close enough?: ", check_closeness(log_beta, s_term, kbound),
+        ": NORMCHECK: ", intermediate_check(G, alpha_vec, d_vec, idealB) );
     );
 
   \\# TRIVIAL CASE HANDLING
@@ -932,27 +995,31 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1)={
 
       if(DEBUG_CPCT,
         print("logbeta and s: ", precision(log_beta,10), "   ", precision(s_term,10));
-        print(" - ROUND ", i, ": beta close enough?: ", check_closeness(log_beta, desired_betalog, kbound), ".\nNORMCHECK: ", intermediate_check(G, alpha_vec, d_vec, idealB) );
+        print(" - ROUND ", i, ": beta close enough?: ", check_closeness(log_beta, desired_betalog, kbound),
+            ".\nNORMCHECK: ", intermediate_check(G, alpha_vec, d_vec, idealB) );
       );
-
   ); \\ end main for loop
 
-    \\\  ENTER THE FINAL ITERATION OF THE ALGORITHM, WHICH IS SPECIAL
+    \\\#  ENTER THE FINAL ITERATION OF THE ALGORITHM, WHICH IS SPECIAL
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    s_term = 2*s_term;                                                          \\ this is s_{k'+1} = log rho
-    desired_betalog = (-alpha) - (2*log_rho);                     \\ this equation is "rho - 2*rho_{k'}"
+    s_term = 2*s_term;                                              \\# this is s_{k'+1} = log rho
+    desired_betalog = (-alpha) - (2*log_rho);                       \\# this equation is "rho - 2*rho_{k'}"
     [idealB, target, log_rho, beta] = double_and_reduce(G, idealB, target,log_rho);
     log_beta= log(abs(G[5][1]*beta))~;
 
-    if(DEBUG_CPCT >0,
-        print(" - PRIOR TO COLLECT:\n -  rho_i ", precision(log_rho,10), " -  alpha ", precision(-alpha, 10));
-        debug_print(" -  log of needed minimum ",-alpha-log_rho);
-    );
-
-    \\ LAGRANGE PART: idealB is reduced and we have a minimum beta which may or may not have the correct log vector
+    \\# use enumeration to find the right value for beta
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+    if (type(testFlag) == "t_INT" && (testFlag == 1),
+        print("WARNING: Forcing final enum operation in compact representation");
+        idealB = idealdiv(G, idealB, idealB[,1]);
+        beta = nfeltmul(G, beta, idealB[,1] ); beta = nfalgtobasis(G, beta);
+        desired_betalog -= log(abs(nfeltembed(G,idealB[,1])));
+        log_beta= log(abs(G[5][1]*beta))~;
+    );
     if(!samevecs(abs(desired_betalog), abs(log_beta),eps),
-        [idealB, log_beta, beta] = cpct_rep_final_collect(G, idealB, log_beta, desired_betalog, eps);
+        desired_betalog -= log_beta;
+        [idealB, log_beta, beta] = cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, eps, testFlag);
     );
 
     [alpha_i, ideal_denom]=get_alpha_and_d(G, idealB, beta);
@@ -963,7 +1030,7 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1)={
     if(DEBUG_CPCT, print(" -- final rho_i ", precision(2*log_rho[1..length(log_beta)] + log_beta,10)););
 
     return( [alpha_vec, d_vec] );
-} \\ end compact_rep_buchmann
+} \\ end compact_rep_enum
 
 
 \\ INPUT:
@@ -977,6 +1044,7 @@ cpct_from_loglattice(G, lglat, eps, avp=1)={
         aOK = matid(poldegree(G.pol)),
         cr_i = [];
     );
+    GP_ASSERT_EQ(matsize(lglat)[1], G.r1+G.r2-1);
     for (i=1, length(lglat),
         extended_log = concat(lglat[,i], extra_log_coordinate(G.r1, G.r2, lglat[,i]));
         crnew = compact_rep_full_input(G, extended_log, aOK, eps, avp);
