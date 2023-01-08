@@ -16,6 +16,8 @@ is_trace_zero
 check0
 samevecs
 vec_flip_positive
+increment_coordinates
+column_lin_comb
 
 vec_less_than
 */
@@ -214,4 +216,37 @@ infinity_norm(v)={
     if (abv > val, val = abv);
   );
   return(val);
+}
+
+
+\\# INPUT:
+\\ - A vector of integers A which defines the subdivision for the babystock
+\\ - A vector of integers V that defines a particular 'giant step'
+\\   for all i, V[i] < A[i]
+\\# OUTPUT:
+\\ - The vector V 'incremented' by 1, similar to a number in which each digit
+\\  is a different base
+increment_coordinates(a_vec, ~current_vec)={
+    my(place = length(current_vec), carryflag = 0;);
+    current_vec[place]+=1;
+    if(current_vec[place] >= a_vec[place], carryflag =1);
+    while(carryflag == 1,
+        current_vec[place] = 0; carryflag = 0;
+        if(place == 1, return(current_vec));
+        place -= 1;
+        current_vec[place]+=1;
+        if(current_vec[place] >= a_vec[place], carryflag =1);
+    );
+    return;
+}
+
+column_lin_comb(~lattice, ~coeff_vector)=
+{
+    GP_ASSERT_EQ(length(coeff_vector) , length(lattice));
+    lc_vector = vector(matsize(lattice)[1], i, 0)~;
+    GP_ASSERT_TRUE(type(lc_vector) == "t_COL");
+    for(i=1, length(lattice),
+        lc_vector += (coeff_vector[i]*lattice[,i]);
+    );
+    return(lc_vector);
 }
