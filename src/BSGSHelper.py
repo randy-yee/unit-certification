@@ -9,7 +9,6 @@ Helper functions for the main BSGS routine
 
 compute_vector_norm
 selectBStockSideLengths
-increment_coordinates
 increment_with_place_marker
 update_directions
 is_repeat_babystock
@@ -70,28 +69,6 @@ selectBStockSideLengths(lattice_lambda, fullregion_to_babystock_ratio, hybridB)=
         );
     );
     return(avec);
-}
-
-
-\\# INPUT:
-\\ - A vector of integers A which defines the subdivision for the babystock
-\\ - A vector of integers V that defines a particular 'giant step'
-\\   for all i, V[i] < A[i]
-\\# OUTPUT:
-\\ - The vector V 'incremented' by 1, similar to a number in which each digit
-\\  is a different base
-increment_coordinates(a_vec, ~current_vec)={
-    my(place = length(current_vec), carryflag = 0;);
-    current_vec[place]+=1;
-    if(current_vec[place] >= a_vec[place], carryflag =1);
-    while(carryflag == 1,
-        current_vec[place] = 0; carryflag = 0;
-        if(place == 1, return(current_vec));
-        place -= 1;
-        current_vec[place]+=1;
-        if(current_vec[place] >= a_vec[place], carryflag =1);
-    );
-    return;
 }
 
 

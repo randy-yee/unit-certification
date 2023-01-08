@@ -167,16 +167,7 @@ gram_schmidt(~real_lattice)=
     return(ortho_basis);
 }
 
-column_lin_comb(~lattice, ~coeff_vector)=
-{
-    GP_ASSERT_EQ(length(coeff_vector) , length(lattice));
-    lc_vector = vector(matsize(lattice)[1], i, 0)~;
-    GP_ASSERT_TRUE(type(lc_vector) == "t_COL");
-    for(i=1, length(lattice),
-        lc_vector += (coeff_vector[i]*lattice[,i]);
-    );
-    return(lc_vector);
-}
+
 get_enumeration_bounds(degree, lll_lattice)=
 {
     my(rank = length(lll_lattice),
@@ -193,30 +184,31 @@ get_enumeration_bounds(degree, lll_lattice)=
 
 check_ideal_reduced(G, ideal)=
 {
+    if(abs(1/matdet(idealhnf(G, ideal)))>sqrt(abs(G.disc)), return(0));
+
     my(rank = length(ideal),
         k_vector, zero_vec, iteration_vector);
+    ideal_lattice = G[5][1]*ideal;
+    ideal_lattice = embed_real(G, ideal_lattice);
 
-    ideal_lattice = embed_real(G, G[5][1]*ideal);
     lll_basis_change_matrix = qflll(ideal_lattice);
     lll_lat = ideal_lattice*lll_basis_change_matrix;    \\#real lattice
     lll_ideal = ideal*lll_basis_change_matrix;          \\#ideal representation
-
     ortho_basis = gram_schmidt(lll_lat);                \\#orthogonalized
     k_vector = get_enumeration_bounds(rank, lll_lat);  \\# compute the k vector
     k_vector = vector(rank, i, k_vector[i]+1);
-
     zero_vec = vector(rank, i , 0);
     iteration_vector = zero_vec;
     increment_coordinates(k_vector, ~iteration_vector);
-    one_vec = vector(G.r1+G.r2, i , 0);
-
+    one_vec = vector(G.r1+G.r2, i , 1);
     temp_bit_precision = max(10, ceil(log(denominator(ideal))+4+(rank^2*log(4*denominator(ideal)^2))+2));
     mainbitprecision = default(realbitprecision);
     default(realbitprecision, temp_bit_precision);  \\#save and change precision
     while(iteration_vector != zero_vec,
         test_vector = column_lin_comb(~lll_ideal, ~iteration_vector);
-        print(test_vector, " embedding vec: ", nfeltembed(G, test_vector));
-        if(vec_less_than(nfeltembed(G, test_vector), one_vec),
+        \\if(vec_less_than(abs(nfeltembed(G, test_vector)), 3*one_vec), print(test_vector, " embedding vec: ", nfeltembed(G, test_vector)););
+
+        if(vec_less_than(abs(nfeltembed(G, test_vector)), one_vec),
             default(realbitprecision, mainbitprecision);    \\#restore precision
             return(0)
         );
