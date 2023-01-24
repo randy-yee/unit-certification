@@ -136,8 +136,7 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
             bsgs_out_lattice = log_lattice_from_compact_set(K,bsgs_output);
             print("result regulator: ", precision(unscaled_determinant(K, bsgs_out_lattice),10));
             print("actual regulator: ", precision(reg1,10));
-            write(OUTFILE1, "Overall   time: ",precision(t10-t9,10), "  In mins: " ,precision((t10-t9)/60000.0,10),"\n" );
-
+            write(OUTFILE1, "Overall   time: ",precision(t10-t9,10), "  In mins: " ,precision((t10-t9)/60000.0,10),"  reg ratio: ", precision(unscaled_determinant(K, bsgs_out_lattice)/reg1, 10),"\n");
             overallTime = t10-t9;
             listput(~timeVector, [j,overallTime]);
             if (j == init,
@@ -261,7 +260,7 @@ run_bsgs_experiment_single(signature_string, fieldnum, single_range, auxilliary)
             bsgs_out_lattice = log_lattice_from_compact_set(K,bsgs_output);
             print("result regulator: ", precision(unscaled_determinant(K, bsgs_out_lattice),10));
             print("actual regulator: ", precision(reg1,10));
-            write(OUTFILE1, "Overall   time: ",precision(t10-t9,10), "  In mins: " ,precision((t10-t9)/60000.0,10),"\n" );
+            write(OUTFILE1, "Overall   time: ",precision(t10-t9,10), "  In mins: " ,precision((t10-t9)/60000.0,10),"  reg ratio: ", precision(unscaled_determinant(K, bsgs_out_lattice)/reg1, 10));
             write(strexpand("bsgs-b-",sigstring, suffix), j, " , ",precision(t10-t9,10));
             if (j == init, timeout = min(timeout, max(2*(t10-t9), 30*60000)); );
         );
