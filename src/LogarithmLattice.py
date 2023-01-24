@@ -330,7 +330,7 @@ limitminvector(yy,bound)={
     lis;
 }
 checkred_old(y,G,eps)={
-    if(abs(1/matdet(y))>sqrt(abs(G.disc)), return(0));
+    if(abs(1/matdet(y))>sqrt(abs(G.disc)), return(0));      \\ norm condition, can cite Thiel thesis
         if(ideal_contains1(y)==1,
             my(y1, lisy, n = poldegree(G.pol), gramy);
             y1=G[5][1]*y;
@@ -403,6 +403,13 @@ is_in_axis_box(element_logvec, box_corners)={
         )
     );
     return(1);
+}
+
+sum_inf_norm(L)=
+{
+    my(sumvec = L[,1]);
+    for(i = 1, matsize(L)[2], sumvec+=L[,i]);
+    return(normlp(sumvec));
 }
 
 verify_lattice_containment(~G, ~new_vec)=

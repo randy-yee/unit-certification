@@ -21,9 +21,22 @@ adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, ~trackerLog, ~expected_posi
         divisor_distance,
         adjustment_divisor, new_divisor,
         new_distance,
-        newFactor
+        newFactor,
+        localbitprecision = 30  \\ only used to get a rough gauge on distance
     );
     a_time1 = getabstime();
+
+    if (storage == "COMPACT",
+        trackerLog = trackerLogarithm(G, ~tracker, r);
+    );
+    mainbitprecision = default(realbitprecision);
+
+    default(realbitprecision, localbitprecision);
+    divisor_distance = expected_position - trackerLog~;
+    default(realbitprecision, mainbitprecision);
+    divisor_distance = bitprecision(divisor_distance, mainbitprecision);
+
+    /* delete after making sure the above works
     if (storage == "LOG",
         mainbitprecision = default(realbitprecision);
 
@@ -32,11 +45,11 @@ adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, ~trackerLog, ~expected_posi
         default(realbitprecision, mainbitprecision);
         divisor_distance = bitprecision(divisor_distance, mainbitprecision);
     ,
+
         trackerLog = trackerLogarithm(G, ~tracker, r);
         divisor_distance = expected_position - trackerLog~;
-        \\print("Make sure the precision is chosen correctly"); \\breakpoint();
     );
-
+    */
     a_time2 = getabstime();
     adjusttime1 += (a_time2 - a_time1);
     if(sqrt(norml2(divisor_distance)) < s_radius,
@@ -64,7 +77,10 @@ adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, ~trackerLog, ~expected_posi
 
                 if(new_distance < norml2(divisor_distance)+eps,
                     trackerLog += logNewFactor;
-                    listput(~tracker, [newFactor, 1]);
+                    print("tracker, ", tracker[length(tracker)]);
+                    tracker[length(tracker)] = nfeltmul(G, newFactor, tracker[length(tracker)]);
+                    \\listput(~tracker, [newFactor, 1]);
+                    print(tracker[length(tracker)]);
                     return([new_divisor, trackerLog]);
                 );
             );
@@ -72,7 +88,7 @@ adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, ~trackerLog, ~expected_posi
         \\ adjustment fails, so we should use jump to compute something close
         gstep_divisor = jump_compact(matid(length(G.zk)), expected_position, G, length(G.zk), eps);
         trackerLog = log_from_cpct(G, gstep_divisor[3]);
-        print("WARNING: recomputing tracking divisor with jump. Reset the tracker also");
+        print("WARNING: recomputing current divisor with jump.");
         return([gstep_divisor, trackerLog]);
     );
 };
@@ -206,8 +222,10 @@ check_ideal_reduced(G, ideal)=
     default(realbitprecision, temp_bit_precision);  \\#save and change precision
     while(iteration_vector != zero_vec,
         test_vector = column_lin_comb(~lll_ideal, ~iteration_vector);
-        \\if(vec_less_than(abs(nfeltembed(G, test_vector)), 3*one_vec), print(test_vector, " embedding vec: ", nfeltembed(G, test_vector)););
-
+        \\if(vec_less_than(abs(nfeltembed(G, test_vector)), one_vec),
+        \\    print(test_vector, " embedding vec: ", nfeltembed(G, test_vector), "\n", abs(nfeltembed(G, test_vector)) );
+        \\    print(ideal^(-1)*test_vector);
+        \\);
         if(vec_less_than(abs(nfeltembed(G, test_vector)), one_vec),
             default(realbitprecision, mainbitprecision);    \\#restore precision
             return(0)
@@ -272,16 +290,23 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~rep
             if (FIRST, print("WARNING: confirm this ideal norm check is accurate"); FIRST =0);
             new_yLLL = real_y*qflll(real_y);
             if(1,
-                GP_ASSERT_EQ(check_ideal_reduced(G, new_y), checkred_old(new_y,G,eps));
-                print("extra ideal check here");
-                if(checkred_old(new_y,G,eps)==1,
+            /*
+                if (check_ideal_reduced(G, new_y) != checkred_old(new_y,G,eps),
+                    print("ideal check mismatch:");
+                    print(G.pol, "  ", new_y, "  ", eps);
+
+                );
+                \\print("comparing reduced ideal checks. delete when resolved");
+                \\if(checkred_old(new_y,G,eps)==1,
+                */
+                if(check_ideal_reduced(G, new_y),
                     vec_numerical = (G[5][1]*scan_elements[,ii])~;
                     \\ # Start at 2 because j=1 holds the nu value ( see babystock_scan_jump )
                     for(j = 2, length(log_distance_list),
                         psi_value = vector_approximate(log(abs(vec_numerical[1..G.r1+G.r2]))+log_distance_list[j][1..G.r1+G.r2],eps);
-                        print("psi (low  prec): ", precision(psi_value,20), "  ");
+                        \\print("psi (low  prec): ", precision(psi_value,20), "  ");
                         cpctList = cpct_list[j-1];
-                        print("psi (high prec): ", precision(trackerLogarithm(G, cpctList, G.r1+G.r2-1)[1..G.r1+G.r2]+log(abs(vec_numerical[1..G.r1+G.r2])),20));
+                        \\print("psi (high prec): ", precision(trackerLogarithm(G, cpctList, G.r1+G.r2-1)[1..G.r1+G.r2]+log(abs(vec_numerical[1..G.r1+G.r2])),20));
                         \\print("ov ", precision(log(abs(vec_numerical[1..G.r1+G.r2])),10), "  ", precision(log_distance_list[j][1..G.r1+G.r2],10));
                         if(mapisdefined(bmap, new_y, &existing_entry),
                             repeatflag = is_repeat_babystock(existing_entry, psi_value, eps);
@@ -442,8 +467,8 @@ check_compact_bstock(~cpct_bstock, ~L, ~G, eps)={
 babystockPrecision(G, sublatticeBasis)={
     my(X2,sumv = sublatticeBasis[,1]);
     for(j=2, length(sublatticeBasis), sumv+=sublatticeBasis[,j]);
-    X2 = prec_baby(poldegree(G.pol), log(abs(G.disc)), infinity_norm(sumv));
-    return(X2);
+    X2 = prec_baby(poldegree(G.pol), log(abs(G.disc)), normlp(sumv));
+    return(ceil(X2));
 }
 
 initialize_babystock_edges(~giant_legs, scan_shrink_factor, r)=
@@ -486,9 +511,10 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
         start_time
     );
     GP_ASSERT_EQ(r, length(giant_legs));
-    start_time = getabstime();
+    REQ_BS = babystockPrecision(G, giant_legs);
+    default(realbitprecision, REQ_BS);  \\\ change precision. Note this is changed again in the giant step algorithm
 
-    \\REQ_BS = babystockPrecision(G, giant_legs); print(REQ_BSGS, "  ", default(realbitprecision)); breakpoint();
+    start_time = getabstime();
 
     [babystock_t, denoms] = initialize_babystock_edges(~giant_legs, scanballRadius, r);
 
@@ -511,7 +537,7 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
         idealCompactGenerator = Map(),
         s_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));
     );
-    \\ #for some reason I have to flip these. giantstep() may actually return an inverse
+
     [direction_elements, inverse_direction_elements] =
         get_giant_step_increment_vectors_compact(G, babystock_t, field_deg, eps);
 
@@ -557,7 +583,7 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
         if (mapisdefined(scanIdeals, baby_divisor[1], &distanceList),
             repeat_counter+=1;
             if(!is_repeat_babystock(distanceList, logdist, eps),
-                print("new babystock element: ", precision(logdist, 10));
+                \\print("new babystock element: ", precision(logdist, 10));
                 listput(~distanceList, logdist);
                 mapput(~scanIdeals, baby_divisor[1], distanceList);
 
@@ -570,12 +596,17 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
             \\ # occurrence. This is accounted for in overlap_scanball
             mapput(~scanIdeals, baby_divisor[1] ,List([baby_divisor[2], logdist]));
             mapput(~idealCompactGenerator, baby_divisor[1], List([compactTracking] ));
-            \\print("first ideal log added: ",  baby_divisor[1], "  ", precision(logdist, 10));
         );
         \\# increase the tracking variable and update directions
         place_marker = increment_with_place_marker(~denoms, ~web_coords);
         updateDirections(~directions, ~place_marker);
 
+        if ((ctr%500 == 0) && ctr > 0,
+            \\\ regenerate after constant number of steps
+            renewLog = trackerLogarithm(G, ~compactTracking, r);
+            if (norml2(trackingLog - renewLog) < (10^(-10)), trackingLog = renewLog, print("log renewal fails"); breakpoint(););
+            default(realbitprecision, mainbitprecision);
+        );
         ctr++;
         if((ctr % 2000) == 0,
             print(ctr, "  ", web_coords);
@@ -598,7 +629,7 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
 
         cpct_list = mapget(idealCompactGenerator, scanIdealsMatrix[i]);
         GP_ASSERT_EQ(length(distanceList)-1, length(cpct_list));
-        if (length(distanceList) > 2, print("Warning collision found within babystocks"););
+        if (length(distanceList) > 2, print("Collision found within babystocks"););
         nu = distanceList[1];
         \\overlap_scanball(~G, ~baby_hashmap, ~scanIdealsMatrix[i], ~nu, ~distanceList, scan_shrink_factor, eps, ~repeated_minima);
         overlap_scanball(~G, ~baby_hashmap, ~scanIdealsMatrix[i], ~nu, ~distanceList, scan_shrink_factor, eps, ~repeated_minima, cpct_list);
@@ -643,9 +674,9 @@ incremental_baby_steps_storage(y, ~lattice_lambda, ~giant_legs,\
         start_time
     );
     GP_ASSERT_EQ(r, length(giant_legs));
+    REQ_BS = babystockPrecision(G, giant_legs);
+    default(realbitprecision, REQ_BS);  \\\ change precision, switches back in giant step algs
     start_time = getabstime();
-
-    \\REQ_BS = babystockPrecision(G, giant_legs); print(REQ_BSGS, "  ", default(realbitprecision)); breakpoint();
 
     [babystock_t, denoms] = initialize_babystock_edges(~giant_legs, scanballRadius, r);
 
@@ -727,7 +758,6 @@ incremental_baby_steps_storage(y, ~lattice_lambda, ~giant_legs,\
         \\#GP_ASSERT_VEC_NEAR(log_from_cpct(G, baby_divisor[3]), trackerLogarithm(G, ~compactTracking, r), 0.0000001);
 
 
-
         \\# identify ideals to be scanned plus the corresponding u
         if (mapisdefined(scanIdeals, baby_divisor[1], &distanceList),
             repeat_counter+=1;
@@ -748,7 +778,6 @@ incremental_baby_steps_storage(y, ~lattice_lambda, ~giant_legs,\
             if (storage == "COMPACT",
                 mapput(~idealCompactGenerator, baby_divisor[1], List([compactTracking] ));
             );
-            \\print("first ideal log added: ",  baby_divisor[1], "  ", precision(logdist, 10));
         );
         \\# increase the tracking variable and update directions
         place_marker = increment_with_place_marker(~denoms, ~web_coords);

@@ -18,6 +18,7 @@ samevecs
 vec_flip_positive
 increment_coordinates
 column_lin_comb
+change_precision
 
 vec_less_than
 */
@@ -25,6 +26,7 @@ vec_less_than
 sqrt2 = sqrt(2);
 
 read("src/MLLL.py");
+read("src/bounds.gp")
 read("test/TestingUtility.gp")
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -249,4 +251,11 @@ column_lin_comb(~lattice, ~coeff_vector)=
         lc_vector += (coeff_vector[i]*lattice[,i]);
     );
     return(lc_vector);
+}
+
+change_precision(newbitprec)=
+{
+    oldbitprecision = default(realbitprecision);
+    default(realbitprecision, newbitprec);
+    return(oldbitprecision);
 }

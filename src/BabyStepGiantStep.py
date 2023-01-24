@@ -503,12 +503,13 @@ get_giant_step_increment_vectors_compact(G, giant_sublattice, field_deg, eps)={
         gstep_divisor[3] = invert_compact(G, gstep_divisor[3]);
         listput(~giant_step_ideals_inverse, [idealinv(G,gstep_divisor[1]), invert_coordinates(gstep_divisor[2]),gstep_divisor[3] ] );
 
-        myprod = mul_compact(G, giant_step_ideals[j][3], giant_step_ideals_inverse[j][3]);
+
         \\debug_compare(idealdiv(G, matid(field_deg), compact_reconstruct(G,giant_step_ideals_inverse[j][3][1], giant_step_ideals_inverse[j][3][2])), giant_step_ideals_inverse[j][1]);
         \\ #check that the cpct reps are actually inverses.
         \\ #also check that the reps are near the intended log lattice point
-        print("WARNING: Verifying increment ideals");
-        GP_ASSERT_EQ(compact_reconstruct(G, myprod[1], myprod[2]), 1);
+        \\print("WARNING: Verifying increment ideals");
+        \\myprod = mul_compact(G, giant_step_ideals[j][3], giant_step_ideals_inverse[j][3]);
+        \\GP_ASSERT_EQ(compact_reconstruct(G, myprod[1], myprod[2]), 1);
 
     );
     return([giant_step_ideals, giant_step_ideals_inverse]);
@@ -524,11 +525,16 @@ updateDirections(~directions_vec, place_marker)=
 collision_check_cpct(G, ~lattice_lambda, r, eps,\
                  ~matches_cpct, ~giant_divisor, ~compactTracking)=
 {
+    gd_log = trackerLogarithm(G, ~compactTracking, r);
+    temp_precision = prec_compact(poldegree(G.pol), log(abs(G.disc))/log(2), normlp(gd_log));
+    \\print(default(realbitprecision), "  ", temp_precision);
+    old_precision = change_precision(temp_precision);
+
     for(i=1, length(matches_cpct),
-        gd_log = trackerLogarithm(G, ~compactTracking, r);
+
         baby_log = trackerLogarithm(G, ~matches_cpct[i], r);
         new_vec = gd_log - baby_log;
-        print("match[i] ", precision(matches_cpct[i],10));
+        \\print("match[i] ", precision(matches_cpct[i],10));
         if(norml2(new_vec) > (eps*10)^2 && is_vec_in_lattice(new_vec[1..r]~,lattice_lambda,eps)==0,
 
             if(DEBUG_BSGS>1,
@@ -536,7 +542,7 @@ collision_check_cpct(G, ~lattice_lambda, r, eps,\
                 verify_lattice_containment(~G, ~new_vec);
             );
 
-            lattice_lambda = my_mlll( matconcat([lattice_lambda, new_vec~]),eps);
+            lattice_lambda = my_mlll( matconcat([lattice_lambda, new_vec[1..r]~]),eps);
             if (matsize(lattice_lambda)[1] != matsize(lattice_lambda)[2],
                 print("ERROR: mlll failed to properly determine new basis in giant steps.");
                 breakpoint();
@@ -544,9 +550,12 @@ collision_check_cpct(G, ~lattice_lambda, r, eps,\
             if(DEBUG_BSGS>0, print("new regulator = ", precision(matdet(lattice_lambda),10)););
         );
     );
+    change_precision(old_precision);
     return(lattice_lambda);
 }
 
+\\ checks collisions by computing the log from a compact representation list
+\\ but assumes the babystock as sufficiently accurate log approximations
 collision_check1(G, ~lattice_lambda, r, eps,\
                  ~matches, ~giant_divisor, ~compactTracking)=
 {
@@ -573,6 +582,7 @@ collision_check1(G, ~lattice_lambda, r, eps,\
     return(lattice_lambda);
 }
 
+\\ recomputes the babystock logarithm
 collision_check2(G, ~lattice_lambda, r, eps,\
                  matchIdeal, ~matches, ~giant_divisor, ~compactTracking)=
 {
@@ -580,7 +590,6 @@ collision_check2(G, ~lattice_lambda, r, eps,\
         deg = poldegree(G.pol),
         mainbitprecision = default(realbitprecision)
     );
-
     /*
         gd_precision = prec_compact(deg, log(abs(G.disc)), infinity_norm("giant divisor's log");
         "Get a loose approximation of the log vector using the cpct representation, then determine gd_precision"
@@ -592,11 +601,11 @@ collision_check2(G, ~lattice_lambda, r, eps,\
     */
 
     for(i=1, length(matches),
-        print(precision(matches[i],10));
-        print(matchIdeal, "    ", giant_divisor[1]);
-        baby_element = compact_rep_buchmann(G, matches[i], giant_divisor[1], eps);
-        psi_baby = log_from_cpct(G, baby_element)[1..r];
-        print(precision(matches[i],20), "   ", precision(psi_baby,20));
+        baby_element = compact_rep_full_input(G, matches[i], giant_divisor[1], eps);
+        psi_baby = log_from_cpct(G, baby_element);
+        if(norml2(matches[i] - psi_baby) > 0.00000001,
+            print("CC2 mismatch: ", precision(matches[i],20), "   ", precision(psi_baby,20) );
+        );
         gd_log = trackerLogarithm(G, ~compactTracking, r);
         new_vec = gd_log - psi_baby;
 
@@ -606,7 +615,7 @@ collision_check2(G, ~lattice_lambda, r, eps,\
                 lattice_lambda_copy = lattice_lambda;
                 verify_lattice_containment(~G, ~new_vec);
             );
-            lattice_lambda = my_mlll( matconcat([lattice_lambda, new_vec~]),eps);
+            lattice_lambda = my_mlll( matconcat([lattice_lambda, new_vec[1..r]~]),eps);
             if (matsize(lattice_lambda)[1] != matsize(lattice_lambda)[2],
                 print("ERROR: mlll failed to properly determine new basis in giant steps.");
                 breakpoint();
@@ -636,9 +645,9 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
     my(
         field_deg = poldegree(G.pol),   r = G.r1 + G.r2 -1,
         zero_vec = vector(r, i , 0),    identity = matid(field_deg),
-        giant_coeffs = zero_vec,        current_giant_vec = zero_vec,
+        giant_coeffs = zero_vec,
         giant_divisor,                  expected_position,
-        matches,                        new_vec,
+        matches,
         place_marker = r,               directions
     );
     GP_ASSERT_EQ(r, length(giant_sublattice));
@@ -661,6 +670,8 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
     mainbitprecision = default(realbitprecision);
     default(realbitprecision, localbitprecision);
     s_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));
+    max_element = lattice_lambda[,1];
+    for(i=2, length(lattice_lambda), max_element += lattice_lambda[,i]);
     default(realbitprecision, mainbitprecision);
     s_radius = bitprecision(s_radius, mainbitprecision);
 
@@ -675,7 +686,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
 
     giant_divisor = [matid(field_deg), vector(r+1, i,1 ), [[1],[1]] ];
 
-    SCREEN(0, "Additional timing variables and file write in jump");
+    SCREEN(0, "GSLog version: With additional timing variables and file writes");
     my(giant_t1, giant_tn, giant_tmid, ctr,
         tDivisorCompute, tDivisorReduce,
         tCompare, tNext);
@@ -687,7 +698,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
     tCompare = 0;
     tNext = 0;
 
-
+    localbitprecision = 50;\\prec_compact(field_deg, log(abs(G.disc)), normlp(max_element)); print("GS precision ", 1000);
     SCREEN("Consider checking for inverses when comparing giant step divisors");
     \\ #increments are done modulo the product of avec, returns to zero when
     \\ #all elements have been visited
@@ -730,8 +741,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
         tAdjust = getabstime();
         tDivisorReduce += (tAdjust - t_half);
 
-        EXACT_CHECK = 0;
-
+        EXACT_CHECK = 1;
         \\ use babystock hashmap to check for collisions and update as needed
         if(mapisdefined(babystock, giant_divisor[1]),
             \\if(DEBUG_BSGS>0 ,print("baby-giant match. checking for new vector:"););
@@ -743,10 +753,15 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
             ,
                 lattice_lambda = collision_check2(G, ~lattice_lambda, r, eps,
                                 giant_divisor[1], ~matches, ~giant_divisor, ~compactTracking);
-                print("collision check success");
             );
         );
 
+        if ((ctr%500 == 0) && ctr > 0,
+            default(realbitprecision, localbitprecision);
+            renewLog = trackerLogarithm(G, ~compactTracking, r);
+            if (norml2(trackingLog - renewLog) < 10^(-10), trackingLog = renewLog, print("log renewal fails"); breakpoint(););
+            default(realbitprecision, mainbitprecision);
+        );
         tEnd = getabstime();
         tCompare += (tEnd - tAdjust);
 
@@ -758,6 +773,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
             write(OUTFILE_GS, "gstep computation ", precision((tEnd - giant_t1)/60000.0,10), " mins exceeds timeout. Halting gsteps");return(lattice_lambda);
         );
         ctr++;
+
         if(ctr %1000 ==0,
             print(ctr, " giant steps completed");
             print("Compute: ", tDivisorCompute, " Reduce1 ", tNext," Adjust ", tDivisorReduce, " Compare: ", tCompare);
@@ -779,6 +795,7 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
                         eps, storage, cpct_bstock, outFileInfo=[])=
 {
     if(storage != "COMPACT" && storage != "LOG", print("invalid storage format"); break;);
+    if(storage == "LOG", print("Warning there is a bug in this setting, use the regular incremental giant steps instead"));
     my(timeout, OUTFILE_GS);
     if(length(outFileInfo) == 2,
         timeout = outFileInfo[2];
@@ -791,16 +808,18 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
     my(
         field_deg = poldegree(G.pol),   r = G.r1 + G.r2 -1,
         zero_vec = vector(r, i , 0),    identity = matid(field_deg),
-        giant_coeffs = zero_vec,        current_giant_vec = zero_vec,
+        giant_coeffs = zero_vec,
         giant_divisor,                  expected_position,
-        matches,                        new_vec,
+        matches,
         place_marker = r,               directions
     );
     GP_ASSERT_EQ(r, length(giant_sublattice));
 
-    expected_position = vector(G.r1+G.r2, i, 0)~;
+    expected_position = vector(G.r1+G.r2, i, 0)~;       \\# now an r1+r2 length vec
     directions = vector(length(giant_sublattice), i , 1);
-    giant_coeffs[r] = 1;    \\# initialize variable to track giant elements at 1
+
+    \\# initialize variable to track giant elements at 1
+    giant_coeffs[r] = 1;
 
     my(
         \\# vectors of length r which are used to compute an adjacent element in
@@ -809,13 +828,17 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
         direction_elements,                 \\# set of corresponding to a giant step in each lattice dimension
         inverse_direction_elements,         \\# inverse elements of the above
         compactTracking = List(),           \\# list of cpct reps corresponding to current giant step
-        trackingLog = vector(r, i, 0),      \\# log corresponding to current giant step. Precision drops fast
-        s_radius                            \\# max acceptable distance from expected position in log lattice
+        trackingLog = vector(r+1, i, 0),    \\# log corresponding to current giant step. Precision drops fast
+        s_radius,                            \\# max acceptable distance from expected position in log lattice
+        localbitprecision = 30
     );
 
     mainbitprecision = default(realbitprecision);
+    print(mainbitprecision, "   ", localbitprecision);
     default(realbitprecision, localbitprecision);
     s_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));
+    max_element = lattice_lambda[,1];
+    for(i=2, length(lattice_lambda), max_element += lattice_lambda[,i]);
     default(realbitprecision, mainbitprecision);
     s_radius = bitprecision(s_radius, mainbitprecision);
 
@@ -842,8 +865,8 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
     tCompare = 0;
     tNext = 0;
 
-
-    SCREEN("Consider checking for inverses when comparing giant step divisors");
+    localbitprecision = prec_compact(field_deg, log(abs(G.disc)), normlp(max_element));
+    print("GS precision based on jump to largest element: ", localbitprecision);
     \\ #increments are done modulo the product of avec, returns to zero when
     \\ #all elements have been visited
     while(giant_coeffs != zero_vec,
@@ -888,6 +911,14 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
             trackingLog += log(abs(nfeltembed(G, compactTracking[length(compactTracking)][1])));
             default(realbitprecision, mainbitprecision);
             trackingLog = bitprecision(trackingLog, mainbitprecision);
+            if (ctr > 0 && (ctr%200 == 0),
+                print(precision(trackingLog,10));
+                default(realbitprecision, localbitprecision);
+                renewElement = compact_rep_full_input(G, trackingLog, giant_divisor[1], eps);
+                renewLog = log_from_cpct(G, renewElement);
+                default(realbitprecision, mainbitprecision);
+                print("renewed log: ",precision(renewLog,10)); breakpoint();
+            );
         );
 
         [giant_divisor, tempLog] = adjust_giant_step_cpct(~G, ~giant_divisor, ~compactTracking, bitprecision(trackingLog,REQ_BSGS), ~expected_position, bitprecision(s_radius, REQ_BSGS), eps);
@@ -895,8 +926,7 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
         tAdjust = getabstime();
         tDivisorReduce += (tAdjust - t_half);
 
-        EXACT_CHECK = 0;
-
+        EXACT_CHECK = 1;
         \\ use babystock hashmap to check for collisions and update as needed
         if(mapisdefined(babystock, giant_divisor[1]),
             \\if(DEBUG_BSGS>0 ,print("baby-giant match. checking for new vector:"););
@@ -912,11 +942,9 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
                 ,
                     lattice_lambda = collision_check2(G, ~lattice_lambda, r, eps,
                                     giant_divisor[1], ~matches, ~giant_divisor, ~compactTracking);
-                    print("collision check success");
                 );
             );
             if (storage == "COMPACT",
-                print("Compact collision checker");
                 lattice_lambda = collision_check_cpct(G, ~lattice_lambda, r, eps,
                                  ~matches_cpct, ~giant_divisor, ~compactTracking)
             );
@@ -942,7 +970,7 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
             giant_tmid = giant_tn;
         );
     );
-    print("Compute: ", tDivisorCompute, " Reduce1 ", tNext," Adjust ", tDivisorReduce, " Compare: ", tCompare);
+    print("Giant steps Completed: Compute: ", tDivisorCompute, " Reduce1 ", tNext," Adjust ", tDivisorReduce, " Compare: ", tCompare);
 
     return(lattice_lambda);
 }
@@ -1056,31 +1084,30 @@ get_next_giant_divisor_cpct(~G, ~giant_divisor, ~tracker)={
 \\ - B is an integer that indicates a fraction of the fundamental region to search
 \\   Divides the last coordinate vector by B.
 \\ - babystock_scale_factor indicates the volume of the babystock region
+\\ - scanballRadius indicates how large each of the ball regions is in scanball
 \\ - eps is the error, REQ_BSGS is the calculated precision needed for accurate results
+\\ - REQ_BSGS,FILE1 is a file for certain outputs
 \\ - options is a vector of additional arguments.
 \\ - options[1] may specify a different algorithm to scan with (not available yet)
 \\ - or it specifies a timeout value, which will be checked periodically and
 \\ -    the program terminated if exceeded
 bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1="data/tmp-bsgs-log", options = [])={
 
-    print("\nBSGS Algorithm Start"); bsgs_start = getabstime();
-    my(S_radius, r = G.r1 + G.r2 -1,
-        field_deg = poldegree(G.pol),
+    bsgs_start = getabstime();
+    my(S_radius,
+        r = G.r1 + G.r2 -1,     field_deg = poldegree(G.pol),
         zero_vec = vector(r, i , 0),
         avec,
-        giant_coeffs,                                                           \\ holds numerator of coefficients for the giant steps
-        giant_sublattice,                                                       \\ matrix of columns of lambda, each scaled by a_i
-        current_giant_vec,
+        giant_coeffs,
+        giant_sublattice,
         babystock = Map(),
-        giant_divisor,
-        matches,
-        new_vec,lattice_lambda,
+        lattice_lambda,
         timeout = 0,
         alg = "SCAN",
-        storage = "COMPACT"
+        storage = "LOG"     \\storage variable has 2 valid options "COMPACT", "LOG"
     );
     if (storage == "COMPACT", cpct_bstock = Map());
-
+    print("\nBSGS Algorithm Start. Storage type: ", storage);
     \\ check if an auxilliary string for output has been provided
     if (length(options)!=0,
         if(type(options[1]) == "t_STR",
@@ -1128,17 +1155,23 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
             [lattice_lambda, num_elts_found] =
                 incremental_baby_steps_storage(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps, storage, ~cpct_bstock, [FILE1, timeout]);
         ,
-                [lattice_lambda, num_elts_found] =
-                    incremental_baby_steps(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps, [FILE1, timeout]);
+            [lattice_lambda, num_elts_found] =
+                incremental_baby_steps(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps, [FILE1, timeout]);
         );
 
         foundflag = length(num_elts_found);
         print("babystock size: ", length(babystock), " cpct bstock size: ", length(cpct_bstock));
         while(foundflag !=0,
-            \\ if new elements found, regenerate lattice_lambda to remove precision loss
+            \\# if new elements found, regenerate lattice_lambda to remove precision loss
+            print("Reducing precision due to new element");
+            print(precision(unscaled_determinant(G, lattice_lambda),10)); breakpoint();
+            newprec = prec_bsgs(field_deg, log(abs(G.disc)), sum_inf_norm(lattice_lambda));
+            REQ_BSGS = newprec; default(realbitprecision, REQ_BSGS);
+
             lattice_lambda = log_lattice_from_compact_set(G, cpct_from_loglattice(G, lattice_lambda, eps));
             [avec, giant_sublattice] = get_giant_step_params(G,lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS);
 
+            \\# then rerun the baby steps using the new lattice
             if (storage == "COMPACT",
                 [lattice_lambda, num_elts_found] =
                     incremental_baby_steps_storage(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps, storage, cpct_bstock, [FILE1, timeout]);
@@ -1146,6 +1179,7 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
                     [lattice_lambda, num_elts_found] =
                         incremental_baby_steps(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps, [FILE1, timeout]);
             );
+
             GP_ASSERT_EQ(matsize(lattice_lambda)[1], matsize(lattice_lambda)[2]);
             foundflag = length(num_elts_found);
             if(DEBUG_BSGS>0 ,print("FoundFlag ",foundflag););
@@ -1161,21 +1195,28 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
     my(aProduct = 1);
     for(i=1, length(avec), avec[i] += 1; aProduct*=avec[i];);                                       \\ adjust avec to include boundaries.
     avec = round(avec);
-    print("avec just before giant steps: ", precision(avec,10)); \\breakpoint();
+    print("a-vector prior to GS: ", precision(avec,10));
     \\# the search region area is the product of the norms of each sublattice vector
-    \\#normproduct = 1; for(i=1, length(giant_sublattice), normproduct*=sqrt(norml2(giant_sublattice[,i])) );
+    \\#normproduct = 1; for(i=1, length(giant_sublattice), normproduct*=sqrt(norml2(giant_sublattice[,i])) ); print("region size: ", normproduct);
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     tg = getabstime();
 
-    lattice_lambda =
-        incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, \
-                                ~babystock, avec, eps, [FILE1, timeout]);
-    \\lattice_lambda = jump_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec, eps);
+    if(storage == "LOG",
+        lattice_lambda =
+            incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, \
+                                    ~babystock, avec, eps, [FILE1, timeout]);
+    );
+    if(storage == "COMPACT",
+        lattice_lambda =
+            incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, \
+                                    ~babystock, avec, eps, storage, cpct_bstock, [FILE1, timeout]);
+    );
+    \\#lattice_lambda = jump_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec, eps);
 
     bsgs_end = getabstime();
     gianttime = bsgs_end-tg;
 
-    write(FILE1,  "Giantstep time:  ", gianttime,  "   ",precision(gianttime/60000.0,15), " . Giant steps computed: ", aProduct);
+    write(FILE1,  "Giantstep time:  ", gianttime,  "   ",precision(gianttime/60000.0,15), " . Giant steps computed: ", precision(aProduct,10));
 
     return(cpct_from_loglattice(G,lattice_lambda,eps));
 }

@@ -32,6 +32,15 @@ Tfunc(n)={
   return(output);
 }
 
+idealPrecision(G, ideal, maxnorm)=
+{
+  my(log2 = log(2), rho);
+  rho = poldegree(G.pol)^2;
+  rho = rho*log(4*(denominator(ideal)^2)*maxnorm)/log2 +2;
+  return(log(denominator(ideal))/log2 + 2*log(maxnorm+1)/log2 + 3 +rho);
+}
+
+
 
 B = 1;
 p = B;
@@ -60,20 +69,23 @@ jump_complexity(n,q, loginfv) = {
 }
 
 
-prec_compact(n, logdisc,loginfv)={
-  expression = (4*n^2)*logdisc + 2*n^4 -(n^3 -24*n^2 -6)*log(n) + 7 + (n^2+2)*loginfv;
+prec_compact(degree, logdisc,loginfv)={
+  expression = ceil( (4*(degree^2))*logdisc + 2*(degree^4) -(degree^3 -24*(degree^2) -6)*log(degree) + 7 + (degree^2+2)*loginfv);
   return(expression);
 }
 
 prec_baby(n,logdisc, infsumt)={
-  expression = (4*n^2*logdisc +2*n^4+(-n^3+24*n^2+6)*log(n) +7 +(n^2+4)*log(infsumt + sqrt(n)/4*logdisc) );
+  expression = (4*(n^2)*logdisc +2*n^4+(-n^3+24*n^2+6)*log(n) +7 +(n^2+4)*log(infsumt + (sqrt(n)/4)*logdisc) );
 }
 prec_giant(n, logdisc, logdetlamp, infsumu)={
   expression = (4*n^2 +1)*logdisc +2*n^4 -(n^3-24*n^2)*log(n);
   expression += (n^2+4)*log(infsumu +3);
 }
 
-
+prec_bsgs(fdegree, logdisc, inf_sumv)=
+{
+  return(ceil(max(prec_baby(fdegree,logdisc, inf_sumv), prec_giant(fdegree, logdisc, 1, inf_sumv) )));
+}
 \\ membership test complexity
 TOtest(n, logdisc)={
   my(expression);

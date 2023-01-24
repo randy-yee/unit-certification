@@ -794,45 +794,72 @@ cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, eps, testFlag = 
     GP_ASSERT_EQ(length(log_beta), G.r1+G.r2);
 
     boundary_vector = abs(desired_betalog - log_beta);
+    print("norm of new betalog ", precision(norml2(boundary_vector),10));
     boundary_vector += vector(G.r1+G.r2, i, eps);       \\# increase boundary for error
-    exp_boundary = exponentiate_logvec(G.r1+G.r2-1, boundary_vector);
-    exp_boundary = norml2(exp_boundary); print(precision(exp_boundary,10));
+
     \\#setup ideal for qfminim
-    latticeB = embed_real(G, G[5][1]*idealB);
-    lll_basis_change_matrix = qflll(latticeB);
-    latticeB_lll = latticeB*lll_basis_change_matrix;
-    scan_elements = qfminim((latticeB_lll~*latticeB_lll),exp_boundary^2,,2)[3]; \\#check all elements within the bound
-    if (samevecs(desired_betalog, log_beta, eps),  return([idealB, log_beta, beta] ) );
-    my(check_beta, checkvec);
-    for(i=1, length(scan_elements),
-        check_beta = idealB*scan_elements[,i];          \\# beta wrt integral basis
-        checkvec = log_beta + log(abs( nfeltembed(G, check_beta)));
-        if(samevecs(desired_betalog, checkvec, eps),
-            idealB = idealdiv(G, idealB, check_beta);
-            return([idealB, checkvec, nfeltmul(G,beta,check_beta)]);
+    alternate = 1;
+    temp_precision = ceil(idealPrecision(G, idealB, normlp(boundary_vector)));
+    oldbitprecision = change_precision(temp_precision);
+    print(oldbitprecision);
+    if(!alternate,
+        exp_bvec = exponentiate_logvec(G.r1+G.r2-1, boundary_vector);
+        exp_boundary = norml2(exp_bvec); print(precision(exp_boundary,10));
+        latticeB = embed_real(G, G[5][1]*idealB);
+        lll_basis_change_matrix = qflll(latticeB);
+        latticeB_lll = latticeB*lll_basis_change_matrix;
+        lll_ideal = idealB*lll_basis_change_matrix;
+        scan_elements = qfminim((latticeB_lll~*latticeB_lll),exp_boundary^2,,2)[3]; \\#check all elements within the bound
+        if (samevecs(desired_betalog, log_beta, eps),  return([idealB, log_beta, beta] ) );
+        my(check_beta, checkvec);
+        \\print("dbl: ", precision(desired_betalog,10), " ", length(scan_elements));
+        for(i=1, length(scan_elements),
+
+            check_beta = lll_ideal*scan_elements[,i];          \\# beta wrt integral basis
+            checkvec = log_beta + log(abs( nfeltembed(G, check_beta)));
+
+            if(samevecs(desired_betalog, checkvec, eps),
+                change_precision(oldbitprecision);
+                \\print(i, "  ", precision(checkvec,10));
+                idealB = idealdiv(G, idealB, check_beta);
+                return([idealB, checkvec, nfeltmul(G,beta,check_beta)]);
+            );
         );
     );
+    if(alternate,
+        degree = poldegree(G.pol);
+        print(precision(boundary_vector,10));
+        print(precision(exponentiate_logvec(G.r1+G.r2-1, boundary_vector, 1),10));
+        exp_bvec = exponentiate_logvec(G.r1+G.r2-1, boundary_vector, 1);
+        if(matsize(G[5][1])[1] != G.r1+G.r2, print("final_enum vector length mismatch"); breakpoint(); );
+        scaled_latticeB = mulvec(G[5][1]*idealB, exp_bvec);
+        scaled_latticeB = embed_real(G, scaled_latticeB);
+        lll_CoB = qflll(scaled_latticeB);
 
+        lll_ideal = idealB*lll_CoB;
+        scaled_lll_lattice = scaled_latticeB*lll_CoB;
+        print("degree bound: ", degree+eps); for(s = 1, length(scaled_lll_lattice), print(precision(norml2(scaled_lll_lattice[,s]),10)));breakpoint();
+        scan_elements = qfminim(scaled_lll_lattice~*scaled_lll_lattice,degree+eps*1.0,,2)[3];
+        \\print(scan_elements); print("dbl: ", precision(desired_betalog,10));
+        for(i=1, length(scan_elements),
+            check_beta = lll_ideal*scan_elements[,i];          \\# beta wrt integral basis
+            checkvec = log_beta + log(abs( nfeltembed(G, check_beta)));
+
+            if(samevecs(desired_betalog, checkvec, eps),
+                idealB = idealdiv(G, idealB, check_beta);
+                change_precision(oldbitprecision);
+                return([idealB, checkvec, nfeltmul(G,beta,check_beta)]);
+            );
+            checkvec = log_beta - log(abs( nfeltembed(G, check_beta)));
+            if(samevecs(desired_betalog, checkvec, eps),
+                idealB = idealmul(G, idealB, check_beta);
+                change_precision(oldbitprecision);
+                return([idealB, checkvec, nfeltmul(G,beta,check_beta)]);
+            );
+        );
+    );
     print("No elements satisfy the condition. Error.");
     return(-1);
-
-    while(!samevecs(desired_betalog, checkvec, eps),
-        ctr += 1;
-
-        if(ctr > length(neighbours_output), print("No neighbours of 1 satisfy the condition. Error."); return(-1));
-        print("target: ", precision(desired_betalog, 10), "  ",
-            precision(log_beta+log(abs( nfeltembed(G,neighbours_output[ctr]))), 10), "  ",
-            precision(log(abs( nfeltembed(G,neighbours_output[ctr]) ))));
-        checkvec = vector(length(desired_betalog),j, log(abs( nfeltembed(G,neighbours_output[ctr]) ))[j]);
-        if(1, print(ctr ," minima ", precision(checkvec,10)););
-        checkvec += log_beta[1..unit_rank];
-    );
-
-    idealB = idealdiv(G, idealB, neighbours_output[ctr]);
-    beta = nfeltmul(G, beta, neighbours_output[ctr]);
-    log_beta = checkvec;
-
-    return([idealB, log_beta, beta]);
 }
 /******************************************************************************/
 \\ INPUT:
@@ -957,7 +984,8 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
   GP_ASSERT_EQ(length(alpha), unit_rank+1);
   if(type(alpha) == "t_COL", alpha = alpha~);
   kbound = log(sqrt( abs(G.disc) ))/log(2)/2;                 \\ defines the boundary of the area W
-
+  \\cpct_prec = prec_compact(poldegree(G.pol), ceil(log(abs(G.disc))/log(2)), normlp(alpha));
+  \\print(default(realbitprecision), "  ", cpct_prec); breakpoint();
   \\# MAIN LOOP: following the algorithm of Thiel, under the assumption alpha is a unit.
   \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   \\# Note: In this case, gamma = 1, and beta1 = 1 also. This means we can skip iteration 1
@@ -974,7 +1002,7 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
   d_vec = concat(d_vec,ideal_denom);                                                       \\ Get d_i= d(A) and append to tracking vector
   alpha_vec = concat(alpha_vec, alpha_i);                                                  \\ compute alpha_i = d/beta and append to tracking vector
 
-  if(DEBUG_CPCT >0,
+  if(DEBUG_CPCT > 0,
     print("log beta and s: ", precision(log_beta,10), "   ", precision(s_term,10));
     print(" - ROUND ", 2, ": beta close enough?: ", check_closeness(log_beta, s_term, kbound),
         ": NORMCHECK: ", intermediate_check(G, alpha_vec, d_vec, idealB) );
@@ -998,12 +1026,13 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
         print(" - ROUND ", i, ": beta close enough?: ", check_closeness(log_beta, desired_betalog, kbound),
             ".\nNORMCHECK: ", intermediate_check(G, alpha_vec, d_vec, idealB) );
       );
-  ); \\ end main for loop
+  ); \\# end main for loop
 
     \\\#  ENTER THE FINAL ITERATION OF THE ALGORITHM, WHICH IS SPECIAL
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     s_term = 2*s_term;                                              \\# this is s_{k'+1} = log rho
     desired_betalog = (-alpha) - (2*log_rho);                       \\# this equation is "rho - 2*rho_{k'}"
+    print("norml desired_betalog at final iteration: ", precision(norml2(desired_betalog),10));
     [idealB, target, log_rho, beta] = double_and_reduce(G, idealB, target,log_rho);
     log_beta= log(abs(G[5][1]*beta))~;
 
@@ -1012,13 +1041,15 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
 
     if (type(testFlag) == "t_INT" && (testFlag == 1),
         print("WARNING: Forcing final enum operation in compact representation");
-        idealB = idealdiv(G, idealB, idealB[,1]);
-        beta = nfeltmul(G, beta, idealB[,1] ); beta = nfalgtobasis(G, beta);
-        desired_betalog -= log(abs(nfeltembed(G,idealB[,1])));
-        log_beta= log(abs(G[5][1]*beta))~;
+        beta = nfeltmul(G, beta, idealB[,2] ); beta = nfalgtobasis(G, beta);
+        log_beta= log(abs(nfeltembed(G,beta)));
+        idealB = idealdiv(G, idealB, idealB[,2]);
+
+        if(!samevecs(abs(desired_betalog), abs(log_beta),eps),
+            [idealB, log_beta, beta] = cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, eps, testFlag);
+        );
     );
     if(!samevecs(abs(desired_betalog), abs(log_beta),eps),
-        desired_betalog -= log_beta;
         [idealB, log_beta, beta] = cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, eps, testFlag);
     );
 
