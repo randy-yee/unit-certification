@@ -257,8 +257,7 @@ read("src/CompactRepresentation.py");
     capvec = vector(rank, i, 10);
     countervec = zerovec; increment_coordinates(~capvec, ~countervec);
     total_time = 0;
-
-
+    capvec = [1,10,10];
     while(countervec != zerovec,
 
         increment_coordinates(~capvec, ~countervec);
@@ -269,18 +268,18 @@ read("src/CompactRepresentation.py");
         total_time += (time_end - time_start);
     );
 
-    print("Cpct computation time: ",total_time);
-    \\GP_ASSERT_LT(abs(total_time-9900)/9900, 0.1);
+    print("Cpct computation time: ",total_time, "\n");
+    GP_ASSERT_WITHIN_RATIO(total_time, 78200, 0.1);
 
 
     big_unit = (11^(200))*extended_llattice[,2];
-    print("big unit", precision(big_unit,10));
+    print("Large unit test");
     time_start = getabstime();
-
     compact_rep_full_input(G1, big_unit, O_K, eps, 1, 1);
     time_end = getabstime();
     total_time += (time_end - time_start);
-    print("Cpct computation time: ",total_time);
+    print("Big unit cpct computation time: ",total_time);
+    GP_ASSERT_WITHIN_RATIO(total_time, 11000, 0.1);
 }
 {
 /*

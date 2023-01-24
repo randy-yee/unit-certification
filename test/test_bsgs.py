@@ -112,8 +112,16 @@ func(~map)={
     reg1 = unscaled_determinant(K1, lglat);
 
     cpct_units = cpct_from_loglattice(K1, lglat, eps);
-    bsgs_output= bsgs(K1,cpct_units, B, 25, scanRadius, eps,20,"alltest.txt");
+    totaltime = 0;
+    start_time = getabstime();
 
+    bsgs_output= bsgs(K1,cpct_units, B, 25, scanRadius, eps,20,"alltest.txt");
+    end_time = getabstime();
+    totaltime +=(end_time- start_time);
+    print("BSGS time: " ,totaltime);
+    GP_ASSERT_WITHIN_RATIO(totaltime, 5712, 0.1);
+    \\\log version with exact check is about 4900
+    \\\ inexact check was also about 4900
     y = [1, 0, 0; 0, 1, 0; 0, 0, 1];
     glegs = [4.619061865536216760, -16.675036477848972758, 14.169130776523246111;
     3.705556112720428534, 14.697056881773186001, -26.315297544331964588;
