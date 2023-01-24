@@ -120,6 +120,15 @@ GP_ASSERT_VEC_LT(~arg1, ~arg2, eps)={
   );
 }
 
+GP_ASSERT_WITHIN_RATIO(actual, expect, range)=
+{
+  if(abs(actual-expect)/expect < range,
+    \\test passes
+  ,
+    print("Actual value not within the expected range");breakpoint();
+  );
+}
+
 nf_argcheck(~vec)={
   if (type(vec) != "t_VEC" || length(vec) != 9 || type(vec[1]) != "t_POL",
       print("expected number field argument \n");breakpoint();
