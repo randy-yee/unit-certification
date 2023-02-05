@@ -209,7 +209,6 @@ embed_real(~G,~M)={
     b_mat = M;
     column_num = matsize(b_mat)[2];                                   \\ initiate column number
     outmatrix = b_mat[1..G.r1,];
-    \\outmatrix = matrix(G.r1,column_num, i, j, b_mat[i,j]);          \\ copy the real part of the matrix
 
     for(i= G.r1+1, G.r1+G.r2,                                         \\ loop over the complex embeddings
         tempvec = sqrt(2)*real(b_mat[i,]);
