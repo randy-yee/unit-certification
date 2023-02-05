@@ -3,7 +3,8 @@ read("src/LogarithmLattice.py");
 read("src/bounds.gp")
 
 /*
-get_giant_step_params
+Subfunctions for the purpose of getting the giant step parameters
+- get_giant_step_params
 
 */
 
@@ -32,7 +33,6 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
     \\# This is the basic calculation for the babystock region
     smallsquare = sqrt(  (abs(detLambda)/B)*g_n/b_n  );
     print("Old babystock volume value:  ", precision(smallsquare,10));
-    if(DEBUG_BSGS, print("Default babystock region size: ", precision(smallsquare,10) ););
 
     \\babystock_scale_factor =((2)^(unit_rank-1))*(log(abs(G.disc))/8)^(1/(2));              \\ increase this to make the babystock smaller
     \\babystock_scale_factor = (2^unit_rank) * log(abs(G.disc)) / 32;
@@ -113,15 +113,12 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
         deg = poldegree(G.pol),
         fullregion_to_babystock_ratio= 1);
 
+    \\# This is the basic calculation for the babystock region
     g_n = giant_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
     b_n =  baby_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
-    \\ This is the basic calculation for the babystock region
     smallsquare = sqrt(  (abs(detLambda)/B)*g_n/b_n  );
     print("Old babystock volume value:  ", precision(smallsquare,10));
-    if(DEBUG_BSGS, print("Default babystock region size: ", precision(smallsquare,10) ););
 
-    \\babystock_scale_factor =((2)^(unit_rank-1))*(log(abs(G.disc))/8)^(1/(2));              \\ increase this to make the babystock smaller
-    \\babystock_scale_factor = (2^unit_rank) * log(abs(G.disc)) / 32;
     print("BSGS: Babystock scaling factor ", precision(babystock_scale_factor,10));
 
     \\# Compute ratio of (full search region / babystock region)
@@ -173,8 +170,6 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
             );
         );
 
-        if(DEBUG_BSGS, print("product without  a_r ",precision(ai_product,10)); );
-
         if (dimensions !=unit_rank+1,
             avec = concat(avec ,  min(norm_vr/B , fullregion_to_babystock_ratio/ai_product )  );
         );
@@ -212,32 +207,33 @@ get_giant_step_params(G, lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS)
             print("- length of v_",i,"   ",  precision(sqrt(norml2(lattice_lambda[,i])),10));
             originalarea*=sqrt(norml2(lattice_lambda[,i]))
         );
-        print("- product: ", precision(originalarea,10), "\n- det_lambda: ", precision(det_lambda,10) );
+        print("- product of v_i: ", precision(originalarea,10), ", --- - det_lambda: ", precision(det_lambda,10) );
     );
 
     \\\# determine r independent vectors that will define the giant steps
     \\\# note that the fundamental region of these vectors is the babystock
     \\avec = get_subdivisions(G,lattice_lambda,r, det_lambda, B, babystock_scale_factor, REQ_BSGS);
-    print("Using non-integer values for a-vector");
+
     avec = non_integral_subdivisions(G,lattice_lambda,r, det_lambda, B, babystock_scale_factor, REQ_BSGS);
-    print(precision(non_integral_subdivisions(G,lattice_lambda,r, det_lambda, B, babystock_scale_factor, REQ_BSGS),10));
+    print("Using non-integer values for a-vector: ", precision(avec,10));
 
     extra_log_coords = vector(r, i, extra_log_coordinate(G.r1, G.r2, lattice_lambda[,i]));
     giant_legs = matconcat([lattice_lambda; extra_log_coords]);
     for (i=1, r-1, giant_legs[,i] = -giant_legs[,i]/avec[i]);
     giant_legs[,r] = -giant_legs[,r]/(avec[r]*B);
 
-    \\giant_legs = matrix(r, r-1, s,t, -lattice_lambda[s,t]/avec[t]);             \\ giant_legs is a matrix with columns (-v_i /a_i) for i =1 ..r-1
-    \\giant_legs = matconcat([giant_legs, -lattice_lambda[,r]/(avec[r]*B)] );     \\ column r is (-v_r /(a_r*B))
-
     if(1,
-        \\print("- avec ", avec, "  ", B);
-        area = 1;
-        for(i=1, length(giant_legs),
-            \\print("Norms of scaled vectors (a_i, B) ", precision(sqrt(norml2(giant_legs[,i][1..r])),10));
-            area*=sqrt(norml2(giant_legs[,i][1..r])));
-        print("actual babystock area region (multiplying vector norms): ", precision(area,10),"\n \n");
+        print_area_info(giant_legs, r);
     );
 
     return([avec,giant_legs]);
+}
+
+print_area_info(~giant_legs, rank)=
+{
+    my(area = 1);
+    for(i=1, length(giant_legs),
+        \\print("Norms of scaled vectors (a_i, B) ", precision(sqrt(norml2(giant_legs[,i][1..rank])),10));
+        area*=sqrt(norml2(giant_legs[,i][1..rank])));
+    print("actual babystock area region (multiplying vector norms): ", precision(area,10),"\n \n");
 }
