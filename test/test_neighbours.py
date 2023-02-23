@@ -72,7 +72,7 @@ read("src/Neighbours.py");
     \\for(i=1, length(my_collection), print(norml2(valuationvec(G, my_collection[i]))));
     for(i=1, length(short_list),
         if(is_minimum(ring_of_integers,short_list[,i],G,eps ),
-            GP_ASSERT_TRUE(setsearch(my_collection, flipvec(short_list[,i]))!=0 );
+            GP_ASSERT_TRUE(setsearch(my_collection, vec_flip_positive(short_list[,i]))!=0 );
         );
     );
 }

@@ -15,28 +15,32 @@ DEBUG_CPCT = 0;
 DEBUG_REDDIV = 0;
 
 
-OUTFILE1 = "data/tmp-experiment-data-bsgs-3-0.txt";
+sigstring = "3-0";
+outfilestring = concat(concat("data/tmp-experiment-data-bsgs-",sigstring),".txt");
+outfilestring;
+infilestring = concat(concat("input/test-poly-",sigstring),".gp");
+OUTFILE1 = outfilestring;
+read(infilestring)
 
 
+\\read("input/test-poly-1-1.gp");
+\\read("input/test-poly-3-0.gp");
+\\read("input/test-poly-4-0.gp");
+\\read("input/test-poly-2-1.gp");
+\\read("input/test-poly-0-2.gp");
 
-\\read("input/test-poly-1-1.gp"); data = data1_1;
-read("input/test-poly-3-0.gp"); data = data3_0;
-\\read("input/test-poly-4-0.gp"); data = data4_0;
-\\read("input/test-poly-2-1.gp"); data = data2_1;
-\\read("input/test-poly-0-2.gp"); data = data0_2;
+\\read("input/test-poly-1-2.gp");
+\\read("input/test-poly-3-1.gp");
+\\read("input/test-poly-5-0.gp");
+\\read("input/test-poly-0-3.gp");
+\\read("input/test-poly-2-2.gp");
 
-\\read("input/test-poly-1-2.gp"); data = data1_2;
-\\read("input/test-poly-3-1.gp"); data = data3_1;
-\\read("input/test-poly-5-0.gp"); data = data5_0;
-\\read("input/test-poly-0-3.gp"); data = data0_3;
-\\read("input/test-poly-2-2.gp"); data = data2_2;
-
-\\read("input/test-poly-4-1.gp"); data = data4_1;
-\\read("input/test-poly-0-4.gp"); data = data0_4;
-\\read("input/test-poly-1-3.gp"); data = data1_3;
+\\read("input/test-poly-4-1.gp");
+\\read("input/test-poly-0-4.gp");
+\\read("input/test-poly-1-3.gp");
 
 {
-for(i=1, 10,
+for(i=4, 4,
 
     \\
     \\ INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
@@ -77,7 +81,6 @@ for(i=1, 10,
     print("input determinant ", precision(unscaled_determinant(K,lglat_new),10));
     write(OUTFILE1, "\n--------------------------\n", i, " Field pol: ", K.pol, "Disc: ", K.disc, ".      Signature: ", K.r1, " ", K.r2);
     write(OUTFILE1, "\nRegulator: ", precision(reg1,10),"--------------------------precision value", ceil(REQ_BSGS));
-
     cpct_units = cpct_from_loglattice(K, lglat_new, eps);
 
     B = 1;          \\ 1 means you scan the whole region

@@ -13,29 +13,34 @@ DEBUG_CPCT = 0;
 DEBUG_REDDIV = 0;
 
 
-OUTFILE1 = "data/tmp-experiment-hybrid.txt";
+sigstring = "1-1";
+outfilestring = concat(concat("data/tmp-experiment-data-hybrid-",sigstring),".txt");
+outfilestring;
+//infilestring = concat(concat("input/polynomial-",sigstring),".gp");
+infilestring = concat(concat("input/test-poly-",sigstring),".gp");
+OUTFILE1 = outfilestring;
+read(infilestring)
 
-\\read("input/test-poly-1-1.gp"); data = data1_1;
-read("input/test-poly-3-0.gp"); data = data3_0;
-\\read("input/test-poly-4-0.gp"); data = data4_0;
-\\read("input/test-poly-2-1.gp"); data = data2_1;
-\\read("input/test-poly-0-2.gp"); data = data0_2;
+\\read("input/test-poly-1-2.gp");
+\\read("input/test-poly-3-0.gp");
+\\read("input/test-poly-4-0.gp");
+\\read("input/test-poly-2-1.gp");
+\\read("input/test-poly-0-2.gp");
 
-\\read("input/test-poly-1-2.gp"); data = data1_2;
-\\read("input/test-poly-3-1.gp"); data = data3_1;
-\\read("input/test-poly-5-0.gp"); data = data5_0;
-\\read("input/test-poly-0-3.gp"); data = data0_3;
-\\read("input/test-poly-2-2.gp"); data = data2_2;
+\\read("input/test-poly-1-2.gp");
+\\read("input/test-poly-3-1.gp");
+\\read("input/test-poly-5-0.gp");
+\\read("input/test-poly-0-3.gp");
+\\read("input/test-poly-2-2.gp");
 
-\\read("input/test-poly-4-1.gp"); data = data4_1;
-\\read("input/test-poly-0-4.gp"); data = data0_4;
-\\read("input/test-poly-1-3.gp"); data = data1_3;
+\\read("input/test-poly-4-1.gp");
+\\read("input/test-poly-0-4.gp");
+\\read("input/test-poly-1-3.gp");
 
 
 {
 
-for(i=22, 23,
-
+for(i=1,7,
     \\
     \\ INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -113,10 +118,15 @@ for(i=22, 23,
 
     balanceB = abs(log(reg1))*2^poldegree(K.pol)*reg1^(1/3);
     balanceB = min(reg1, balanceB);
+
+    last_vector_norm = sqrt( norml2(lglat_new[,length(lglat_new)]));
+    if(balanceB > last_vector_norm  ,
+        print("WARNING: B is being limited by the vector norm:");
+    );
     balanceB = min(balanceB, sqrt( norml2(lglat_new[,length(lglat_new)])  ) );
 
 
-    write(OUTFILE1, "Chosen bound B ", balanceB);
+    write(OUTFILE1, "Chosen bound B ", balanceB, "\nrth vector norm: ", precision(last_vector_norm,10));
 
     \\ Should define this based on the optimal balance of pohst and bsgs
     \\pohstB = 10000;

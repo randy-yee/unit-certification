@@ -153,8 +153,8 @@ mixed_quartic(magnitude)={
 
 /************************************************************/
 /************************************************************/
-\\ INCOMPLETE - This function should allow you to select a signature, and then produce an irreducible poly whose
-\\ 							discriminant is close to
+\\ This function should allow you to select a signature, and then produce an irreducible poly whose
+\\ 							discriminant is close to 10^magnitude
 \\ OUTPUT:
 random_poly(r,s, magnitude)={
 
@@ -233,7 +233,7 @@ random_poly(r,s, magnitude)={
       );
       candidate = round(candidate);
 
-      \\print(candidate, "  " , poldisc(candidate));
+			\\ verify the polynomial is irreducible and that it has the correct sig
       if (polisirreducible(candidate), flag = 1;);
       if(flag == 1 ,
           K = nfinit(candidate);
@@ -250,27 +250,30 @@ random_poly(r,s, magnitude)={
 
 {
 
-writefile = "stest-poly-4-1.gp";
-maxreal = 8;
-maxcomplex = 2;
+maxreal = 5;
+maxcomplex = 0;
 
 \\ testing new complex root choosing function
 \\for(i=1, 500, croot = random_croot_norm(10^10, 1.0); print(precision(croot,10), "  " round(norm(croot))) );
 
-
 print("Gathering polynomials");
-disc_cap = 41;
-for(r =3, 3,
-	for(s = 0, 0,
-		writefile = concat(["test-poly-", Str(r),"-",Str(s)]);
+
+file_prefix = "polynomial-new-";
+fields_per_magnitude = 3;
+magnitude_jump = 3;
+
+disc_cap = 30;
+for(r =1, 1,
+	for(s = 1, 1,
+		writefile = concat([file_prefix, Str(r),"-",Str(s)]);
 		\\if(r+2*s < 7 || r+2*s > 14 || r+s-1 > 6, ,
 		if(0, ,
 				write(writefile, "\\\\ Signatures ", r, " ",s);
-				write(writefile, data,Str(r),"_"Str(s), " = [\\" );
-				discsize = 40;
+				write(writefile, data," = [\\" );
+				discsize = 7;
 				while(discsize<disc_cap,
 						tally = 0;
-						while(tally < 10,
+						while(tally < fields_per_magnitude,
 							pol1 = random_poly(r,s, discsize);
 							K1 = bnfinit(pol1, 1);
 							if( (  abs( log(abs( poldisc(pol1) ) )/log(10)-discsize )<1.1   )&& K1.clgp.no == 1,
@@ -278,46 +281,10 @@ for(r =3, 3,
 								write(writefile, "[" , pol1, ", " , poldisc(pol1), ", \\\n",  K1[3]  , "], \\" ); );
 						);
 
-						discsize+=5;
+						discsize += magnitude_jump;
 				);
 				write(writefile, "];");
 		);
 	);
 );
 }
-
-
-/*
-{for(i=1, 10,
-	pol1 = random_poly(0,2, 29);
-	print(pol1, ",    \\\\", poldisc(pol1), "      ", precision(log(abs(poldisc(pol1)))/log(10),10) );
-)
-}
-{for(i=1, 10,
-	pol1 = random_poly(0,3, 30);
-	print(pol1, ",    \\\\ ", poldisc(pol1), "      ", precision(log(abs(poldisc(pol1)))/log(10),10) );
-)
-}
-
-{for(i=1, 10,
-	pol1 = random_poly(0,4, 30);
-	print(pol1, ",    \\\\ ", poldisc(pol1), "      ", precision(log(abs(poldisc(pol1)))/log(10),10) );
-)
-}
-{for(i=1, 10,
-	pol1 = random_poly(0,5, 30);
-	print(pol1, ",    \\\\ ", poldisc(pol1), "      ", precision(log(abs(poldisc(pol1)))/log(10),10) );
-)
-}
-*/
-\\for(i=1, 10, f = generate_real_cubic(24);print("[",polcoeff(f,3),",",polcoeff(f,2),",",polcoeff(f,1),",",polcoeff(f,0) "],  \\\\ ", poldisc(f)););
-\\print("];")
-\\testpoly = mixed_quartic(20);
-\\{for(i=1,50,
-\\f = mixed_quartic(30);
-\\print("[",polcoeff(f,4), ",",  polcoeff(f,3),",",polcoeff(f,2),",",polcoeff(f,1),",",polcoeff(f,0) "], \\\\ ", poldisc(f), " " exponent(poldisc(f)) );
-\\);
-\\}
-
-\\ f = generate_real_cubic(); print("[",polcoeff(f,3),",",polcoeff(f,2),",",polcoeff(f,1),",",polcoeff(f,0) "  \\\\ ", poldisc(f));
-\\print("Double checking, is it irreducible? ", polisirreducible(f), ". And is it index one?  ", nfinit(f).index)

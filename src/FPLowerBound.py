@@ -191,8 +191,8 @@ lower_regbound(G, K, eps, input_j = -1, k_limit = 0)={
         \\if ((abs(nfeltnorm(G, SK[,i])) == 1 && !samevecs( log(abs(valuationvec(G, SK[,i], column = 1))), zerovec, eps )) ==1, print("unitfound"));
         if( is_non_torsion_unit(G, SK[,i], zerovec, eps),
             \\if(DEBUG_LREG, print( "L2 Norm of TK element ", precision(norml2(((absoluteval_nvec(G, SK[,i])))), 10 ) ););
-            inverse_element = flipvec(nfeltpow(G, SK[,i], -1));
-            SK_units = setunion( SK_units, Set([flipvec(SK[,i]), inverse_element]) );
+            inverse_element = vec_flip_positive(nfeltpow(G, SK[,i], -1));
+            SK_units = setunion( SK_units, Set([vec_flip_positive(SK[,i]), inverse_element]) );
         );
     );
     \\tt3 = getabstime(); print("Lower Bound search time:  ",tt3-tt2 );

@@ -25,6 +25,7 @@ get_log_lattice_bnf
 get_unscaled_determinant
 
 is_in_axis_box
+verify_lattice_containment
 */
 
 
@@ -41,7 +42,7 @@ testequalOK(y,K)={
     yhnf=idealhnf(K,y);
     if(yhnf==matid(n),
         1,
-    0);                                \\else
+    0);
 }
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -67,7 +68,7 @@ minkowski_absval(v, r1)={
 /* IMPORTANT to note the squares on the complex embeddings.
 
 /******************************************************************************/
-valuationvec(G,elt, column = 0)={
+valuationvec(~G,~elt, column = 0)={
 	my(embedvec, column_elt);
     \\ process input so that it is a column vector
     if((column == 0) || (column ==1 && type(elt)== "t_INT"), column_elt = nfalgtobasis(G,elt);, column_elt = elt );
@@ -85,7 +86,7 @@ valuationvec(G,elt, column = 0)={
 \\ then the conjugates in the same order. ie. [s1, s2, s_{r1+1}, ... s_{r1+r2}, conj(s_{r1+1}), conj(s_{r1+2}), ... conj(s_{r1+r2})]
 \\ OUTPUT:
 \\ A vector of length n consisting of the absolute value of each embedding.
-absoluteval_nvec(G, v, side = 2)={
+absoluteval_nvec(~G, ~v, side = 2)={
     my(embed_v, outvec);
     embed_v = abs(G[5][1]*v)~;                                                  \\ vector of length r1+r2 corresponding to valuations
 
@@ -178,7 +179,7 @@ nfeltpow_modp(G, p, elt, expo )={
 \\ - v a dimension G.r1+G.r2 vector
 \\ OUTPUT:
 \\ - the real vector of v having dimension R^n, n is the degree of the number field
-get_real_vec(G, v)={
+get_real_vec(~G, ~v)={
   my(vec1, realvec=[]);
   sqrt2 = sqrt(2);
   vec1 = v;
@@ -195,7 +196,7 @@ get_real_vec(G, v)={
 \\ - M a (complex) matrix of dimension (r x n), where r = r1 +r2
 \\ OUTPUT:
 \\ - A matrix M' which has dimension n x n, obtained by splitting complex rows into real and imag parts, scaling them by sqrt2
-embed_real(G,M)={
+embed_real(~G,~M)={
     my(
       outmatrix,                                                  \\ holder for the output matrix
       tempvec,                                                    \\ intermediate vector holder
@@ -208,7 +209,6 @@ embed_real(G,M)={
     b_mat = M;
     column_num = matsize(b_mat)[2];                                   \\ initiate column number
     outmatrix = b_mat[1..G.r1,];
-    \\outmatrix = matrix(G.r1,column_num, i, j, b_mat[i,j]);          \\ copy the real part of the matrix
 
     for(i= G.r1+1, G.r1+G.r2,                                         \\ loop over the complex embeddings
         tempvec = sqrt(2)*real(b_mat[i,]);
@@ -329,7 +329,7 @@ limitminvector(yy,bound)={
     lis;
 }
 checkred_old(y,G,eps)={
-    if(abs(1/matdet(y))>sqrt(abs(G.disc)), return(0));
+    if(abs(1/matdet(y))>sqrt(abs(G.disc)), return(0));      \\ norm condition, can cite Thiel thesis
         if(ideal_contains1(y)==1,
             my(y1, lisy, n = poldegree(G.pol), gramy);
             y1=G[5][1]*y;
@@ -337,8 +337,8 @@ checkred_old(y,G,eps)={
             y1 = y1*qflll(y1);                                                  \\ return LLL reduced y1, coeffs in terms of integral basis
             gramy = y1~*y1;
             lisy=qfminim(gramy,n,,2)[3];                                        \\ This function uses qfminim with radius n
-
             for (i = 1, length(lisy),
+                \\print("embedding value: ",precision(y1*lisy[,i],10), "  ", lisy[,i]);
                 if ( check0(y1*lisy[,i],eps) != 0, return(0))
             );
             return(1),
@@ -380,12 +380,13 @@ compute_sublattice(lglat, FILENAME ,extype = 0)={
 
 \\ given a column vector v and a lattice L, check if v is contained in the lattice
 \\ eps is an error value
-is_vec_in_lattice(v,L,eps)={
+is_vec_in_lattice(~v,~L,eps)={
     my(v_solution, round_solution);
+    GP_ASSERT_EQ(matsize(L)[1],matsize(L)[2]);
     v_solution=L^(-1)*v;                            \\ solves L*x = v for x.
     round_solution=round(v_solution);               \\ rounds the entries, this strategy is checking if x is an integer vector.
     \\
-    if(norml2(v_solution-round_solution)<(eps*10)^2,   \\ If v is in L, then cov should be equal to covin up to some error
+    if(norml2(v_solution-round_solution)<eps,   \\ If v is in L, then cov should be equal to covin up to some error
         1,
     return(0));                           \\ else
 }
@@ -401,4 +402,21 @@ is_in_axis_box(element_logvec, box_corners)={
         )
     );
     return(1);
+}
+
+sum_inf_norm(L)=
+{
+    my(sumvec = L[,1]);
+    for(i = 1, matsize(L)[2], sumvec+=L[,i]);
+    return(normlp(sumvec));
+}
+
+verify_lattice_containment(~G, ~new_vec)=
+{
+print("New vector found: Initial reg = ", precision(matdet(lattice_lambda),10));
+print("WARNING: Expensive verification. Check if new found vector is truly a unit");
+bnflattice = get_log_lattice_bnf(bnfinit(G));
+print(precision(bnflattice^(-1)*new_vec~,10));
+
+breakpoint();
 }

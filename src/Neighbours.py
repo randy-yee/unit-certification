@@ -209,11 +209,15 @@ cubescan_unequal(idealmat, cvec, G, eps)={
 is_minimum(idealmat, v, G, eps)={
     my(normedbody);
     normedbody = cubescan_unequal(idealmat, valuationvec(G,v, column = 1), G, eps);
-    if (length(normedbody)!=0,
+    if (length(normedbody)!=0 && length(normedbody)!=1, \\sometimes accidentally captures itself
+        \\print(normedbody);
         return(0),
+        if( (length(normedbody) == 1) && (normedbody[1]!=v),
+            return(0);
+        );
         return(1));
 };
-
+\\ tried using this condition, but I think should not
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ This function will take in a column vector which represent coefficients wrt the integral basis and check if it is a minimum in the given ideal
@@ -320,7 +324,7 @@ expand_minset(idealmat, minset, G, axis)={
 		\\ Now scan cube with boundaries included.
 		expansion = cubescan_equal(idealmat, Cvector, G,eps);
 
-        for(i=1, length(expansion), expansion_set = setunion(expansion_set, [ flipvec(expansion[i]) ] ));     \\ This is our Set of minimal elements as column vectors
+        for(i=1, length(expansion), expansion_set = setunion(expansion_set, [ vec_flip_positive(expansion[i]) ] ));     \\ This is our Set of minimal elements as column vectors
 		if(DEBUG_EXPAND,
 		      print(" expansion_set elements: \n--", expansion_set);
 		      for(i=1, length(expansion_set), print("--", precision(valuationvec(G,nfbasistoalg(G,expansion_set[i])),10))); print("\n");
@@ -479,7 +483,7 @@ NEIGHBORS(G, idealmat, minima1, eps, p_avoid =1,target = 0)={
     D = idealdiv(G, idealmat, minima1); D=idealhnf(G,D);
     if(target != 0, adjusted_targ = target - log(abs(nfeltembed(G, minima1)))[1..G.r1+G.r2-1] );
     neighborlist = compute_one_neighbours(G, D, eps, p_avoid, adjusted_targ);
-    newlist = vector(length(neighborlist), i , flipvec(nfalgtobasis(G, nfeltmul(G, minima1, neighborlist[i]))) );
+    newlist = vector(length(neighborlist), i , vec_flip_positive(nfalgtobasis(G, nfeltmul(G, minima1, neighborlist[i]))) );
     newlist = Set(newlist);
     return(newlist);
 }
@@ -528,7 +532,6 @@ increase_collection(G, minima_set,check_element, boundary, region_type, adjusted
 \\ OUTPUT:
 \\ - the set of minima in the ideal J which lie in the box defined by Bvec
 COLLECT(G, idealmat, Bvec, eps, sphere = 0, target = 0)={
-
     my( Bvec_error,
         onevec=nfalgtobasis(G, 1),
         minima_collection = Set(),                                              \\ hold all minima in the cube defined by Bvec
