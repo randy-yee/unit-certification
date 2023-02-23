@@ -39,19 +39,6 @@ make_poly(coeff_list) = {
   return(output_polynomial)
 };
 
-\\ just a method for printing out matrices in a slightly nicer fashion
-printmat(M, digits=10) = {
-    my(mat_dimensions = matsize(M),
-    output_string = "";);
-    for(i = 1, mat_dimensions[1],
-        output_string="";
-        for(j = 1, mat_dimensions[2],
-            output_string = concat(concat(output_string, precision(M[i,j],digits)), "     ");
-        );
-        print(output_string);
-    );
-};
-
 /********************************************/
 /* VECTOR and MATRIX multiplication methods */
 /********************************************/
@@ -74,7 +61,6 @@ dividevector(y,u) = mulvec(y,invert_coordinates(u));
 
 /* Coordinate-wise multiply vector u1 with the inverse of vector u2 in R^n*/
 pointwise_vector_div(~u1,~u2) = pointwise_vector_mul(u1,invert_coordinates(u2));
-
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ INPUT: A vector v
@@ -111,12 +97,6 @@ inverse_expvec(v) = {
     xn = vector(length(xn), i, exp(xn[i]) );    \\ create a vector [exp(x[1]),exp(x[2]), ... exp(sum)]
     return(xn);
 }
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ INPUT: A vector v
-\\ OUTPUT: Vector with entries of [log(abs(v[i]))] as a column
-\\ Construct the log vector for x (coordinatewise). If length of x is r, then the logvector has length r-1 */
-logvector(~v) = vector(length(v), {i}, {log(abs(v[i]))} )~;
 
 /******************************************************************************/
 /* Returns an approximation of the vector v */
@@ -185,26 +165,11 @@ vec_less_than(~v1,~v2, axis = 0)={
 		if(length(v1)!= length(v2), print("v1, v2 not the same length. Error."); return(-1));
 		for(i =1, length(v1),
 				if(i != axis,
-
 						if(v1[i]-v2[i] >=0 , return(0););
 				);
 		);
 		return(1);
 }
-
-\\ Given two vectors v1 and v2, determines if all entries are within w of each other.
-\\ INPUT:
-\\ - v1 and v2 are real vectors,
-\\ - w is a positive real number.
-\\ OUTPUT:
-\\ - Return 1 if they are close, 0 otherwise.
-check_closeness(v1, v2, w)={
-    for(i=1, length(v1),
-        if(abs(v1[i]-v2[i]) > w, return(0));
-    );
-    return(1);
-} \\ end check_closeness
-
 
 \\ Computes the infinity norm of a vector v
 \\ INPUT:
@@ -405,10 +370,6 @@ check_ideal_reduced(G, ideal)=
     default(realbitprecision, temp_bit_precision);  \\#save and change precision
     while(iteration_vector != zero_vec,
         test_vector = column_lin_comb(~lll_ideal, ~iteration_vector);
-        \\if(vec_less_than(abs(nfeltembed(G, test_vector)), one_vec),
-        \\    print(test_vector, " embedding vec: ", nfeltembed(G, test_vector), "\n", abs(nfeltembed(G, test_vector)) );
-        \\    print(ideal^(-1)*test_vector);
-        \\);
         if(vec_less_than(abs(nfeltembed(G, test_vector)), one_vec),
             default(realbitprecision, mainbitprecision);    \\#restore precision
             return(0)

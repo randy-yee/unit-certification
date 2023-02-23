@@ -70,6 +70,7 @@ jump_complexity(n,q, loginfv) = {
 
 
 prec_compact(degree, logdisc,loginfv)={
+
   expression = ceil( (4*(degree^2))*logdisc + 2*(degree^4) -(degree^3 -24*(degree^2) -6)*log(degree) + 7 + (degree^2+2)*loginfv);
   return(expression);
 }
