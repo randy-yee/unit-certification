@@ -36,7 +36,7 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
 
     \\babystock_scale_factor =((2)^(unit_rank-1))*(log(abs(G.disc))/8)^(1/(2));              \\ increase this to make the babystock smaller
     \\babystock_scale_factor = (2^unit_rank) * log(abs(G.disc)) / 32;
-    print("BSGS: Babystock scaling factor ", precision(babystock_scale_factor,10));
+    print("BSGS: Babystock scaling factor ", precision(babystock_scale_factor,10), " B ", B);
 
     \\# Compute ratio of (full search region / babystock region)
     \\# any modification of the scale factor will shrink the babystock region
@@ -119,8 +119,6 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
     smallsquare = sqrt(  (abs(detLambda)/B)*g_n/b_n  );
     print("Old babystock volume value:  ", precision(smallsquare,10));
 
-    print("BSGS: Babystock scaling factor ", precision(babystock_scale_factor,10));
-
     \\# Compute ratio of (full search region / babystock region)
     \\# any modification of the scale factor will shrink the babystock region
     \\fullregion_to_babystock_ratio = (babystock_scale_factor)*abs(detLambda)/(smallsquare*B);
@@ -141,7 +139,10 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
     if(dimensions == 1,
         avec = vector(dimensions, i , fullregion_to_babystock_ratio);
     , \\else
-        if (norm_vr/B > 2, dimensions++);
+        \\if (norm_vr/B > 2, dimensions++); \\ previously we had this restriction, but it makes the babystock
+        \\ choice really bad, revisit and make sure it can be removed now that we use non-integral numbers
+
+        if (1, dimensions++);
         sides = max(1,sqrtn(fullregion_to_babystock_ratio, dimensions-1));             \\ approximate the sides with integers
 
         if(DEBUG_BSGS,print("(r-1)th root of target area  ", precision(sides,10)););
