@@ -69,7 +69,7 @@ m_star(G, const_C, jv)={
 
 get_pohst_j(G)={
     if(G.r2 == 0,
-        return(length(G.zk)-2);
+        return(0);
     ,\\ else
       return(min(2*G.r2, length(G.zk)-2));                                      \\ choice of j described in in F-P, p2772
     );
@@ -155,7 +155,7 @@ lower_regbound(G, K, eps, input_j = -1, k_limit = 0)={
     my(field_deg = length(G.zk), unit_rank = G.r1+G.r2-1,
         j_val,
         K_star,
-        real_IB = G[5][2],                      \\ This is a matrix G such that (Gv)^T * Gv = T2(v)
+        real_IB = G[5][2],                      \\ This is a matrix G such that (Gv)^T * Gv = T2(v) \\embed_real(G, G[5][1])
         SK = [],
         SK_units = Set(),
         zerovec = vector(G.r1+G.r2, i, 0),
@@ -169,7 +169,7 @@ lower_regbound(G, K, eps, input_j = -1, k_limit = 0)={
     , \\else
         j_val = input_j;
     );
-    \\print("Lowerbound: j= ", j_val);
+
     \\if(K < (1+sqrt(2))*length(G.zk), print("Error K is too small. "); return(0));       \\ check if K is big enough
     K_star = m_star(G, K, j_val);                                                         \\ define the value K*
 
@@ -180,7 +180,7 @@ lower_regbound(G, K, eps, input_j = -1, k_limit = 0)={
         SK = qfminim(real_IB~*real_IB, K+ eps, , 2 )[3];                                    \\ get the elements whose norm is smaller than K
         tt2 = getabstime();
     , \\
-        print("Pohst K is too large, searching up to the limit bound ", k_limit);
+        print("Pohst K is too large, searching up to the limit bound ", floor(k_limit));
         K = k_limit;
         tt = getabstime();
         SK = qfminim(real_IB~*real_IB, K+ eps, , 2 )[3];
@@ -236,10 +236,19 @@ lower_regbound(G, K, eps, input_j = -1, k_limit = 0)={
 \\ eps is the error
 \\ jval -1 and search limit are arguments for calculating the lower regulator bound
 \\ OUTPUT is a bound in the index of lattice_lambda as a subgroup of the unit lattice
-get_index_bound2(nf,lattice_lambda, eps, jval = -1, search_limit = 0)={
-    my(constK, lrb);
+get_index_bound2(nf,lattice_lambda, eps, jval = -1, search_limit = 0, outstring = "")={
+    my(constK, lrb, degree = poldegree(nf.pol));
+
+    \\# nf.zk is specified as LLL reduced in the pari documentation
     constK = nf[5][2]*nfalgtobasis(nf, nf.zk[length(nf.zk)]); constK = constK~*constK;
     constK = 2*constK;
+    numElementEstimate = (1+2*constK)^(degree);
+    if(outstring != "",
+        if (search_limit == 0,
+            write(outstring, "K: ", constK);,
+            write(outstring, "effective K ", floor(min(constK, search_limit)), " Limit: ", search_limit);
+        );
+    );
     lrb = lower_regbound(nf, constK, eps, jval, search_limit);
     \\write("bound2.txt", "LOGLAT: ", type(lattice_lambda),precision(lattice_lambda,10),"\nDET: ", precision(abs(matdet(lattice_lambda)),10), "  \nLowerbound: ", lrb );
     ceil(unscaled_determinant(nf, lattice_lambda)/lrb );
