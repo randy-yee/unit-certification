@@ -121,6 +121,7 @@ prec_pthroot(n, B, logdisc, loginfv, logpsi_eta)={
 
 prec_rigorous(n, logdisc, logsumv, logdetlamp)={
   expression = (4*n^2+1)*logdisc +2*n^4 -(n^3-24*n^2-4)*log(n) +(n^2+2)*logsumv+2;
+  print("REQ_RIG ",ceil(REQ_RIG));
   return(expression);
 }
 

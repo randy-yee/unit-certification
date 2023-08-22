@@ -123,8 +123,8 @@ print("Tests commented out bsgs")
     bsgs_output= bsgs(K1,cpct_units, B, 25, scanRadius, eps,20,"alltest.txt");
     end_time = getabstime();
     totaltime +=(end_time- start_time);
-    print("BSGS time: " ,totaltime);
-    GP_ASSERT_WITHIN_RATIO(totaltime, 5712, 0.1);
+    print("BSGS time: " ,totaltime, " Expected ", 4900);
+    GP_ASSERT_WITHIN_RATIO(totaltime, 3700, 0.1);
     \\\log version with exact check is about 4900
     \\\ inexact check was also about 4900
     \\\ exact check was about 3700
