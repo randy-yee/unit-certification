@@ -407,8 +407,27 @@ is_in_axis_box(element_logvec, box_corners)={
 sum_inf_norm(L)=
 {
     my(sumvec = L[,1]);
-    for(i = 1, matsize(L)[2], sumvec+=L[,i]);
+    for(i = 2, matsize(L)[2], sumvec+=L[,i]);
     return(normlp(sumvec));
+}
+
+get_minimal_length(~lattice)=
+{
+    GP_ASSERT_TRUE(length(lattice) > 0);
+    my(minimal_vec_length = norml2(lattice[,1]));
+
+    for(ii = 1, length(lattice),
+        if (norml2(lattice[,ii]) < minimal_vec_length, minimal_vec_length = norml2(lattice[,ii]));
+    );
+    minimal_vec_length = sqrt(minimal_vec_length);
+    return(minimal_vec_length);
+}
+
+column_sum(latticeL)=
+{
+    my(col_sum = latticeL[,1]);
+    for(i = 2, matsize(latticeL)[2], col_sum+=latticeL[,i]);
+    return(col_sum;)
 }
 
 verify_lattice_containment(~G, ~new_vec)=
