@@ -32,7 +32,7 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
     b_n =  baby_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
     \\# This is the basic calculation for the babystock region
     smallsquare = sqrt(  (abs(detLambda)/B)*g_n/b_n  );
-    print("Old babystock volume value:  ", precision(smallsquare,10));
+    \\print("Old babystock volume value:  ", precision(smallsquare,10));
 
     \\babystock_scale_factor =((2)^(unit_rank-1))*(log(abs(G.disc))/8)^(1/(2));              \\ increase this to make the babystock smaller
     \\babystock_scale_factor = (2^unit_rank) * log(abs(G.disc)) / 32;
@@ -102,6 +102,7 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
     return(avec);
 }
 
+\\\# dimensions = unit rank
 non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_factor, REQ_BSGS)={
     my(smallsquare,
         sides,
@@ -117,16 +118,18 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
     g_n = giant_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
     b_n =  baby_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
     smallsquare = sqrt(  (abs(detLambda)/B)*g_n/b_n  );
-    print("Old babystock volume value:  ", precision(smallsquare,10));
+    \\print("Old babystock volume value:  ", precision(smallsquare,10));
 
     \\# Compute ratio of (full search region / babystock region)
     \\# any modification of the scale factor will shrink the babystock region
     \\fullregion_to_babystock_ratio = (babystock_scale_factor)*abs(detLambda)/(smallsquare*B);
 
-    \\ assigning a volume of the babystock
+    \\# assigning a volume of the babystock
     smallsquare = babystock_scale_factor;
-    fullregion_to_babystock_ratio = abs(detLambda)/(smallsquare*B);
 
+    \\# the product of the a_i should be roughly equal to this value
+    fullregion_to_babystock_ratio = abs(detLambda)/(smallsquare*B);
+    print("babystock size in subdivisions function: ", precision(smallsquare,10), " " , precision(fullregion_to_babystock_ratio,10));
     write(OUTFILE1, " babystock_vol = ", precision( smallsquare,10),".  Region/babystock ratio: ", strprintf("%10.5f",fullregion_to_babystock_ratio) );
 
     if(DEBUG_BSGS,
