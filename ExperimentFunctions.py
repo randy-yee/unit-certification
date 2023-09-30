@@ -40,19 +40,20 @@ scale_lattice_column(loglat, col, factor)={
 generateFileStrings(signature_string, suffixString, auxilliary)=
 {
     outfilestring = strexpand("data/data-bsgs-",signature_string,suffixString);
-    print("Output directed to file ", outfilestring);
+
     \\infilestring = concat(concat("input/test-poly-",signature_string),".gp");
     infilestring = concat(concat("input/polynomial-",signature_string),".gp");
     OUTFILE1 = outfilestring;
 
     if(length(aux) >1 && (type(aux[2]) == "t_STR"),
         OUTFILE1 = aux[2];
-        print("GFS: ",OUTFILE1 );
+
     );
     if(length(aux) >2 && (type(aux[3]) == "t_STR"),
         infilestring = aux[3];
-        print("GFS: ",infilestring );
     );
+    print("Output directed to file ", OUTFILE1);
+    print("Input File is: ",infilestring );
     return([OUTFILE1, infilestring]);
 }
 
