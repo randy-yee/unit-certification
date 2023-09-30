@@ -84,6 +84,53 @@ outputInstanceInfo(fNum, K, lglat_new, reg1, signature_string, prec)={
     write(OUTFILE1, strprintf("%-20s %-20s %s\n%-20.9F %-20.9F %d\n", "Log(Disc) ", "Regulator: ", "Disc:", log(abs(K.disc)), reg1, K.disc));
     write(concat("data/table-bsgs-", signature_string), strprintf("%-20.9F %-20.9F %d", log(abs(K.disc)), reg1, K.disc));
 }
+
+get_baby_stock_fit_size(urank, deg_n, detLambda)=
+{
+    my(coeffA, coeffB, coeffC, sqrt_reg, log_sqrt_reg);
+    sqrt_reg = sqrt(abs(detLambda));
+    log_sqrt_reg = log(sqrt_reg);
+
+    \\ a*x*log(x) + b*sqrt(log(x)) + c
+
+    coeffA = 0.000368562*(deg_n^2) -0.002715*deg_n - 0.0000533746*(urank^2)+0.00687096;
+    coeffB = (262.421 - 96.1079*deg_n + 10.4862*(deg_n^2) + 171.561*urank - 16.4892*deg_n*urank - 30.3957*(urank^2));
+    coeffC = (-110.308 *(2^urank)+ 221.575*deg_n -15.2457*(deg_n^2)-779.873*sqrt(urank) + 159.539 *(urank^2));
+
+    \\# absolute value on sqrt(log_sqrt_reg) prevents complex numbers. In this case
+    \\# the discriminant is so small the calculation barely matters
+    estimate = floor(coeffA*sqrt_reg*log_sqrt_reg+coeffB*abs(sqrt(log_sqrt_reg))+coeffC);
+    return(estimate);
+
+}
+
+hybrid_balance_calculator(urank, deg_n, detLambda)=
+{
+    \\# these coefficients are in terms of sqrtdetLambda
+    \\# (see estimate formula in get_baby_stock_fit_size)
+    bsgsCoeffA = 0.000368562*(deg_n^2) -0.002715*deg_n - 0.0000533746*(urank^2)+0.00687096;
+    bsgsCoeffB = (262.421 - 96.1079*deg_n + 10.4862*(deg_n^2) + 171.561*urank - 16.4892*deg_n*urank - 30.3957*(urank^2));
+    bsgsCoeffC = (-110.308 *(2^urank)+ 221.575*deg_n -15.2457*(deg_n^2)-779.873*sqrt(urank) + 159.539 *(urank^2));
+
+    a_1 = 3.18006*10^(-11);
+    b_1 = -7.98212*10^(-7);
+    c_1 = - 2.8872*10^(-7);
+    d_1 = 2.05083*10^(-6);
+    a_2 = -5.17116*10^(-15); b_2 = 0.0000156797; c_2 = - 0.000028529;
+    d_2 = -0.0000485853; e_2 = -0.0000149705;
+    a_3 = 0.0178487;
+    b_3 = 0.0000275878;
+    c_3 = -0.461283 ;
+    d_3 = -0.289706 ;
+    e_3 = 1.45846;
+    pmaxCoeffA = a_1*deg_n^5 + b_1*sqrt(deg_n) + c_1*(1/(urank^5)) + d_1;
+    pmaxCoeffB = a_2*(deg_n^5*urank^10)  + b_2*urank + c_2*log(urank) + d_2*(2^(-deg_n)) + e_2;
+    pmaxCoeffC = a_3*(deg_n^3/urank^3) + b_3*(deg_n^3*urank^3) + c_3*(deg_n/urank) + d_3*urank + e_3;
+
+    first_guess = -pmaxCoeffC + bsgsCoeffC + bsgsCoeffA*sqrt(detLambda)+bsgsCoeffB*sqrt(log(detLambda));
+    first_guess = first_guess/(bsgsCoeffA+pmaxCoeffA);
+    return(first_guess);
+}
 \\# loop_range is a triple indicating the start, end and increment of the loop
 \\# note tha the input files have a specific form, and the vector read in is always called data
 
