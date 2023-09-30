@@ -6,8 +6,8 @@ eps = 10^(-100);      \\ error tolerance
 sqrt2 = sqrt(2);
 DEBUG_CPCT = 0;
 DEBUG_REDDIV = 0;
-
-\\\\ BSGS functions
+DEBUG_BSGS = 0;
+\\\\ Setup functions
 setInstanceVariables(readData)={
   K = nfinit(readData[1]);
   lglat = process_complex_loglattice(K ,readData[3]);
