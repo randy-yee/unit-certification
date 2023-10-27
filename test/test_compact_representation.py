@@ -7,7 +7,7 @@ read("src/BSGSHelper.py")
 \\ read("src/Neighbours.py");
 }
 print("WARNING!!:: remember to uncomment these cases after!");
-/*
+
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ test cases for compact_rep_buchmann and compact_reconstruct
 {
@@ -282,7 +282,7 @@ print("WARNING!!:: remember to uncomment these cases after!");
     print("Time spent: ",total_time);
     GP_ASSERT_WITHIN_RATIO(total_time, 5400, 0.1); \\ old timing 11000 Jan 2023
 }
-*/
+
 {
     print("Slow Cpct Rep Example");
     \\\ This is blocking the use of collision_check2, which should regenerates the babystock elements from their logs
@@ -301,15 +301,9 @@ print("WARNING!!:: remember to uncomment these cases after!");
     print("Input Log ", precision(minima_log, 20));
     verify_generator_with_list(K, idealI, compactTracking);
     GP_ASSERT_NEAR(norml2(trackerLogarithm(K, ~compactTracking, rank)- minima_log), 0, 2^(-10));
-    /*
-    realI = K[5][1]*idealI;
-    embeddedI = embed_real(K, realI);
-    LLL_op = qflll(embeddedI);
-    idealI_LLL = realI*LLL_op;
-    */
 
     print("Problem case1:");
-    ending_cpct_rep = compact_rep_full_input(K, minima_log, O_K, 10^(-8), 1,1);
+    ending_cpct_rep = compact_rep_full_input(K, minima_log, idealI, 10^(-8), 1,1);
     GP_ASSERT_NEAR(norml2(log_from_cpct(K,ending_cpct_rep)- minima_log), 0, 2^(-10));
 }
 
@@ -328,10 +322,33 @@ print("WARNING!!:: remember to uncomment these cases after!");
     GP_ASSERT_NEAR(norml2(trackerLogarithm(K,cpctList, K.r1+K.r2-1)- minima_log), 0, 2^(-10));
     print("Input Log ", precision(minima_log, 10));
 
-    ending_cpct_rep = compact_rep_full_input(K, minima_log, O_K, 10^(-8), 1,1);
+    ending_cpct_rep = compact_rep_full_input(K, minima_log, idealI, 10^(-8), 1,2);
     print("cpct log ", precision(log_from_cpct(K,ending_cpct_rep), 10));
     GP_ASSERT_NEAR(norml2(log_from_cpct(K,ending_cpct_rep)- minima_log), 0, 2^(-10));
 }
+
+{
+/*Note that this element is not in OK, which is why it fails
+
+K = nfinit(x^5 - 7*x^4 + 198*x^3 - 4590*x^2 + 16754*x - 86817);
+O_K = matid(poldegree(K.pol));
+print("Case 3: log(disc)=", precision(log(K.disc),10));
+\\element = [-16366187066269271/1669253678097915817, -814384842541957/1669253678097915817, -197448717903823/3338507356195831634, -21429093735869/3338507356195831634, -1278428892130/1669253678097915817]~;
+element = [130616635949463525736257186134400353493276043/43971142765977846567823208041863473291662706581582034436, 275448752748853343870502424600491920992833219/117256380709274257514195221444969262111100550884218758496, 14045341919839801260871029466488687666141091/58628190354637128757097610722484631055550275442109379248, 4309477412166424722868085030603950312521935/175884571063911386271292832167453893166650826326328137744, 2359604739081971666277293669565299553561727/351769142127822772542585664334907786333301652652656275488]~;
+\\denom = denominator(element);
+\\element *= denom;
+element_log = log(abs(nfeltembed(K, element)));
+print("Input Log ", precision(element_log, 10));
+
+\\new_precision = prec_compact(poldegree(K.pol), ceil(log(abs(K.disc))/log(2)), normlp(element_log));
+default(realbitprecision, 500);
+print("precision: ", default(realbitprecision));
+alphaOK = idealdiv(K, O_K, element);
+returned_element = compact_rep_full_input(K, element_log, alphaOK, 10^(-10), 1,2);
+*/
+
+}
+
 {
 /*
     a = [];
