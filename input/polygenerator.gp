@@ -248,14 +248,81 @@ random_poly(r,s, magnitude)={
     return(candidate);
 }
 
+
+
+generate_polynomial_list(file_prefix, disc_start, disc_cap, interval_gap, sample_size, r1, r2)={
+
+	print("Gathering polynomials");
+
+	fields_per_magnitude = sample_size;
+	magnitude_jump = interval_gap;
+	for(r =r1, r1,
+		for(s = r2, r2,
+			writefile = concat([file_prefix, Str(r),"-",Str(s)]);
+			\\if(r+2*s < 7 || r+2*s > 14 || r+s-1 > 6, ,
+			if(0, ,
+					write(writefile, "\\\\ Signatures ", r, " ",s);
+					write(writefile, data," = [\\" );
+					discsize = disc_start;
+					while(discsize<disc_cap,
+							tally = 0;
+							while(tally < fields_per_magnitude,
+								pol1 = random_poly(r,s, discsize);
+								K1 = bnfinit(pol1, 1);
+								if( (  abs( log(abs( poldisc(pol1) ) )/log(10)-discsize )<1.1   )&& K1.clgp.no == 1,
+									tally+=1;
+									if(tally == fields_per_magnitude && ((discsize+magnitude_jump) >= disc_cap),
+										write(writefile, "[" , pol1, ", " , poldisc(pol1), ", \\\n",  K1[3]  , "] \\" );
+									,
+										write(writefile, "[" , pol1, ", " , poldisc(pol1), ", \\\n",  K1[3]  , "], \\" );
+									);
+							  );
+							);
+
+							discsize += magnitude_jump;
+					);
+					write(writefile, "];");
+			);
+		);
+	);
+}
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\\ MAIN
 {
+	OUTPUT_FILE_PREFIX = "extra3-polynomials-";
+	STARTING_DISC_RANGE = 20;
+	ENDING_DISC_RANGE = 30;
+	DISC_GAP_SIZE = 1;
+	DISC_SAMPLE_SIZE = 3;
+	REAL_EMBEDDINGS = 1;
+	COMPLEX_EMBEDDINGS = 2;
+	generate_polynomial_list(OUTPUT_FILE_PREFIX, \
+													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
+													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
+													5, 0);
+	/*
+	generate_polynomial_list(OUTPUT_FILE_PREFIX, \
+													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
+													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
+													0, 2);
+	generate_polynomial_list(OUTPUT_FILE_PREFIX, \
+													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
+													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
+													2, 1);
+	generate_polynomial_list(OUTPUT_FILE_PREFIX, \
+													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
+													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
+													1, 2);
+	generate_polynomial_list(OUTPUT_FILE_PREFIX, \
+													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
+													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
+													0, 3);
+	*/
+}
 
-maxreal = 5;
-maxcomplex = 0;
-
-\\ testing new complex root choosing function
-\\for(i=1, 500, croot = random_croot_norm(10^10, 1.0); print(precision(croot,10), "  " round(norm(croot))) );
-
+/*
+{
 print("Gathering polynomials");
 
 file_prefix = "polynomial-new-";
@@ -263,8 +330,8 @@ fields_per_magnitude = 3;
 magnitude_jump = 3;
 
 disc_cap = 30;
-for(r =1, 1,
-	for(s = 1, 1,
+for(r =5, 5,
+	for(s = 0, 0,
 		writefile = concat([file_prefix, Str(r),"-",Str(s)]);
 		\\if(r+2*s < 7 || r+2*s > 14 || r+s-1 > 6, ,
 		if(0, ,
@@ -288,3 +355,4 @@ for(r =1, 1,
 	);
 );
 }
+*/
