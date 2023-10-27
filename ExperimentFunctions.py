@@ -540,7 +540,7 @@ for(i=start, end,
 
     oldB = abs(log(reg1))*2^poldegree(K.pol)*reg1^(1/3);
     balanceB = hybrid_balance_calculator(r, n, reg1);
-    breakpoint();
+
     balanceB = min(reg1, balanceB);
 
     print("Degree: ", n, " UnitRank = ",r, " Original B ", floor(oldB));
@@ -579,10 +579,12 @@ for(i=start, end,
     [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat_new, ~reg1);
     REQ_RIG = prec_rigorous(n, logdisc, log(infinity_norm(sumv)),log(abs(reg1))  );
     */
+
     write(OUTFILE1, "hybrid B ", precision(balanceB,10), "  Old B:  ", precision(oldB, 10));
 
 
     print("Running Pohst Algorithm");                                           \\ lglat_new is the input lattice, pohst_out_lattice is the result after ruling out index divisors up to pohstB
+
     unitvector_cpct = cpct_from_loglattice(K, lglat_new, eps);                  \\ computation of compact reps
 
     tbefore = getabstime();
@@ -632,7 +634,6 @@ for(i=start, end,
     bsgs_out_lattice = log_lattice_from_compact_set(K, bsgs_output);
     outreg = unscaled_determinant(K,bsgs_out_lattice);
 
-    \\write(OUTFILE1,"BSGS Output Regulator: ", precision(outreg,10 ), ". Ratios: ", (modpair1[2]-inputreg/outreg)< eps);
     write(OUTFILE1, "bsgs time ",precision(bsgstime,10), " In minutes: ", precision(bsgstime/60000.0,15) );
     write(OUTFILE1,"Overall time: ", precision(bsgstime+lptime , 10) , " In minutes: ", precision((bsgstime+lptime)/60000.0,15) );
 
