@@ -213,25 +213,7 @@ one_massive_qfminim(G, giant_sublattice, S_radius)={
     return(babystock1);
 }
 
-neighbour_search(G,lattice_lambda, babystock_region, ~babystock, giant_sublattice, eps)=
-{
-    my(mid_ideal, nu, logdist);
-    print("Using neighbors for babystock\n",precision(babystock_region,10));
-    [mid_ideal, nu, logdist] = get_initial_neighbour(G, giant_sublattice, field_deg,eps);
 
-    Mset2= COLLECT_BABYSTOCK(G, mid_ideal, logdist[1..length(lattice_lambda)], babystock_region, eps);
-    [lattice_lambda, newctr] = check_babystock_for_units(Mset2,lattice_lambda,G,eps);
-
-    for(ctr=1, length(Mset2),
-        if(mapisdefined(babystock, Mset2[ctr][1]),
-            existing_entry = mapget(babystock, Mset2[ctr][1]);
-            repeatflag = is_repeat_babystock(existing_entry, Mset2[ctr][2],eps);
-
-            if(repeatflag==0, mapput(babystock, Mset2[ctr][1], concat( mapget(babystock, Mset2[ctr][1]), [Mset2[ctr][2]]) );),
-            mapput(babystock, Mset2[ctr][1], [Mset2[ctr][2]]);
-        );
-    );
-}
 
 \\ subalgorithm for bsgs, adjust by the radius S
 expand_babystock_region(babystock_region,S_radius )={
@@ -242,13 +224,4 @@ expand_babystock_region(babystock_region,S_radius )={
     babystock_region[2] = babystock_region[2] + S_radius_vector;
 
     return(babystock_region);
-}
-
-\\ subalgorithm in the bsgs method, get the initial neighbour to start
-\\ the babystock search when using the neighbours method
-get_initial_neighbour(G, giant_sublattice, field_deg,eps)={
-    my(middle_babystock);
-    middle_babystock = vector(length(giant_sublattice), i, 1/2);
-    middle_babystock = giant_sublattice*(middle_babystock~);
-    return(giantstep(matid(field_deg), middle_babystock, G, field_deg, eps);)
 }
