@@ -1,12 +1,12 @@
 In order to use the function pari_prime_check, which executes the fast index divisor check, 
 an extra function needs to be added to the pari library.
 
-I'm sure there are better ways to do this, but one way is as follows :
+I'm sure there are better ways to do this, but possibility is as follows :
 
 1) Paste the function from the file buch3-insert.c in this directory into pari's buch3.c 
 located in src/basemath
  
-2) In src/headers/paridecl.h paste the following line 
+2) In src/headers/paridecl.h paste the following line: 
 GEN     pari_prime_check(GEN nf, GEN beta, GEN prim, GEN bad, GEN cpct);
 into the buch3.c header section.
  
@@ -14,14 +14,11 @@ into the buch3.c header section.
 {"pari_prime_check",0,(void*)pari_prime_check,10,"GGGGG","pari_prime_check(nf,beta, prim,bad, cpct): primecertify. Uses matrix relations to check prime does not divide index. Returns 1 if successful, 0 after 2r ideals have been considered without success"}
 into the appropriate alphabetical spot
 
-Once complete, build pari (probably you want to do so locally) and everything should work
+Once complete, build pari (probably you want to do so locally) and everything should work.
 
-Please excuse the .py extensions, my text editor does not highlight .gp file syntax properly!
-The AllTest.gp and experiment- files as samples for how to make use of the functions within.
+Please excuse the .py extensions, I do not have a text editor that highlights .gp files properly, so this is a poor man's workaround.
+The AllTest.gp and experiment- files are samples for how to make use of the functions within.
 experiment files read in precomputed log lattice data from the input folder in order to avoid having to execute bnfinit for large discriminant input.
-Some of the larger discriminant fields do not work, which currently I suspect is because the log lattice data
-was not computed to sufficient precision, but may also be due to a bug.
+Please contact me if there are any bugs and I will do my best to address them, thank you!
 
-
-
-Test cases are currently in progress, but far from complete.
+Test cases are currently in progress

@@ -602,7 +602,10 @@ complex_log_from_cpct(G, cpct_rep)={
     my(intermediate, lvec_complex = vector(G.r1+G.r2,k,0) ) ;
     for(j=1, length(cpct_rep[1]),
         lvec_complex*=2;
+        print("embedding");
         intermediate = log(nfeltembed(G, nfeltdiv(G, cpct_rep[1][j], cpct_rep[2][j])));
+        print(precision(intermediate,10));
+        print("done embedding");
         lvec_complex+= intermediate;
       );
       return(lvec_complex);
