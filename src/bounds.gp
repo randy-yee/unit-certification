@@ -75,6 +75,20 @@ prec_compact(degree, logdisc,loginfv)={
   return(expression);
 }
 
+prec_reduce(G)=
+{
+  my(n = poldegree(G.pol),
+    ldisc = log(abs(G.disc))/log(2),
+    m = G.r1 +G.r2,
+    prec = 0
+  );
+  prec = (n^2+2*n+1+1/n)*ldisc + ((3*n^3 - 3*n^2 +3*n)/4)+ ((2*n^2+6*n+3)/2)*log(n)/log(2);
+  prec += (m/2)*log(n)/log(2) + 3*m + 2*log(m)/log(2) -m*log(m-1)/log(2) + 8;
+
+  oldprec = 2*ldisc + (n+1)^2*(10*log(n)/log(2) + 3*n*(n-1)/4 -(n-1/2)*log(n)/log(2)+ldisc + (n^2+1)*ldisc+ log(abs(G.disc)+2)/log(2) );
+  print(ceil(oldprec), "  ", ceil(prec));
+  return(ceil(prec));
+}
 prec_baby(n,logdisc, infsumt)={
   expression = (4*(n^2)*logdisc +2*n^4+(-n^3+24*n^2+6)*log(n) +7 +(n^2+4)*log(infsumt + (sqrt(n)/4)*logdisc) );
 }
@@ -121,6 +135,7 @@ prec_pthroot(n, B, logdisc, loginfv, logpsi_eta)={
 
 prec_rigorous(n, logdisc, logsumv, logdetlamp)={
   expression = (4*n^2+1)*logdisc +2*n^4 -(n^3-24*n^2-4)*log(n) +(n^2+2)*logsumv+2;
+  print("REQ_RIG ",ceil(REQ_RIG));
   return(expression);
 }
 
@@ -150,8 +165,8 @@ forstep(logdisc = 20, 50, 5,
     \\giant_complexity = volG*n^5*q^2*(logdetlamp+n^2);
 
     \\pohst_complexity = indexLambda * r*n^5*q^2*(n^2 + logdetlamp) + r*n^2*p*log(p) + (3*logdisc+n^2+n);
-    \\print("- babystock : ",baby_complexity);
-    \\print("- giantstep : ",giant_complexity);
+    \\print("- baby stock : ",baby_complexity);
+    \\print("- giant step : ",giant_complexity);
     \\print("-     pohst : ",pohst_complexity);
   );
 );

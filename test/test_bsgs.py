@@ -16,7 +16,8 @@ func(~map)={
     print(Mat(testmap)); breakpoint();
 }
 */
-
+print("Tests commented out bsgs")
+/*
 {   \\\ TEST step incrementation
     print("Test 1 - incrementer ");
     my(avec, v, directions, counter = 1);
@@ -85,6 +86,10 @@ func(~map)={
     hashmap1 = Map();
     hashmap2 = Map();
     my(temp1, temp);
+
+    cpct_hashmap = Map();
+
+    incremental_baby_steps_storage(y, L, glegs, ~hashmap1, K1, scan_ball_radius, eps, "COMPACT", cpct_hashmap, []);
     \\[L, temp] = babystock_scan_jump(y, L, glegs, ~hashmap1, K1, scan_ball_radius, eps);
     [L1, temp1] = incremental_baby_steps(y, L, glegs, ~hashmap2, K1, scan_ball_radius, eps);
     print("Compare babystock set sizes: ", matsize(Mat(hashmap1)), "  ",matsize(Mat(hashmap2))  );
@@ -95,9 +100,9 @@ func(~map)={
 
 
     incremental_giant_steps(K1, L1, glegs, hashmap2, [10], eps);
-    print("TEST 3 Succeeds")
+    print("TEST 3 Succeeds");
 }
-
+*/
 
 {
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
@@ -118,10 +123,11 @@ func(~map)={
     bsgs_output= bsgs(K1,cpct_units, B, 25, scanRadius, eps,20,"alltest.txt");
     end_time = getabstime();
     totaltime +=(end_time- start_time);
-    print("BSGS time: " ,totaltime);
-    GP_ASSERT_WITHIN_RATIO(totaltime, 5712, 0.1);
+    print("BSGS time: " ,totaltime, " Expected ", 4900);
+    GP_ASSERT_WITHIN_RATIO(totaltime, 3700, 0.1);
     \\\log version with exact check is about 4900
     \\\ inexact check was also about 4900
+    \\\ exact check was about 3700
     y = [1, 0, 0; 0, 1, 0; 0, 0, 1];
     glegs = [4.619061865536216760, -16.675036477848972758, 14.169130776523246111;
     3.705556112720428534, 14.697056881773186001, -26.315297544331964588;

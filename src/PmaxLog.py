@@ -128,8 +128,7 @@ check_in_unitlattice(G, v, eps)={
     log_mu_p = v - log_mu[1..r];
     \\log_mu_p = v - log_mu;
     log_mu_p2 = v2 - log_mu;
-    print("  v       ", precision(v_extra,10));
-    print("  log_mu  ", precision(log_mu,10));
+
     print("log_mu_p  ", precision(log_mu_p,10), "   ", precision(log_mu_p2,10));
     if(DEBUG_MEMBERSHIP,
     print("\n Original membership check: \n \
@@ -178,7 +177,6 @@ check_in_unitlattice(G, v, eps)={
     );
 
     return(0);
-
 }
 
 exponentiated_embedding(G, logvec)={
@@ -466,7 +464,7 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
                 test_eta_k = new_units*eta_exp_mat[,k];
                 test_eta_k = test_eta_k/p;
 
-                /*
+                /*# commented out because method can't be proven
                 eta_k_complex_log = vector(G.r1+G.r2, t, 0);
                 for(i =1, length(unitvector_cpct),
                     eta_k_complex_log += eta_exp_mat[i,k]*complex_log_from_cpct(G, unitvector_cpct[i]);
@@ -477,11 +475,17 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
                 print("complex eta_k ",precision(eta_k_complex_log,10));
                 */
                 lattice_check_t1 = getabstime();
+
+                \\\# here, test_eta_k is known on all coordinates because
+                \\\# it is a lin comb. of log vectors of units, so the sum of coordinates is just 0
                 solutionflag = check_in_unitlattice(G, test_eta_k~, eps);
-                \\solutionflag1=complex_check_in_unitlattice(G, eta_k_complex_log, eps);
+
+                \\solutionflag1=complex_check_in_unitlattice(G, eta_k_complex_log, eps); # commented out because method can't be proven
                 \\print(solutionflag1, "  ", solutionflag);
                 t_pthRootAfter = getabstime();
                 time_pthRoot+= (t_pthRootAfter - t_pthRootBefore);
+
+                \\# commented out because method can't be proven
                 \\if (solutionflag != complex_check_in_unitlattice(G, eta_k_complex_log/p, eps), print("flags not matching");breakpoint());
 
                 \\print("DEBUGGING: lattice check time: ", getabstime() - lattice_check_t1);
@@ -545,9 +549,11 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
             betavec = unitvector_cpct;
             compact_lcm = lcm_denominators(unitvector_cpct);                    \\ used as the 'bad' input to pari_prime_check, ignores non-coprime primes during the equation finding step
         );
-        if(p>500,
-            print("PthRoot: ", time_pthRoot, "\nUpdate: ", time_update ); breakpoint());
-        \\if (getabstime()-initialTime > (12*60*60*1000), write(OUTFILE1, G.pol, " time exceeds 12 hours");break;);
+        \\if(p>500,
+        \\    print("PthRoot: ", time_pthRoot, "\nUpdate: ", time_update ); breakpoint());
+
+        if (getabstime()-initialTime > (12*60*60*1000), write(OUTFILE1, G.pol, " time exceeds 12 hours");break;);
+
         p = nextprime(p+1);
     );
     return(new_units);

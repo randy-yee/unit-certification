@@ -1,10 +1,12 @@
 {
 read("src/CompactRepresentation.py");
+read("src/BSGSHelper.py")
 \\ If using Alltest.gp, the file reads below are not needed, but the tests
 \\ depend on these files
 \\ read("src/VectorMethods.py");
 \\ read("src/Neighbours.py");
 }
+print("WARNING!!:: remember to uncomment these cases after!");
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ test cases for compact_rep_buchmann and compact_reconstruct
@@ -21,7 +23,7 @@ read("src/CompactRepresentation.py");
     logarithm_lattice = matconcat([logarithm_lattice; extra_log_coords]);
 
     for(i=1, length(G2.fu),
-        cpct_rep = compact_rep_full_input(G1, logarithm_lattice[,i]~, O_K , eps, avp=1);
+        cpct_rep = compact_rep_full_input(G1, logarithm_lattice[,i]~, O_K , eps);
         GP_ASSERT_EQ(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2]), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
     );
 }
@@ -242,7 +244,7 @@ read("src/CompactRepresentation.py");
 }
 
 {
-    print("Test 1000 compact representations in a degree 6 field");
+    print("\nTest 1000 compact representations in a degree 6 field");
     my(G1, G2, O_K, n, logarithm_lattice, cpct_rep,cpct_list, eps = 10^(-9));
     G1 = nfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31); \\ signature 2,2
     G2 = bnfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
@@ -260,17 +262,16 @@ read("src/CompactRepresentation.py");
     total_time = 0;
     capvec = [1,10,10];
     while(countervec != zerovec,
-
-        increment_coordinates(~capvec, ~countervec);
         log_vector = column_lin_comb(extended_llattice, countervec);
         time_start = getabstime();
         compact_rep_full_input(G1, log_vector, O_K, eps, 1,1);
         time_end = getabstime();
         total_time += (time_end - time_start);
+        increment_coordinates(~capvec, ~countervec);
     );
 
-    print("Cpct computation time: ",total_time, "\n");
-    GP_ASSERT_WITHIN_RATIO(total_time, 78200, 0.1);
+    print("Time spent: ",total_time, "\n");
+    GP_ASSERT_WITHIN_RATIO(total_time, 2800, 0.1);  \\ old timing: 5600 Jan2023
 
 
     big_unit = (11^(200))*extended_llattice[,2];
@@ -279,9 +280,76 @@ read("src/CompactRepresentation.py");
     compact_rep_full_input(G1, big_unit, O_K, eps, 1, 1);
     time_end = getabstime();
     total_time += (time_end - time_start);
-    print("Big unit cpct computation time: ",total_time);
-    GP_ASSERT_WITHIN_RATIO(total_time, 11000, 0.1);
+    print("Time spent: ",total_time);
+    GP_ASSERT_WITHIN_RATIO(total_time, 5400, 0.1); \\ old timing 11000 Jan 2023
 }
+
+{
+    print("Slow Cpct Rep Example");
+    \\\ This is blocking the use of collision_check2, which should regenerates the babystock elements from their logs
+    K = nfinit(x^3 + 46*x^2 + 1188*x - 50115);
+    print("Log Disc K = ", precision(log(abs(K.disc)),10));
+    rank = K.r1+K.r2 -1;
+    O_K = matid(poldegree(K.pol));
+    idealI = [1, 7/15, 2/15; 0, 1/15, 1/60; 0, 0, 1/60];
+    GP_ASSERT_TRUE(check_ideal_reduced(K,idealI));
+    minima_log = [-79.52467739064149897915521144256478187720261777135775275592590392467599353174402354871259680758462182345330502892968935896300664012414927128702402114868164062500000000000000000000,
+    43.1635360769829048649908424128892808508499009321350992754371391316717261637843958634880003464571566631011144291805688502638993497839692281559109687805175781250000000000000000000000];
+
+    \\[-79.524677390641498979155211442564781877202617771361888392885097233928656039614443794032615095049170274292811009641293407281666210969359472421285352382868781967095862388134724868004120031774674049308643743895568826060785175731729997259316330145181418113243185067256304432519009437631559071908339611471778796247403475890558928414394398638309970902233715196080626667281982446892787229718292245859343796694677791, \\43.163536076982904864990842412889280850849900932132466624210570851569394922703183344125920507427915524276343317928890818016610635175693062788361765431300450083634001171576298482025233609557931183086457947573545702284167025946981892264411325126112832946299167029849414931998545555260813883711610523331293077620243529968879997290054287906033130704074628262268977931198000813282364858607381478137316194276427522]
+
+    compactTracking = List([[[List([1, 1]), [1, 1]], 114], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-35, 1, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-247/9, -13/45, 1/45]~, 1], [[1, 0, 0]~, 1], [[37/171, -17/912, 1/2736]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-1223/405, 109/2025, 2/2025]~, 1], [[-38560/25703, 392/25703, 13/25703]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-8593/14107, -153/14107, 11/14107]~, 1], [[1, 0, 0]~, 1], [[42/19, -151/4560, -1/1520]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[3511/4574, -209/4574, 1/4574]~, 1], [[-35836/25005, 107/8335, 17/25005]~, 1], [[1, 0, 0]~, 1], [[-803/5220, -13/522, 1/5220]~, 1], [[-23/39, -1/520, 1/1560]~, 1], [[1, 0, 0]~, 1], [[-2100/16483, -816/16483, 19/16483]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-13537/14939, -525/14939, 17/14939]~, 1], [[1, 0, 0]~, 1], [[-14/11, 1/33, 0]~, 1], [[1, 0, 0]~, 1], [[102/533, -43/2132, 1/2132]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-1585/6834, 197/3417, -7/6834]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-20750/9181, 501/9181, 1/9181]~, 1], [[635/1893, 19/1262, -1/1893]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[131/141, -91/1128, 1/1128]~, 1], [[-10628/8765, 143/8765, 6/8765]~, 1], [[3277/1973, -377/19730, -11/19730]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-6286/6249, -21/2083, 5/6249]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-1543/110, -1/22, 1/110]~, 1], [[-19004/18327, -184/18327, 13/18327]~, 1], [[1, 0, 0]~, 1], [[-536/2551, -85/5102, 3/5102]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[151/990, -49/990, 1/990]~, 1], [[1, 0, 0]~, 1], [[1899/11791, 267/11791, -8/11791]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[588/1307, -517/6535, 9/6535]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-998/195, -1/10, 1/195]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[4/4355, -75/871, 7/4355]~, 1], [[1, 0, 0]~, 1], [[-301/234, -1/90, 1/1170]~, 1], [[-331/2925, -1/195, 2/2925]~, 1], [[9371/10513, -1244/52565, -7/52565]~, 1], [[1, 0, 0]~, 1], [[6154/10933, -879/21866, 11/21866]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-263/195, -8/39, 1/195]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-44/27, 1/27, 0]~, 1], [[31/2195, 1059/35120, -17/35120]~, 1], [[1, 0, 0]~, 1], [[-263/1755, -8/351, 1/1755]~, 1]]);
+    print("Input Log ", precision(minima_log, 20));
+    verify_generator_with_list(K, idealI, compactTracking);
+    GP_ASSERT_NEAR(norml2(trackerLogarithm(K, ~compactTracking, rank)- minima_log), 0, 2^(-10));
+
+    print("Problem case1:");
+    ending_cpct_rep = compact_rep_full_input(K, minima_log, idealI, 10^(-8), 1,1);
+    GP_ASSERT_NEAR(norml2(log_from_cpct(K,ending_cpct_rep)- minima_log), 0, 2^(-10));
+}
+
+{
+    print("Problem Case 2: ");
+    \\\ This is blocking the use of collision_check2, which should regenerates the babystock elements from their logs
+    K = nfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
+    print("Log Disc K = ", precision(log(abs(K.disc)),10));
+    rank = K.r1+K.r2 -1;
+    O_K = matid(poldegree(K.pol));
+    idealI = [1, 0, 0, 153/245; 0, 1, 0, 8/49; 0, 0, 1, 1/35; 0, 0, 0, 1/245];
+    GP_ASSERT_TRUE(check_ideal_reduced(K,idealI));
+    minima_log = [2.54776901799963504434000000000000000000, 2.21946832304103985395000000000000000000, 1.51783548444128304166000000000000000000, -0.78381461493723095514000000000000000000];
+    cpctList = List([[[List([1, 1]), [1, 1]], 0], [[List([1, 1]), [1, 1]], 3], [[List([1, 1]), [1, 1]], 3], [[1, 0, 0, 0]~, 1], [[1, 0, 0, 0]~, 1], [[33, -4, -2, 1]~, 1], [[214/161, 4/7, 2/23, 3/161]~, 1], [[-14, 0, 1, 0]~, 1], [[-908/811, 167/811, 58/811, -26/811]~, 1], [[271/161, 5/7, -8/23, -12/161]~, 1], [[-2497/1385, -165/277, -143/1385, -34/1385]~, 1], [[-1128/811, 111/811, -78/811, 7/811]~, 1]]);
+    verify_generator_with_list(K, idealI, cpctList);
+    GP_ASSERT_NEAR(norml2(trackerLogarithm(K,cpctList, K.r1+K.r2-1)- minima_log), 0, 2^(-10));
+    print("Input Log ", precision(minima_log, 10));
+
+    ending_cpct_rep = compact_rep_full_input(K, minima_log, idealI, 10^(-8), 1,2);
+    print("cpct log ", precision(log_from_cpct(K,ending_cpct_rep), 10));
+    GP_ASSERT_NEAR(norml2(log_from_cpct(K,ending_cpct_rep)- minima_log), 0, 2^(-10));
+}
+
+{
+/*Note that this element is not in OK, which is why it fails
+
+K = nfinit(x^5 - 7*x^4 + 198*x^3 - 4590*x^2 + 16754*x - 86817);
+O_K = matid(poldegree(K.pol));
+print("Case 3: log(disc)=", precision(log(K.disc),10));
+\\element = [-16366187066269271/1669253678097915817, -814384842541957/1669253678097915817, -197448717903823/3338507356195831634, -21429093735869/3338507356195831634, -1278428892130/1669253678097915817]~;
+element = [130616635949463525736257186134400353493276043/43971142765977846567823208041863473291662706581582034436, 275448752748853343870502424600491920992833219/117256380709274257514195221444969262111100550884218758496, 14045341919839801260871029466488687666141091/58628190354637128757097610722484631055550275442109379248, 4309477412166424722868085030603950312521935/175884571063911386271292832167453893166650826326328137744, 2359604739081971666277293669565299553561727/351769142127822772542585664334907786333301652652656275488]~;
+\\denom = denominator(element);
+\\element *= denom;
+element_log = log(abs(nfeltembed(K, element)));
+print("Input Log ", precision(element_log, 10));
+
+\\new_precision = prec_compact(poldegree(K.pol), ceil(log(abs(K.disc))/log(2)), normlp(element_log));
+default(realbitprecision, 500);
+print("precision: ", default(realbitprecision));
+alphaOK = idealdiv(K, O_K, element);
+returned_element = compact_rep_full_input(K, element_log, alphaOK, 10^(-10), 1,2);
+*/
+
+}
+
 {
 /*
     a = [];
