@@ -6,7 +6,6 @@ read("src/BSGSHelper.py")
 \\ read("src/VectorMethods.py");
 \\ read("src/Neighbours.py");
 }
-print("WARNING!!:: remember to uncomment these cases after!");
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ test cases for compact_rep_buchmann and compact_reconstruct
@@ -27,7 +26,7 @@ print("WARNING!!:: remember to uncomment these cases after!");
     );
 }
 
-{ \\ test cases for compact_rep_buchmann and cpct_from_loglattice
+{ \\ test cases for compact_rep_full_input and cpct_from_loglattice
     print("test case 2");
     my(G1, G2, O_K, n, logarithm_lattice, cpct_rep,cpct_list, eps = 10^(-9));
     G1 = nfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
@@ -53,7 +52,7 @@ print("WARNING!!:: remember to uncomment these cases after!");
 \\ Testing conversion from logarithm to compact representation
 \\ with large-ish values
 {
-    print("Cpct representation with large-ish value");
+    print("Test: Cpct representation with large-ish value");
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep,
         log_lattice, cpct_units, eps = 10^(-20)
     );
@@ -71,7 +70,6 @@ print("WARNING!!:: remember to uncomment these cases after!");
     power = 50000;
     large_unit = concat(log_lattice[,1], extra_log_coordinate(G1.r1, G1.r2, log_lattice[,1]));
     large_unit = power*large_unit;
-    \\cpct_rep = compact_rep_buchmann(G1, large_unit, O_K, eps);
     cpct_rep = compact_rep_full_input(G1, large_unit, O_K, eps);
 
     GP_ASSERT_VEC_NEAR(log_from_cpct(G1, cpct_rep)[1..r], large_unit[1..r], eps);
@@ -125,11 +123,6 @@ print("WARNING!!:: remember to uncomment these cases after!");
     cpct_units = cpct_from_loglattice(G1, log_lattice, eps);
     GP_ASSERT_MAT_NEAR(log_lattice, log_lattice_from_compact_set(G1, cpct_from_loglattice(G1, log_lattice, eps)),eps);
     GP_ASSERT_MAT_NEAR(log_lattice, log_lattice_from_compact_set(G1, cpct_units), eps);
-    for(i=1, length(cpct_units[1]),
-        print(cpct_units[1][1][i], " / ", cpct_units[1][2][i]);
-        print(nfeltpow(G1, cpct_units[1][1][i],-1 ), " ", denominator(nfeltpow(G1, cpct_units[1][i][1],-1 )) ,"\n");
-    );
-
 }
 
 
@@ -173,6 +166,7 @@ print("WARNING!!:: remember to uncomment these cases after!");
 
     \\ confirms that the 3rd basis element is actually located in the normed body
     \\ of the first one
+
     GP_ASSERT_VEC_LT(valuationvec(G1, LLLcoeffmat[,3],column=1), valuationvec(G1, LLLcoeffmat[,1],column=1) ,eps);
 
     \\ assert that the is_minimum test fails
@@ -268,7 +262,9 @@ print("WARNING!!:: remember to uncomment these cases after!");
         total_time += (time_end - time_start);
         increment_coordinates(~capvec, ~countervec);
     );
-
+    
+    \\# note that these timings are probably dependent on the computer system
+    \\# these timings are based on a personal linux desktop. Adjust if needed
     print("Time spent: ",total_time, "\n");
     GP_ASSERT_WITHIN_RATIO(total_time, 2800, 0.1);  \\ old timing: 5600 Jan2023
 
@@ -280,6 +276,8 @@ print("WARNING!!:: remember to uncomment these cases after!");
     time_end = getabstime();
     total_time += (time_end - time_start);
     print("Time spent: ",total_time);
+    \\# note that these timings are probably dependent on the computer system
+    \\# these timings are based on a personal linux desktop. Adjust if needed
     GP_ASSERT_WITHIN_RATIO(total_time, 5400, 0.1); \\ old timing 11000 Jan 2023
 }
 
@@ -298,20 +296,20 @@ print("WARNING!!:: remember to uncomment these cases after!");
     \\[-79.524677390641498979155211442564781877202617771361888392885097233928656039614443794032615095049170274292811009641293407281666210969359472421285352382868781967095862388134724868004120031774674049308643743895568826060785175731729997259316330145181418113243185067256304432519009437631559071908339611471778796247403475890558928414394398638309970902233715196080626667281982446892787229718292245859343796694677791, \\43.163536076982904864990842412889280850849900932132466624210570851569394922703183344125920507427915524276343317928890818016610635175693062788361765431300450083634001171576298482025233609557931183086457947573545702284167025946981892264411325126112832946299167029849414931998545555260813883711610523331293077620243529968879997290054287906033130704074628262268977931198000813282364858607381478137316194276427522]
 
     compactTracking = List([[[List([1, 1]), [1, 1]], 114], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-35, 1, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-247/9, -13/45, 1/45]~, 1], [[1, 0, 0]~, 1], [[37/171, -17/912, 1/2736]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-1223/405, 109/2025, 2/2025]~, 1], [[-38560/25703, 392/25703, 13/25703]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-8593/14107, -153/14107, 11/14107]~, 1], [[1, 0, 0]~, 1], [[42/19, -151/4560, -1/1520]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[3511/4574, -209/4574, 1/4574]~, 1], [[-35836/25005, 107/8335, 17/25005]~, 1], [[1, 0, 0]~, 1], [[-803/5220, -13/522, 1/5220]~, 1], [[-23/39, -1/520, 1/1560]~, 1], [[1, 0, 0]~, 1], [[-2100/16483, -816/16483, 19/16483]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-13537/14939, -525/14939, 17/14939]~, 1], [[1, 0, 0]~, 1], [[-14/11, 1/33, 0]~, 1], [[1, 0, 0]~, 1], [[102/533, -43/2132, 1/2132]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-1585/6834, 197/3417, -7/6834]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-20750/9181, 501/9181, 1/9181]~, 1], [[635/1893, 19/1262, -1/1893]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[131/141, -91/1128, 1/1128]~, 1], [[-10628/8765, 143/8765, 6/8765]~, 1], [[3277/1973, -377/19730, -11/19730]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-6286/6249, -21/2083, 5/6249]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-1543/110, -1/22, 1/110]~, 1], [[-19004/18327, -184/18327, 13/18327]~, 1], [[1, 0, 0]~, 1], [[-536/2551, -85/5102, 3/5102]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[151/990, -49/990, 1/990]~, 1], [[1, 0, 0]~, 1], [[1899/11791, 267/11791, -8/11791]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[588/1307, -517/6535, 9/6535]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-998/195, -1/10, 1/195]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[4/4355, -75/871, 7/4355]~, 1], [[1, 0, 0]~, 1], [[-301/234, -1/90, 1/1170]~, 1], [[-331/2925, -1/195, 2/2925]~, 1], [[9371/10513, -1244/52565, -7/52565]~, 1], [[1, 0, 0]~, 1], [[6154/10933, -879/21866, 11/21866]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-263/195, -8/39, 1/195]~, 1], [[1, 0, 0]~, 1], [[1, 0, 0]~, 1], [[-44/27, 1/27, 0]~, 1], [[31/2195, 1059/35120, -17/35120]~, 1], [[1, 0, 0]~, 1], [[-263/1755, -8/351, 1/1755]~, 1]]);
-    print("Input Log ", precision(minima_log, 20));
+    \\print("Input Log ", precision(minima_log, 20));
     verify_generator_with_list(K, idealI, compactTracking);
     GP_ASSERT_NEAR(norml2(trackerLogarithm(K, ~compactTracking, rank)- minima_log), 0, 2^(-10));
 
-    print("Problem case1:");
+    print("Test: Problem case1:");
     ending_cpct_rep = compact_rep_full_input(K, minima_log, idealI, 10^(-8), 1,1);
     GP_ASSERT_NEAR(norml2(log_from_cpct(K,ending_cpct_rep)- minima_log), 0, 2^(-10));
 }
 
 {
-    print("Problem Case 2: ");
+    print("Test: Problem Case 2: ");
     \\\ This is blocking the use of collision_check2, which should regenerates the babystock elements from their logs
     K = nfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
-    print("Log Disc K = ", precision(log(abs(K.disc)),10));
+    \\print("Log Disc K = ", precision(log(abs(K.disc)),10));
     rank = K.r1+K.r2 -1;
     O_K = matid(poldegree(K.pol));
     idealI = [1, 0, 0, 153/245; 0, 1, 0, 8/49; 0, 0, 1, 1/35; 0, 0, 0, 1/245];
@@ -320,10 +318,10 @@ print("WARNING!!:: remember to uncomment these cases after!");
     cpctList = List([[[List([1, 1]), [1, 1]], 0], [[List([1, 1]), [1, 1]], 3], [[List([1, 1]), [1, 1]], 3], [[1, 0, 0, 0]~, 1], [[1, 0, 0, 0]~, 1], [[33, -4, -2, 1]~, 1], [[214/161, 4/7, 2/23, 3/161]~, 1], [[-14, 0, 1, 0]~, 1], [[-908/811, 167/811, 58/811, -26/811]~, 1], [[271/161, 5/7, -8/23, -12/161]~, 1], [[-2497/1385, -165/277, -143/1385, -34/1385]~, 1], [[-1128/811, 111/811, -78/811, 7/811]~, 1]]);
     verify_generator_with_list(K, idealI, cpctList);
     GP_ASSERT_NEAR(norml2(trackerLogarithm(K,cpctList, K.r1+K.r2-1)- minima_log), 0, 2^(-10));
-    print("Input Log ", precision(minima_log, 10));
+    \\print("Input Log ", precision(minima_log, 10));
 
     ending_cpct_rep = compact_rep_full_input(K, minima_log, idealI, 10^(-8), 1,2);
-    print("cpct log ", precision(log_from_cpct(K,ending_cpct_rep), 10));
+    \\print("cpct log ", precision(log_from_cpct(K,ending_cpct_rep), 10));
     GP_ASSERT_NEAR(norml2(log_from_cpct(K,ending_cpct_rep)- minima_log), 0, 2^(-10));
 }
 
