@@ -90,6 +90,7 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
         if(DEBUG_BSGS, print("product without  a_r ", precision(ai_product,10)); );
 
         if (dimensions !=unit_rank+1,
+            print("exceptional condition");
             avec = concat(avec ,  min(max(1, round(norm_vr/B)  ), round(fullregion_to_babystock_ratio/ai_product ))  );
         );
     );
@@ -138,15 +139,17 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
     );
 
     norm_vr = sqrt(norml2(lattice_lambda[,dimensions] ));
+    GP_ASSERT_TRUE(dimensions == unit_rank);
 
-    if(dimensions == 1,
-        avec = vector(dimensions, i , fullregion_to_babystock_ratio);
+    \\# product of the a_i should equal to the (size of search region)/(size of babystock region)
+    if(unit_rank == 1,
+        avec = vector(unit_rank, i , fullregion_to_babystock_ratio);
     , \\else
-        \\if (norm_vr/B > 2, dimensions++); \\ previously we had this restriction, but it makes the babystock
-        \\ choice really bad, revisit and make sure it can be removed now that we use non-integral numbers
+        \\
+        if (norm_vr/B > 1, dimensions++);
 
-        if (1, dimensions++);
-        sides = max(1,sqrtn(fullregion_to_babystock_ratio, dimensions-1));             \\ approximate the sides with integers
+        \\if (1, dimensions++);
+        sides = max(1,sqrtn(fullregion_to_babystock_ratio, dimensions-1));
 
         if(DEBUG_BSGS,print("(r-1)th root of target area  ", precision(sides,10)););
         avec = [];
@@ -159,7 +162,8 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
         \\# adjust in case the r-1 th root is larger than the vector's norm
         for(i=1, dimensions-1,
             vecnorm =  sqrt(norml2(lattice_lambda[,i] ));
-            if (i == dimensions-1, vecnorm/=B);
+            if (i == unit_rank, vecnorm/=B);
+            print(i, " ", precision(vecnorm,10), "  ", precision(sides,10));
             avec = concat(avec, min(vecnorm, sides));
             diffvector = concat(diffvector, vecnorm - sides );
             ai_product *= avec[i];
@@ -175,21 +179,27 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
         );
 
         if (dimensions !=unit_rank+1,
-            avec = concat(avec ,  min(norm_vr/B , fullregion_to_babystock_ratio/ai_product )  );
+            print("Final a_i: ", precision(norm_vr/B,10), "   ",precision(fullregion_to_babystock_ratio/ai_product,10));
+            avec = concat(avec ,  1  );
+            print("fullregion_to_babystock_ratio/(a_i product) : ", precision(fullregion_to_babystock_ratio/ai_product,10));
+            \\concat(avec ,  min(norm_vr/B , fullregion_to_babystock_ratio/ai_product )  );
         );
     );
 
     finalproduct =1; for(i=1, length(avec), finalproduct*=avec[i]);
     for(i=1, length(avec),
-        if(avec[i] == 0, avec[i]+=1);
+        if(avec[i] == 0, avec[i]=1);
+        if(avec[i] < 1, print("warning, the a_i is less than one for i = ",i));
     );
-
+    print(precision(fullregion_to_babystock_ratio, 10), "  ", precision(finalproduct,10));
     return(avec);
 }
 
 
 \\ subroutine of the bsgs method.
 \\ Determines a basis for the giant steps (coefficients limited by avec)
+\\ giant_leg vectors are extended to vectors of length (r+1). The extra coord
+\\ is computed so that the sum of the logs of each vector equals 0
 \\ INPUT:
 \\ - G is the number field
 \\ - lattice_lambda is the current log lattice (r x r)
@@ -237,7 +247,7 @@ print_area_info(~giant_legs, rank)=
 {
     my(area = 1);
     for(i=1, length(giant_legs),
-        \\print("Norms of scaled vectors (a_i, B) ", precision(sqrt(norml2(giant_legs[,i][1..rank])),10));
+        print("Norms of scaled vectors (a_i, B) ", precision(sqrt(norml2(giant_legs[,i][1..rank])),10));
         area*=sqrt(norml2(giant_legs[,i][1..rank])));
     print("actual babystock area region (multiplying vector norms): ", precision(area,10),"\n \n");
 }

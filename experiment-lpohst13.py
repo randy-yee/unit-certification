@@ -24,8 +24,8 @@ OUTPUT_FILE = "data/pmax-large-";
 {
     sigstring = "1-3";
     OUTPUT_FILE = concat(OUTPUT_FILE, sigstring);
-    start = 19;
-    end   = 25;
+    start = 23;
+    end   = 23;
     step  = 1;
     loop_ranges = [start, end, step];
     pmax_log_experiment(sigstring, loop_ranges, [INPUT_FILE, OUTPUT_FILE]);

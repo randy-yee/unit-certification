@@ -245,7 +245,7 @@ get_enumeration_bounds(degree, lll_lattice)=
 
     if(norml2(lll_lattice[,1])<1, return 0);
     ortho_basis = gram_schmidt(lll_lattice);
-    norm_vector = vector(rank, i, norml2(ortho_basis[,i]));
+    norm_vector = vector(rank, i, sqrt(norml2(ortho_basis[,i])));
     k_vector = vector(rank, i, (3/sqrt(2))^(degree - i)*sqrt(degree)/norm_vector[i] );
     k_vector = floor(k_vector);
     return(k_vector);
@@ -273,8 +273,7 @@ compute_subgroup(G, unimat, modpair, extype=0)={
 
 check_ideal_reduced(G, ideal)=
 {
-    if(abs(1/matdet(idealhnf(G, ideal)))>sqrt(abs(G.disc)), return(0));
-
+    if(abs(1/idealnorm(G, ideal))>sqrt(abs(G.disc)), return(0));
     my(rank = length(ideal),
         k_vector, zero_vec, iteration_vector);
     ideal_lattice = G[5][1]*ideal;
@@ -283,9 +282,24 @@ check_ideal_reduced(G, ideal)=
     lll_basis_change_matrix = qflll(ideal_lattice);
     lll_lat = ideal_lattice*lll_basis_change_matrix;    \\#real lattice
     lll_ideal = ideal*lll_basis_change_matrix;          \\#ideal representation
+    if(norml2(lll_lat[,1]) < 1, return(0));
     ortho_basis = gram_schmidt(lll_lat);                \\#orthogonalized
     k_vector = get_enumeration_bounds(rank, lll_lat);  \\# compute the k vector
+
+    check_elements = qfminim(lll_lat~*lll_lat,poldegree(G.pol)+0.1,,2);
+    if(check_elements[1] == 0, return(1));
+    one_vec = vector(G.r1+G.r2, i , 1);
+    for(i=1, length(check_elements[3]),
+        test_vector_real = abs(G[5][1]*lll_ideal*check_elements[3][,i]);
+        if(vec_less_than(test_vector_real, one_vec),
+            default(realbitprecision, mainbitprecision);    \\#restore precision
+            return(0)
+        );
+    );
+    return(1);
+    \\ if num elts is 0, reduced, else check each of them if they are in the normed body of 1
     k_vector = vector(rank, i, k_vector[i]+1);
+    print(k_vector);
     zero_vec = vector(rank, i , 0);
     iteration_vector = zero_vec;
     increment_coordinates(k_vector, ~iteration_vector);
@@ -293,9 +307,13 @@ check_ideal_reduced(G, ideal)=
     temp_bit_precision = max(10, ceil(log(denominator(ideal))+4+(rank^2*log(4*denominator(ideal)^2))+2));
     mainbitprecision = default(realbitprecision);
     default(realbitprecision, temp_bit_precision);  \\#save and change precision
+
+    complex_ideal_lattice = G[5][1]*lll_ideal;
     while(iteration_vector != zero_vec,
-        test_vector = column_lin_comb(~lll_ideal, ~iteration_vector);
-        if(vec_less_than(abs(nfeltembed(G, test_vector)), one_vec),
+        \\test_vector = column_lin_comb(~lll_ideal, ~iteration_vector);
+        test_vector_real = abs(complex_ideal_lattice*iteration_vector~);
+        \\print(precision(abs(nfeltembed(G, test_vector)),10), "  \n", precision(test_vector_real,10), "\n");
+        if(vec_less_than(test_vector_real, one_vec),
             default(realbitprecision, mainbitprecision);    \\#restore precision
             return(0)
         );

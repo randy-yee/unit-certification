@@ -439,9 +439,11 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
         if(torsion %p == 0,
             betavec = concat(betavec, [[ List( [nfalgtobasis(G, torsiongen)] ), [1]  ]] );
         );
+
         lpohst_ploop_t1 = 0;
         \\if(1,                                                                 \\ UNCOMMENT LINE AND COMMENT OUT THE LINE BELOW IF YOU WANT TO SKIP THE FAST PRIME CHECK
         if(pari_prime_check(G, betavec, p, compact_lcm, 1) == 0 ,
+
             print("\npari_prime_check detects possible index divisor ", p);
             eta_exp_mat = matid(length(new_units));
 
@@ -456,6 +458,7 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
             solution = 0;                                                       \\# variable to hold either 0 or a found solutions
 
             while(solutionflag == 1,
+
                 t_pthRootBefore = getabstime();
                 \\\# step 1 of Algorithm 8, the pth root test
                 test_eta_k = new_units*eta_exp_mat[,k];
@@ -466,6 +469,7 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
                 for(i =1, length(unitvector_cpct),
                     eta_k_complex_log += eta_exp_mat[i,k]*complex_log_from_cpct(G, unitvector_cpct[i]);
                 );
+
                 eta_k_complex_log = eta_k_complex_log/p;
                 GP_ASSERT_VEC_NEAR(real(eta_k_complex_log)[1..G.r1+G.r2-1]~,test_eta_k,eps);
                 print("complex eta_k ",precision(eta_k_complex_log,10));
@@ -485,6 +489,7 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
                 \\if (solutionflag != complex_check_in_unitlattice(G, eta_k_complex_log/p, eps), print("flags not matching");breakpoint());
 
                 \\print("DEBUGGING: lattice check time: ", getabstime() - lattice_check_t1);
+
 
                 if(solutionflag ==1,
                     print("LPohst: Found Solutions --");
@@ -527,9 +532,11 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
 
                     updatevec = update_eta_set_log(G,p,k,unitvector_cpct, eta_exp_mat, new_units, torsion_coeffs);
                     eta_exp_mat = update_expmat(eta_exp_mat, updatevec, k , p );
+
                     torsion_coeffs = torsion_update(~torsion_coeffs, ~updatevec, k);
 
                     \\ Update k and reset solutionflag to 1
+
                     k+=1;
                     solutionflag = 1;
                 );

@@ -5,7 +5,7 @@ read("src/bounds.gp")
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ Set PRECISION:
 \p 500;
-default(parisizemax, 8000000000);
+default(parisizemax, 15G);
 setrand(121213);
 
 \\ Global variables

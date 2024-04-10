@@ -1,0 +1,6 @@
+*.sh
+src/bsgs-description
+Instructions for various tasks
+gnuplot_script.txt
+input/INPUT_README
+experiment*

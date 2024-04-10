@@ -11,6 +11,7 @@ read("src/BSGSHelper.py")
 \\ test cases for compact_rep_buchmann and compact_reconstruct
 {
     print("test case 1");
+
     my(G1, G2, O_K, n, eps = 10^(-9));
     G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);

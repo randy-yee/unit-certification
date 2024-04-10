@@ -24,8 +24,8 @@ OUTPUT_FILE = "data/pmax-large-";
 {
     sigstring = "0-4";
     OUTPUT_FILE = concat(OUTPUT_FILE, sigstring);
-    start = 19;
-    end   = 25;
+    start = 22;
+    end   = 22;
     step  = 1;
     loop_ranges = [start, end, step];
     \\\ # generate data for specified input and output files

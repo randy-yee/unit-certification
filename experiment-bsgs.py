@@ -5,7 +5,7 @@ read("src/bounds.gp")
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ Starting precision:
 \p500
-default(parisizemax, 8000000000);
+default(parisizemax, 15G);
 \\ Global variables
 eps = 10^(-100);      \\ error tolerance
 sqrt2 = sqrt(2);
@@ -16,12 +16,13 @@ DEBUG_REDDIV = 0;
 
 
 sigstring = "3-0";
-outfilestring = concat(concat("data/tmp-experiment-data-bsgs-",sigstring),".txt");
+outfilestring = concat(concat("data/num-experiment-data-bsgs-",sigstring),".txt");
 outfilestring;
-infilestring = concat(concat("input/test-poly-",sigstring),".gp");
+SCREEN(outfilestring);
+\\infilestring = concat(concat("input/test-poly-",sigstring),".gp");
+infilestring = concat(concat("input/polynomial-",sigstring),".gp");
 OUTFILE1 = outfilestring;
 read(infilestring)
-
 
 \\read("input/test-poly-1-1.gp");
 \\read("input/test-poly-3-0.gp");
@@ -40,7 +41,7 @@ read(infilestring)
 \\read("input/test-poly-1-3.gp");
 
 {
-for(i=4, 4,
+for(i=9,9,
 
     \\
     \\ INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
@@ -60,6 +61,7 @@ for(i=4, 4,
     REQ_BSGS = ceil(max(ceil(X1),ceil(X2)));
 
     default(realprecision, ceil(REQ_BSGS));
+    print("Precision set to ", ceil(REQ_BSGS));
     REQ_COMPARE = ceil((poldegree(K.pol)^2 +2)*log(infinity_norm(sumv))+2*poldegree(K.pol)^2 +5);
     eps = 2^(-REQ_COMPARE);
 
@@ -85,13 +87,25 @@ for(i=4, 4,
 
     B = 1;          \\ 1 means you scan the whole region
 
-    t9 = getabstime();
-    bsgs_output= bsgs(K,cpct_units, B, 1/2, eps,REQ_BSGS,OUTFILE1);
-    t10 = getabstime();
-    bsgs_out_lattice = log_lattice_from_compact_set(K,bsgs_output);
-    print(precision(unscaled_determinant(K, bsgs_out_lattice),10));
-    print(precision(reg1,10));
-    write(OUTFILE1, "\n  Total BSGS time ",precision(t10-t9,10), "  In mins: " ,precision((t10-t9)/60000.0,10) );
+
+
+    den = 12;
+    constscale = 30;
+    r = K.r1+K.r2 -1;
+    forstep (j = 50, 50, 10,
+        t9 = getabstime();
+
+        \\scaling_variable = ((2^r)* log(abs(K.disc))^(1+j/den))/constscale ;
+        scaling_variable = j;
+        write(OUTFILE1, "\n");
+
+        bsgs_output= bsgs(K,cpct_units, B, scaling_variable, eps,REQ_BSGS,OUTFILE1);
+        t10 = getabstime();
+        bsgs_out_lattice = log_lattice_from_compact_set(K,bsgs_output);
+        print(precision(unscaled_determinant(K, bsgs_out_lattice),10));
+        print(precision(reg1,10));
+        write(OUTFILE1, "Total BSGS time ",precision(t10-t9,10), "  In mins: " ,precision((t10-t9)/60000.0,10) );
+    );
 
 
 
