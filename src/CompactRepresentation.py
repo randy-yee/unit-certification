@@ -369,7 +369,7 @@ giantstep(y,v,G,n,eps)={
     print("shrunken dist: ", precision(norm_FR(G, shrunken_target),10));
     print("WARNING: Giant step is being deprecated. Please ensure apprpriate use");
     print(length(shrunken_v), "  ", G.r1+G.r2);
-    
+
     [idealB,u,log_distance,beta]=reddiv_compact(y,shrunken_target,G,G[5][1]);   \\ (Ideal, minimum, log distance)
     print("reduced shrunken dist: ", precision(sumvec(log_distance),10));
     [idealB, u, log_distance] = double_and_reduce_divisor_loop(G, t, idealB, u, log_distance);
@@ -739,8 +739,11 @@ cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, alphaOK, eps, te
     if (type(testFlag) == "t_INT" && (testFlag == 1),
         print("final enum");
     );
-    new_eps = ceil(log(abs(G.disc))/(2*n) + 3/2)+1;
-    new_eps = 2^(-new_eps);
+    new_eps = ceil(log(abs(G.disc))/(2*n*log(2)) + 3/2)+1;
+
+    \\see thesis Prop 3.4.3. The +5 is just for a margin of safety
+    new_eps = 2^(-(new_eps+5));
+
     my(neighbours_output, boundary_vector, ctr=1, unit_rank = G.r1+G.r2-1,
         exp_boundary, latticeB, lll_basis_change_matrix, latticeB_lll, scan_elements);
     GP_ASSERT_EQ(length(log_beta), G.r1+G.r2);
@@ -772,7 +775,7 @@ cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, alphaOK, eps, te
         if(samevecs(desired_betalog, checkvec, new_eps),
             idealB = idealdiv(G, idealB, check_beta);
             change_precision(oldbitprecision);
-            if(alphaOK != idealB, print("failed ideal matching in final enum"); breakpoint(););
+            if(alphaOK != idealB, print("(1) failed ideal matching in final enum"); breakpoint(););
             return([idealB, checkvec, nfeltmul(G,beta,check_beta)]);
         );
         checkvec = log_beta - log(abs( nfeltembed(G, check_beta)));
@@ -780,7 +783,7 @@ cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, alphaOK, eps, te
         if(samevecs(desired_betalog, checkvec, new_eps),
             idealB = idealmul(G, idealB, check_beta);
             change_precision(oldbitprecision);
-            if(alphaOK != idealB, print("failed ideal matching in final enum");breakpoint());
+            if(alphaOK != idealB, print("(2) failed ideal matching in final enum");breakpoint());
             return([idealB, checkvec, nfeltmul(G,beta,check_beta)]);
         );
     );

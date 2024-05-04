@@ -41,8 +41,8 @@ generateFileStrings(signature_string, suffixString, auxilliary)=
 {
     outfilestring = strexpand("data/data-bsgs-",signature_string,suffixString);
 
-    \\infilestring = concat(concat("input/test-poly-",signature_string),".gp");
-    infilestring = concat(concat("input/polynomial-",signature_string),".gp");
+    infilestring = concat(concat("input/test-poly-",signature_string),".gp");
+    \\infilestring = concat(concat("input/polynomial-",signature_string),".gp");
     OUTFILE1 = outfilestring;
 
     if(length(aux) >1 && (type(aux[2]) == "t_STR"),
@@ -214,9 +214,9 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
 
             \\ a*x*log(x) + b*sqrt(log(x)) + c
             estimate = floor(coeff_a*sqrt_reg*log_sqrt_reg+coeff_b*sqrt(log_sqrt_reg)+coeff_c);
-            init = estimate - 2*floor(estimate/4);
-            end = estimate + 1*floor(estimate/4);
-            step = floor((end-init)/10);
+            init = estimate;\\ - 1*floor(estimate/4);
+            end = estimate+1;\\ + 1*floor(estimate/4);
+            step = max(floor((end-init)/3),1);
             write(OUTFILE1,"babystock-range: ", estimate, "  ", init, " ", end, " ", step);
         ,\\else
             init = b_ranges[i,1]; end = b_ranges[i,2]; step = b_ranges[i,3];

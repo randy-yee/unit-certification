@@ -68,8 +68,9 @@ m_star(G, const_C, jv)={
 };
 
 get_pohst_j(G)={
+    return(length(G.zk)-2);
     if(G.r2 == 0,
-        return(0);
+        return(length(G.zk)-2); \\ PF suggest this is 0. But we have counterexamples
     ,\\ else
       return(min(2*G.r2, length(G.zk)-2));                                      \\ choice of j described in in F-P, p2772
     );
@@ -206,6 +207,7 @@ lower_regbound(G, K, eps, input_j = -1, k_limit = 0)={
     \\ BEGIN COMPUTATION OF THE LOWER REGULATOR BOUND
     new_j = j_val;
 
+    \\print("Fixed j value is :  ", new_j);
     for(i =1, SK_urank,                                                     \\ this is the value k, the size of the maximal ind. set in S_K
 
         minlog = lunits[,i]; minlog = concat(minlog, minlog[G.r1+1 .. G.r1+G.r2]);
@@ -222,7 +224,7 @@ lower_regbound(G, K, eps, input_j = -1, k_limit = 0)={
         finalbound *= Mi_tilde;
     );
     if(SK_urank < unit_rank,
-      finalbound *= m_star(G, K, j_val)^(unit_rank - SK_urank);
+      finalbound *= m_star(G, K, new_j)^(unit_rank - SK_urank);
     );
     finalbound *= (2^G.r2)/ (length(G.zk)*my_hermiteconstant(unit_rank));
     finalbound = sqrt(finalbound);
