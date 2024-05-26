@@ -91,11 +91,6 @@
     v1 = [1,2,3,4,5,6,7,8,9];
     GP_ASSERT_EQ(concat_negative_sum(v1), [1,2,3,4,5,6,7,8,9,-45]);
 }
-{ \\ test cases for remove_last_coordinate
-    my(v1);
-    v1 = [1,2,3,4,5,6,7,8,9];
-    GP_ASSERT_EQ(remove_last_coordinate(v1), [1,2,3,4,5,6,7,8]);
-}
 
 { \\ test cases for expvec and inverse_expvec
     my(v1, v2, eps = 10^(-20));

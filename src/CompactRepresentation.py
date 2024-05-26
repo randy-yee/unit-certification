@@ -184,7 +184,7 @@ reddiv_compact(~y,~u,~G,~M1, p_avoid=1)={
         ideal_denom,vec_ctr,beta_found =0,
         comp = 2^(-ceil((poldegree(G.pol)^2 +2)*log(infinity_norm(u))+2*poldegree(G.pol)^2 +5))
     );
-    \\breakpoint();
+
     numerical_mat_Y = M1*y;                                                     \\ complex embedding matrix of y
     ideal_uY = mulvec(~numerical_mat_Y, ~u);                                    \\ ideal u*y
     LLL_change_of_basis = get_LLL_basis_change(G, ideal_uY);                    \\ qflll output has columns which are coords wrt the input matrix NOT the integral basis
@@ -366,12 +366,13 @@ giantstep(y,v,G,n,eps)={
     shrunken_target = create_target(G, shrunken_v, 1);                          \\ adds the (r+s)th coord, so that the sum of the log embeddings is 0
 
 
-    print("shrunken dist: ", precision(norm_FR(G, shrunken_target),10));
-    print("WARNING: Giant step is being deprecated. Please ensure apprpriate use");
-    print(length(shrunken_v), "  ", G.r1+G.r2);
+    \\print("shrunken dist: ", precision(norm_FR(G, shrunken_target),10));
+    \\print(length(shrunken_v), "  ", G.r1+G.r2);
+    print("WARNING: Giant step is being deprecated. Please ensure appropriate use");
+
 
     [idealB,u,log_distance,beta]=reddiv_compact(y,shrunken_target,G,G[5][1]);   \\ (Ideal, minimum, log distance)
-    print("reduced shrunken dist: ", precision(sumvec(log_distance),10));
+    \\print("reduced shrunken dist: ", precision(sumvec(log_distance),10));
     [idealB, u, log_distance] = double_and_reduce_divisor_loop(G, t, idealB, u, log_distance);
 
     return( [idealB,u,vector_approximate(log_distance,eps)] );
@@ -735,60 +736,82 @@ cpct_rep_final_collect(G, idealB, log_beta, desired_betalog, eps)={
 }
 
 cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, alphaOK, eps, testFlag = 0)={
-    print("final enum target: ", precision(desired_betalog, 10));
+
+    my(DEBUG_CPCT_ENUM = 0,
+        unit_rank = G.r1+G.r2-1,
+        degree = poldegree(G.pol),
+        new_eps);
+
     if (type(testFlag) == "t_INT" && (testFlag == 1),
-        print("final enum");
+        DEBUG_CPCT_ENUM = testFlag;
+        print("Debugging CPCT Enumeration step");
     );
+
+    if (DEBUG_CPCT_ENUM, print("final enum target: ", precision(desired_betalog, 10)));
+
+    \\#see thesis Prop 3.4.3. The addition 5 bits of precision is just a precaution
     new_eps = ceil(log(abs(G.disc))/(2*n*log(2)) + 3/2)+1;
+    new_eps = 2^(-(new_eps +5 ));
 
-    \\see thesis Prop 3.4.3. The +5 is just for a margin of safety
-    new_eps = 2^(-(new_eps+5));
-
-    my(neighbours_output, boundary_vector, ctr=1, unit_rank = G.r1+G.r2-1,
+    my(neighbours_output, boundary_vector, ctr=1,
         exp_boundary, latticeB, lll_basis_change_matrix, latticeB_lll, scan_elements);
     GP_ASSERT_EQ(length(log_beta), G.r1+G.r2);
 
+    \\#determine the radius we expect to need to search for the desired element
+    \\#there 'should' be an element in the search region, assuming the input
+    \\#of cpct rep was the log vector of an element.
     boundary_vector = (desired_betalog - log_beta);
 
+    \\#temporarily change precision
     temp_precision = ceil(idealPrecision(G, idealB, normlp(boundary_vector)));
     oldbitprecision = change_precision(temp_precision);
 
-    degree = poldegree(G.pol);
-
+    \\# scale the ideal lattice and convert to real entries
     exp_bvec = exponentiate_logvec(G.r1+G.r2-1, boundary_vector, 1);
-    if(matsize(G[5][1])[1] != G.r1+G.r2, print("final_enum vector length mismatch"); breakpoint(); );
     scaled_latticeB = mulvec(G[5][1]*idealB, exp_bvec);
     scaled_latticeB = embed_real(G, scaled_latticeB);
 
-    lll_CoB = qflll(scaled_latticeB);
-    lll_ideal = idealB*lll_CoB;
-
-    scaled_lll_lattice = scaled_latticeB*lll_CoB;
-
+    \\# determine the LLL reduced basis and enumerate
+    lll_CoB = qflll(scaled_latticeB);   \\# LLL transformation matrix
+    lll_ideal = idealB*lll_CoB;         \\# LLL reduced coeff matrix
+    scaled_lll_lattice = scaled_latticeB*lll_CoB; \\# LLL-reduced real matrix
     scan_elements = qfminim(scaled_lll_lattice~*scaled_lll_lattice,degree+new_eps*1.0,,2)[3];
 
+    if (DEBUG_CPCT_ENUM,
+        print("number of scanned elements: ", length(scan_elements), "  scanned radius = ", degree+new_eps*1.0);
+        for(i=1, length(scan_elements),
+            check_beta = scaled_lll_lattice*scan_elements[,i];
+            print("elt: ", scan_elements[,i], " ",   precision(norml2(check_beta),10));
+        );
+    );
+    \\# loop through returned elements and hope the droid we are looking for is here
     for(i=1, length(scan_elements),
-        check_beta = lll_ideal*scan_elements[,i];          \\# beta wrt integral basis
+        check_beta = lll_ideal*scan_elements[,i];    \\# beta wrt integral basis
         checkvec = log_beta + log(abs( nfeltembed(G, check_beta)));
+        \\print("boundary: ", precision(boundary_vector[1..2],10));
+        \\print("log beta" , precision(log_beta[1..2],10));
 
-        \\if(samevecs(desired_betalog, checkvec, 10^(-60)), print("near miss"));
         if(samevecs(desired_betalog, checkvec, new_eps),
             idealB = idealdiv(G, idealB, check_beta);
             change_precision(oldbitprecision);
-            if(alphaOK != idealB, print("(1) failed ideal matching in final enum"); breakpoint(););
+            \\# the below should never happen
+            if(alphaOK != idealB, print("(1) Vector match, but ideal mismatch in cpct enum"); breakpoint(););
             return([idealB, checkvec, nfeltmul(G,beta,check_beta)]);
         );
+
+        \\# if the above doesn't work, try the inverse
         checkvec = log_beta - log(abs( nfeltembed(G, check_beta)));
-        \\if(samevecs(desired_betalog, checkvec, 10^(-60)), print("near miss2"));
         if(samevecs(desired_betalog, checkvec, new_eps),
             idealB = idealmul(G, idealB, check_beta);
             change_precision(oldbitprecision);
-            if(alphaOK != idealB, print("(2) failed ideal matching in final enum");breakpoint());
+            \\# the below should never happen
+            if(alphaOK != idealB, print("(2) Vector match, but ideal mismatch in cpct enum");breakpoint());
             return([idealB, checkvec, nfeltmul(G,beta,check_beta)]);
         );
     );
+    \\# produces a 'bad return value' that should be caught in the calling function
     print("No elements satisfy the condition. Error.");
-    return(-1);
+    return([-1,-1,-1]);
 }
 
 cpct_rep_final_enum2(G, idealB, target, desired_betalog, eps, testFlag = 0)={
@@ -810,11 +833,11 @@ cpct_rep_final_enum2(G, idealB, target, desired_betalog, eps, testFlag = 0)={
     print(precision(exponentiate_logvec(G.r1+G.r2-1, abs(desired_betalog), 1),10), "  ", precision(u_square, 10));
 
     \\\ reddiv but look for specific beta
-    numerical_ideal = G[5][1]*square_ideal;                                                     \\ complex embedding matrix of y
-    ideal_uY = mulvec(~numerical_ideal, ~u_square);                                    \\ ideal u*y
+    numerical_ideal = G[5][1]*square_ideal;                                     \\ complex embedding matrix of y
+    ideal_uY = mulvec(~numerical_ideal, ~u_square);                             \\ ideal u*y
     LLL_change_of_basis = get_LLL_basis_change(G, ideal_uY);                    \\ qflll output has columns which are coords wrt the input matrix NOT the integral basis
     LLL_numerical_uY = ideal_uY*LLL_change_of_basis;                            \\ Obtain LLL basis of u*y in numerical form (possibly complex)
-    LLLcoeffmat = square_ideal*LLL_change_of_basis;                                        \\ LLL basis, coords wrt the integral basis
+    LLLcoeffmat = square_ideal*LLL_change_of_basis;                             \\ LLL basis, coords wrt the integral basis
     real_mat_uY = embed_real(~G, ~LLL_numerical_uY);
     scan_elements = qfminim(real_mat_uY~*real_mat_uY, field_deg,,2)[3];
     print("-- elts scanned: ", length(scan_elements));
@@ -836,7 +859,7 @@ cpct_rep_final_enum2(G, idealB, target, desired_betalog, eps, testFlag = 0)={
     );
 
     print("No elements satisfy the condition. Error."); breakpoint();
-    return(-1);
+    return([-1,-1,-1]);
 }
 /******************************************************************************/
 \\ INPUT:
@@ -869,7 +892,7 @@ compact_rep_buchmann(G, alpha, alphaOK , eps, avp=1)={
   if(type(alpha) == "t_COL", alpha = alpha~);
   kbound = log(sqrt( abs(G.disc) ))/log(2)/2;                 \\ defines the boundary of the area W
 
-  print("This is the old compact representation algorithm!"); breakpoint();
+  print("This is the old compact representation algorithm! No longer verified in the test cases, use at own risk"); breakpoint();
   \\# MAIN LOOP: following the algorithm of Thiel, under the assumption alpha is a unit.
   \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   \\# Note: In this case, gamma = 1, and beta1 = 1 also. This means we can skip iteration 1
@@ -949,12 +972,14 @@ compact_rep_buchmann(G, alpha, alphaOK , eps, avp=1)={
 \\ # Note that the minima is always computed assuming it is in Ok. This function is not able to
 \\ # is no longer able to use a different ideal as the starting point. See comment [*]
 compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
+    checkalpha = [-1.941406250000000000000000000000000000000000000000000000000, 2.882812500000000000000000000000000000000000000000000000000, 0.4609375000000000000000000000000000000000000000000000000000, -1.992187500000000000000000000000000000000000000000000000000, 5.445312500000000000000000000000000000000000000000000000000];
+    if(samevecs(alpha, checkalpha, 1/1000), print("test alpha"); breakpoint());
     \\print("Inside compact rep ");logsum =0;for(i=1, length(alpha),logsum += alpha[i];if (i > G.r1, logsum += alpha[i]););print("log sum : ", precision(logsum,10));breakpoint();
     my(
         unit_rank = G.r1 +G.r2 -1,
         kprime = 1,                                               \\ determines no. steps the algorithm runs for
         kbound,                                                   \\ holds the boundary of the area W
-        idealB = matid(poldegree(G.pol)),                                         \\ variable for the ideal B
+        idealB = matid(poldegree(G.pol)),
         beta = 1,                                                 \\ holds the beta
         d_vec = [1],                                              \\ holds the d_i values
         ideal_denom = 1,                                          \\ used to determine d_i
@@ -967,6 +992,7 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
         exp_s
     );
     GP_ASSERT_EQ(length(alpha), unit_rank+1);
+
     if(type(alpha) == "t_COL", alpha = alpha~);
     kbound = log(sqrt( abs(G.disc) ))/log(2)/2;                 \\ defines the boundary of the area W
 
@@ -1042,7 +1068,7 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
   ); \\# end main for loop
     \\print("Check same: ", precision(log_from_cpct(G, [alpha_vec, d_vec]),10), "  " precision(log_rho,10));
     GP_ASSERT_NEAR(norml2(log_from_cpct(G, [alpha_vec, d_vec])- log_rho),0, 2^(-10) );
-    \\print("rho after loop: ", precision(log_rho,10));
+
     \\\#  ENTER THE FINAL ITERATION OF THE ALGORITHM, WHICH IS SPECIAL
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     s_term = 2*s_term;                                              \\# this is s_{k'+1} = log rho
@@ -1056,15 +1082,26 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
     \\# this is a debug setting for the tests
     if (type(testFlag) == "t_INT" && (testFlag == 1),
         if(!samevecs(abs(desired_betalog), abs(log_beta),new_eps),
-            [idealB, log_beta, beta] = cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, alphaOK, eps, testFlag);
-            log_rho += log_beta;
+            [idealB, log_beta, beta] = cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, alphaOK, new_eps, testFlag);
+            if(idealB == -1, ,\\do nothing in this case, this is an error and we need to print the instance
+                log_rho += log_beta;
+            );
         );
     );
     if(!samevecs(abs(desired_betalog), abs(log_beta),new_eps),
-        [idealB, log_beta, beta] = cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, alphaOK, eps, testFlag);
-        log_rho+= log_beta;
+        [idealB, log_beta, beta] = cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, alphaOK, new_eps, testFlag);
+        if(idealB == -1, ,\\do nothing in this case, this is an error and we need to print the instance
+            log_rho += log_beta;
+        );
+    );
+    \\#clause to catch when cpct_enum fails
+    if(idealB == -1,
+        print("Final Enum has Failed, printing instance data for debugging: ");
+        print(G.pol, "\n ", alphaOK, "  alpha: ", precision(alpha ,50), "  eps: ", new_eps);
+        breakpoint();
     );
 
+    \\# finalize the alpha and denom vectors
     [alpha_i, ideal_denom]=get_alpha_and_d(G, idealB, beta, 0);
     d_vec = concat(d_vec,ideal_denom);
     alpha_vec = concat(alpha_vec, alpha_i);
@@ -1073,7 +1110,7 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
     if (testFlag == 2,
         GP_ASSERT_TRUE(idealB == alphaOK);
     );
-    \\print("compact rep finished");breakpoint();
+
     return( [alpha_vec, d_vec] );
 } \\ end compact_rep_enum
 

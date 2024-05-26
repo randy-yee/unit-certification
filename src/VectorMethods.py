@@ -6,7 +6,6 @@ mulvec
 pointwise_vector_mul
 dividevector
 pointwise_vector_div
-remove_last_coordinate
 concat_negative_sum
 sumvec
 expvec
@@ -30,13 +29,15 @@ read("src/bounds.gp")
 read("test/TestingUtility.gp")
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ OUTPUT: a polynomial in x with coefficients determined by L,
-\\ L[1] is the coefficient of the largest term, L[last] = constant coefficient
-\\ INPUT: in a list of coefficients */
-make_poly(coeff_list) = {
-  my(output_polynomial = 0);
-  for(k =1, length(coeff_list),  output_polynomial += coeff_list[k]*x^(length(coeff_list)-k) );
-  return(output_polynomial)
+\\ INPUT:
+\\ - in a list L containing t coefficients ordered largest exponent to smallest
+\\ OUTPUT:
+\\ - a polynomial f in x of degree (t-1) with coefficients determined by L
+
+make_poly(coeffs) = {
+  my(poly_f = 0);
+  for(k =1, length(coeffs),  poly_f += coeffs[k]*x^(length(coeffs)-k) );
+  return(poly_f)
 };
 
 /********************************************/
@@ -63,18 +64,16 @@ dividevector(y,u) = mulvec(y,invert_coordinates(u));
 pointwise_vector_div(~u1,~u2) = pointwise_vector_mul(u1,invert_coordinates(u2));
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ INPUT: A vector v
-\\ OUTPUT: v with an extra term equal to the negative sum of the entries of v
+\\ BRIEF: Return (v || c) where c is equal to the negative sum of entries of v
+\\ INPUT:
+\\ - A vector v of length t
+\\ OUTPUT:
+\\ - A vector (v || c) of length (t+1)
 concat_negative_sum(v) = concat(v,-sumvec(v));
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ INPUT: A vector v
-\\ OUTPUT: v with last coordinate removed
-remove_last_coordinate(v) = {v[1..length(v)-1]};
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ INPUT: A vector v
-\\ OUTPUT: The sum of the elements of the vector v in R^n
+\\ INPUT: A vector v of length t
+\\ OUTPUT: The sum of the coordinates of the vector v
 sumvec(~v)= {
     my(entry_sum:small = 0);
     for (i = 1,length(v),
@@ -140,8 +139,13 @@ samevecs(~v1,~v2, eps)={
   return(1);
 };
 
-\\ Method for ensuring the that first nonzero entry of a vector is positive
-
+\\
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\ BRIEF: Return adjusted vector so that the first nonzero entry is positive
+\\ INPUT:
+\\ - a vector v
+\\ OUTPUT:
+\\ - either v or -v, based on the sign of the first nonzero coefficient
 vec_flip_positive(v1)={
   for(i=1, length(v1),
       if(v1[i] != 0,
@@ -153,22 +157,23 @@ vec_flip_positive(v1)={
 
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ Checks whether each of the entries of v1 are smaller than the corresponding entry of v2
+\\ BRIEF: Checks if each of the entries of v1 are smaller than that of of v2
+\\ - axis allows us to skip comparison on the specified coordinate, which is
+\\   needed in the expand_minset function. Leave as 0 otherwise
 \\ INPUT:
-\\ - v1, v2 are vectors
-\\ - axis is an integer. Ignore comparison of that entries for that index.
-\\   For application in the expand_minset algorithm. Leave as 0 otherwise
+\\ - vectors v1, v2
+\\ - integer value axis
 \\ OUTPUT
-\\ - 0 if v1 equals or exceeds v2 on any coordinate (excluding axis)
+\\ - 0 if v1 equals or exceeds v2 on any coordinate (except possibly axis)
 \\ - 1 if v1 is smaller than v2 on each coordinate (except possibly axis)
 vec_less_than(~v1,~v2, axis = 0)={
-		if(length(v1)!= length(v2), print("v1, v2 not the same length. Error."); return(-1));
-		for(i =1, length(v1),
-				if(i != axis,
-						if(v1[i]-v2[i] >=0 , return(0););
-				);
+    GP_ASSERT_EQ(length(v1), length(v2));
+	for(i =1, length(v1),
+		if(i != axis,
+			if(v1[i]-v2[i] >=0 , return(0););
 		);
-		return(1);
+	);
+	return(1);
 }
 
 \\ Computes the infinity norm of a vector v
@@ -185,32 +190,43 @@ infinity_norm(v)={
   return(val);
 }
 
-
-\\# INPUT:
-\\ - A vector of integers A which defines the subdivision for the babystock
-\\ - A vector of integers V that defines a particular 'giant step'
-\\   for all i, V[i] < A[i]
-\\# OUTPUT:
-\\ - The vector V 'incremented' by 1, similar to a number in which each digit
-\\  is a different base
+\\ BRIEF:
+\\ - Simulates addition by 1, where current_vec is a vector of digits
+\\   and a_vec is the roll-over value.
+\\   ex) a_vec = [4,5,6], Then increment_coordinates(a_vec, [2,3,5]) = [2,4,0]
+\\   ex) increment_coordinates(a_vec, [3,4,5]) = [0,0,0]
+\\ INPUT:
+\\ - A vector of integers A
+\\ - A vector of integers V such that  for all i, V[i] < A[i]
+\\ OUTPUT:
+\\ - MODIFY IN PLACE: V -> V' incremented in the way described above
 increment_coordinates(a_vec, ~current_vec)={
+    \\# Note that it is assumed that a_vec[i] > current_vec[i] for all i
+    \\# but this is not checked!
     my(place = length(current_vec), carryflag = 0;);
     current_vec[place]+=1;
     if(current_vec[place] >= a_vec[place], carryflag =1);
     while(carryflag == 1,
-        current_vec[place] = 0; carryflag = 0;
-        if(place == 1, return(current_vec));
-        place -= 1;
-        current_vec[place]+=1;
-        if(current_vec[place] >= a_vec[place], carryflag =1);
+        current_vec[place] = 0; carryflag = 0; \\# implies rollover; set value to 0
+        if(place == 1, return);                \\# if this was the leftmost place value, return
+        place -= 1;                            \\# move one place-value left
+        current_vec[place]+=1;                 \\# apply the carryover +1
+        if(current_vec[place] >= a_vec[place], carryflag =1); \\#determine if this value rolls over and repeat
     );
     return;
 }
 
+\\ BRIEF:
+\\ - compute a linear combination of the columns of a matrix
+\\ INPUT:
+\\ - A matrix called lattice of dimension (t,s)
+\\ - A coeff_vector of length s
+\\ OUTPUT:
+\\ - a column vector of size t
 column_lin_comb(~lattice, ~coeff_vector)=
 {
     GP_ASSERT_EQ(length(coeff_vector) , length(lattice));
-    lc_vector = vector(matsize(lattice)[1], i, 0)~;
+    my(lc_vector = vector(matsize(lattice)[1], i, 0)~);
     GP_ASSERT_TRUE(type(lc_vector) == "t_COL");
     for(i=1, length(lattice),
         lc_vector += (coeff_vector[i]*lattice[,i]);
@@ -218,6 +234,12 @@ column_lin_comb(~lattice, ~coeff_vector)=
     return(lc_vector);
 }
 
+\\ BRIEF:
+\\ - changes the working precision of GP
+\\ INPUT:
+\\ - an integer value newbitprec
+\\ OUTPUT:
+\\ - an integer value equal to the old bit precision
 change_precision(newbitprec)=
 {
     oldbitprecision = default(realbitprecision);
@@ -225,10 +247,16 @@ change_precision(newbitprec)=
     return(oldbitprecision);
 }
 
+\\ BRIEF:
+\\ - perform gram schmidt on the input matrix over the reals
+\\ INPUT:
+\\ - real_lattice is a matrix
+\\ OUTPUT:
+\\ - a matrix whose columns should be orthogonal
 gram_schmidt(~real_lattice)=
 {
     my(rank= length(real_lattice), ortho_basis=real_lattice);
-    for(i =2, rank,
+    for(i = 2, rank,
         for(j=1, i-1,
             mu_ij = (real_lattice[,i]~ * ortho_basis[,j])/norml2(ortho_basis[,j]);
             ortho_basis[,i] -= mu_ij*ortho_basis[,j];
@@ -237,6 +265,14 @@ gram_schmidt(~real_lattice)=
     return(ortho_basis);
 }
 
+\\ BRIEF:
+\\ - determine a vector indicating the maximum possible coefficients of a
+\\ - a shortest vector; used to determine which vectors need to be checked
+\\ INPUT:
+\\ - degree of underlying number field,
+\\ - an matrix representation of a lattice (LLL-reduced)
+\\ OUTPUT:
+\\ - a vector whose size matches the number of columns of the input matrix
 get_enumeration_bounds(degree, lll_lattice)=
 {
     my(rank = length(lll_lattice),
@@ -251,9 +287,16 @@ get_enumeration_bounds(degree, lll_lattice)=
     return(k_vector);
 }
 
+\\ BRIEF:
 \\\ A function used for testing. Given a matrix corresponding to Lambda_K
 \\\ construct a new matrix corresponding to a sublattice of Lambda_K
 \\\ Helpful for testing the ability to find index divisors
+\\ INPUT:
+\\ - G is a number field
+\\ - unimat is the matrix corresponding to log lattice of G
+\\ - modpair/extype are used to modify the lattice (see code)
+\\ OUTPUT:
+\\ - a matrix corresponding to a sublattice of the input lattice
 compute_subgroup(G, unimat, modpair, extype=0)={
     my(coord = modpair[1], pow = modpair[2]);
     unimat[,coord] = nfeltpow(G, unimat[,coord], pow);
@@ -270,9 +313,16 @@ compute_subgroup(G, unimat, modpair, extype=0)={
         return(unimat);
     );
 }
-
+\\ BRIEF:
+\\ -
+\\ INPUT:
+\\ - G a number field
+\\ - ideal is a coefficient matrix of an ideal wrt integral basis of G
+\\ OUTPUT:
+\\ - boolean indicating whether the ideal is reduced or not
 check_ideal_reduced(G, ideal)=
 {
+    \\# if the norm is too small, then its not reduced
     if(abs(1/idealnorm(G, ideal))>sqrt(abs(G.disc)), return(0));
     my(rank = length(ideal),
         k_vector, zero_vec, iteration_vector);
@@ -287,16 +337,30 @@ check_ideal_reduced(G, ideal)=
     k_vector = get_enumeration_bounds(rank, lll_lat);  \\# compute the k vector
 
     check_elements = qfminim(lll_lat~*lll_lat,poldegree(G.pol)+0.1,,2);
+    \\#if no elements, then the normed body only contains the 0 vector
     if(check_elements[1] == 0, return(1));
     one_vec = vector(G.r1+G.r2, i , 1);
     for(i=1, length(check_elements[3]),
+        \\#if there were elements in the scan region, check if they are in the normed body of 1
         test_vector_real = abs(G[5][1]*lll_ideal*check_elements[3][,i]);
         if(vec_less_than(test_vector_real, one_vec),
-            default(realbitprecision, mainbitprecision);    \\#restore precision
             return(0)
         );
     );
     return(1);
+
+}
+
+/*
+\\ BRIEF:
+\\ - DEPRECATED
+\\ INPUT:
+\\ - G a number field
+\\ - ideal is a coefficient matrix of an ideal wrt integral basis of G
+\\ OUTPUT:
+\\ - boolean indicating whether the ideal is reduced or not
+check_ideal_reduced_old(G, ideal)=
+{
     \\ if num elts is 0, reduced, else check each of them if they are in the normed body of 1
     k_vector = vector(rank, i, k_vector[i]+1);
     print(k_vector);
@@ -322,3 +386,4 @@ check_ideal_reduced(G, ideal)=
     default(realbitprecision, mainbitprecision);    \\#restore precision
     return(1);  \\# no minima found inside of the normed body of 1
 }
+*/

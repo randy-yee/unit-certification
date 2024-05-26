@@ -7,10 +7,34 @@ read("src/BSGSHelper.py")
 \\ read("src/Neighbours.py");
 }
 
+
+{
+print("debugging : test case");
+
+    my(G1, G2, O_K, n, eps = 10^(-9));
+    G1 = nfinit(x^5 - x^4 - 16*x^3 - x^2 + 32*x + 9);
+    G2 = bnfinit(x^5 - x^4 - 16*x^3 - x^2 + 32*x + 9);
+    n = poldegree(G1.pol);
+    urank = G1.r1 +G1.r2-1;
+    O_K = matid(n);
+    alpha_OK =  [1, 0, 0, 0, 6/43; 0, 1, 0, 0, 128/129; 0, 0, 1, 0, 91/129; 0, 0, 0, 1, 89/129; 0, 0, 0, 0, 1/129];
+    alpha = [-1.94007873535156250, 2.884353637695312500000000000000000000000000, 0.46249389648437500000000000000, -1.9906616210937500000, 5.443695068359375000000000000];
+    alpha1 = [-1.9414062500000000000000000000000, 2.8828125000000000000000000000, 0.46093750000000000000000000000, -1.9921875000000000000000000000000, 5.4453125000000000000000000];
+    epsilon = 1/256;
+    logarithm_lattice = get_log_lattice_bnf(G2);
+    extra_log_coords = vector(length(logarithm_lattice), i, extra_log_coordinate(G1.r1, G1.r2, logarithm_lattice[,i]));
+    logarithm_lattice = matconcat([logarithm_lattice; extra_log_coords]);
+
+    cpct_rep = compact_rep_full_input(G1, alpha, alpha_OK , epsilon,1,2);
+    GP_ASSERT_VEC_NEAR(log_from_cpct(G1, cpct_rep)[1..urank], alpha[1..urank], 1/10000);
+    print("the issue here seems to be that alpha1 is actually a crappy approximation, so we aren't getting the right value");
+    breakpoint();
+
+}
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ test cases for compact_rep_buchmann and compact_reconstruct
 {
-    print("test case 1");
+    print("--Cpct Rep test case 1");
 
     my(G1, G2, O_K, n, eps = 10^(-9));
     G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
@@ -28,7 +52,7 @@ read("src/BSGSHelper.py")
 }
 
 { \\ test cases for compact_rep_full_input and cpct_from_loglattice
-    print("test case 2");
+    print("Cpct Rep test case 2");
     my(G1, G2, O_K, n, logarithm_lattice, cpct_rep,cpct_list, eps = 10^(-9));
     G1 = nfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
     G2 = bnfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
@@ -53,7 +77,7 @@ read("src/BSGSHelper.py")
 \\ Testing conversion from logarithm to compact representation
 \\ with large-ish values
 {
-    print("Test: Cpct representation with large-ish value");
+    print("--Cpct Rep: Cpct representation with large-ish value");
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep,
         log_lattice, cpct_units, eps = 10^(-20)
     );
@@ -81,7 +105,7 @@ read("src/BSGSHelper.py")
 \\ testing computation of logarithm lattice from set of compact representations
 \\ and back: log_lattice_from_compact_set  cpct_from_loglattice
 {
-    print("Test: Compact reps from lattice and back");
+    print("--Cpct Rep Test: Compact reps from lattice and back");
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep,
         log_lattice, cpct_units, eps = 10^(-20)
     );
@@ -129,7 +153,7 @@ read("src/BSGSHelper.py")
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 {\\ test giantstep function
-    print("Testing giantstep");
+    print("--Cpct Rep : Testing giantstep");
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep, delta_K,
         log_lattice, cpct_units, eps = 10^(-20)
     );
@@ -177,7 +201,7 @@ read("src/BSGSHelper.py")
 }
 
 {\\ test invert compact representation and multiply
-    print("Test: Cpct rep, inversion and multiplication");
+    print("--Cpct Rep Test: Cpct rep, inversion and multiplication");
     my(G1, G2, O_K, cpct_rep, inverted, n, eps = 10^(-9));
     G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
@@ -238,7 +262,7 @@ read("src/BSGSHelper.py")
 }
 
 {
-    print("\nTest 1000 compact representations in a degree 6 field");
+    print("\n--Cpct Rep Test : 1000 compact representations in a degree 6 field");
     my(G1, G2, O_K, n, logarithm_lattice, cpct_rep,cpct_list, eps = 10^(-9));
     G1 = nfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31); \\ signature 2,2
     G2 = bnfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
@@ -263,27 +287,27 @@ read("src/BSGSHelper.py")
         total_time += (time_end - time_start);
         increment_coordinates(~capvec, ~countervec);
     );
-    
+
     \\# note that these timings are probably dependent on the computer system
     \\# these timings are based on a personal linux desktop. Adjust if needed
-    print("Time spent: ",total_time, "\n");
+    print("--Time spent: ",total_time, "\n");
     GP_ASSERT_WITHIN_RATIO(total_time, 2800, 0.1);  \\ old timing: 5600 Jan2023
 
 
     big_unit = (11^(200))*extended_llattice[,2];
-    print("Large unit test");
+    print("--Large unit test");
     time_start = getabstime();
     compact_rep_full_input(G1, big_unit, O_K, eps, 1, 1);
     time_end = getabstime();
     total_time += (time_end - time_start);
-    print("Time spent: ",total_time);
+    print("--Time spent: ",total_time);
     \\# note that these timings are probably dependent on the computer system
     \\# these timings are based on a personal linux desktop. Adjust if needed
     GP_ASSERT_WITHIN_RATIO(total_time, 5400, 0.1); \\ old timing 11000 Jan 2023
 }
 
 {
-    print("Slow Cpct Rep Example");
+    print("--Cpct Rep : Slow Cpct Rep Example");
     \\\ This is blocking the use of collision_check2, which should regenerates the babystock elements from their logs
     K = nfinit(x^3 + 46*x^2 + 1188*x - 50115);
     print("Log Disc K = ", precision(log(abs(K.disc)),10));
@@ -301,16 +325,16 @@ read("src/BSGSHelper.py")
     verify_generator_with_list(K, idealI, compactTracking);
     GP_ASSERT_NEAR(norml2(trackerLogarithm(K, ~compactTracking, rank)- minima_log), 0, 2^(-10));
 
-    print("Test: Problem case1:");
+    print("-- Test: Problem case1:");
     ending_cpct_rep = compact_rep_full_input(K, minima_log, idealI, 10^(-8), 1,1);
     GP_ASSERT_NEAR(norml2(log_from_cpct(K,ending_cpct_rep)- minima_log), 0, 2^(-10));
 }
 
 {
-    print("Test: Problem Case 2: ");
+    print("-- Test: Problem Case 2: ");
     \\\ This is blocking the use of collision_check2, which should regenerates the babystock elements from their logs
     K = nfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
-    \\print("Log Disc K = ", precision(log(abs(K.disc)),10));
+
     rank = K.r1+K.r2 -1;
     O_K = matid(poldegree(K.pol));
     idealI = [1, 0, 0, 153/245; 0, 1, 0, 8/49; 0, 0, 1, 1/35; 0, 0, 0, 1/245];

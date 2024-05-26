@@ -81,8 +81,8 @@ outputInstanceInfo(fNum, K, lglat_new, reg1, signature_string, prec)={
     print("Input determinant ", precision(unscaled_determinant(K,lglat_new),10));
     write(OUTFILE1, "\n--------------------------\n", fNum, " Field pol: ", K.pol,
     ".  Sig: (", K.r1, ",", K.r2, ") -- Precision: ", ceil(REQ_BSGS));
-    write(OUTFILE1, strprintf("%-20s %-20s %s\n%-20.9F %-20.9F %d\n", "Log(Disc) ", "Regulator: ", "Disc:", log(abs(K.disc)), reg1, K.disc));
-    write(concat("data/table-bsgs-", signature_string), strprintf("%-20.9F %-20.9F %d", log(abs(K.disc)), reg1, K.disc));
+    write(OUTFILE1, strprintf("%-20s %-20s %s\n%-20.9F %-20.9F %d\n", "Log(Disc) ", "Regulator: ", "Disc:", log(abs(K.disc))/log(2), reg1, K.disc));
+    write(concat("data/table-bsgs-", signature_string), strprintf("%-20.9F %-20.9F %d", log(abs(K.disc))/log(2), reg1, K.disc));
 }
 
 get_baby_stock_fit_size(urank, deg_n, detLambda)=
@@ -134,10 +134,11 @@ hybrid_balance_calculator(urank, deg_n, detLambda)=
 \\# loop_range is a triple indicating the start, end and increment of the loop
 \\# note tha the input files have a specific form, and the vector read in is always called data
 
-\\# \param: signature_string is used to specify the read in file and the output file
-\\# ex. "1-1", "1-2", "0-3" etc
-\\# \param: loop_range is a length 3 vector which specifies which fields to compute on
-\\# they are the arguments for forstep: ex. [3,7,2], will run fields 3,5,7 from data
+\\# param: signature_string is used to specify the read in file and the output file
+\\#     ex. "1-1", "1-2", "0-3" etc
+\\
+\\# param: loop_range is a length 3 vector which specifies which fields to compute on
+\\#     they are the arguments for forstep: ex. [3,7,2], will run fields 3,5,7 from data
 \\# \param: b_ranges is a matrix of size n x 3, where each row is a triple of forstep arguments
 \\# that specifies a range of babystock volumes
 \\# each corresponds to the field number's ceiling mod 3 , only because this corresponds to a rough
@@ -150,16 +151,17 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
 {
     GP_ASSERT_EQ(length(loop_range),3);
 
-
     suffix = strexpand("(", loop_range[1], ",", loop_range[2], ")");
     [OUTFILE1, infilestring] = generateFileStrings(signature_string, suffix, auxilliary);
 
-    \\\ Note that the input file must define the variable data
+    \\\ Note that variable _data_ must be defined in the input file
     read(infilestring);
-    if(loop_range[2] > length(data), loop_range[2] = length(data));
+
+    GP_ASSERT_TRUE(type(data) == "t_VEC");
     GP_ASSERT_TRUE(loop_range[2] <= length(data));
-    print(loop_range[1], " ", loop_range[2], " ", loop_range[3]);
-    print("running1");
+    if(type(b_ranges) == "t_MAT", GP_ASSERT_TRUE(loop_range[2] <= matsize(b_ranges)[1]););
+    if(loop_range[2] > length(data), loop_range[2] = length(data));
+
     forstep(i=loop_range[1],loop_range[2],loop_range[3],
         timeout = 12*60*60*1000; \\12 hours
         \\# INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
@@ -167,6 +169,7 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
         \\# in case bnfinit is needed
         \\K1 = bnfinit(data[i][2],1); unit_index = random(length(K1.fu))+1;
 
+        \\# compute expected precision requirements
         [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat, ~reg1);
         default(realprecision, ceil(REQ_BSGS));
 
@@ -175,7 +178,10 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
         outputInstanceInfo(i, K, lglat_new, reg1, signature_string, REQ_BSGS);
 
         cpct_units = cpct_from_loglattice(K, lglat_new, eps);
-        scaleB = 2;          \\ 1 means you scan the whole region
+
+        \\# Fraction of fundamental region to search. Standalone BSGS should use 2 (1/2)
+        \\# 1 means you scan the whole region, but this is not needed
+        scaleB = 2;
 
         original_precision = default(realbitprecision);
 
@@ -188,6 +194,7 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
             scanBallRadius = auxilliary[1];
         );
         if(b_ranges == [],
+            \\# behaviour when 3rd arg is the empty vector
             print("Auto-selecting babystock region size");
             sqrt_disc = sqrt(abs(K.disc));
             estimate = floor(0.4811*(sqrt_disc^0.3222));
@@ -195,14 +202,6 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
             end = estimate + 1*floor(estimate/3);;
             step = floor((end-init)/10);
             write(OUTFILE1,"babystock-range: ", init, " ", end, " ", step);
-        ,
-        length(b_ranges) == 2,
-            print("Auto-selecting babystock region size using provided coeffs");
-            sqrt_disc = sqrt(abs(K.disc));
-            estimate = floor(b_ranges[1]*(sqrt_disc^b_ranges[2]));
-            init = estimate - floor(estimate/3);
-            end = estimate + 2*floor(estimate/3);
-            step = floor((end-init)/10);
         ,
         (length(b_ranges)==3) && (type(b_ranges)!="t_MAT"),    \\elif
             print("Auto-selecting babystock region size based on coeffs");
@@ -218,8 +217,11 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
             end = estimate+1;\\ + 1*floor(estimate/4);
             step = max(floor((end-init)/3),1);
             write(OUTFILE1,"babystock-range: ", estimate, "  ", init, " ", end, " ", step);
-        ,\\else
+        ,
+        (length(b_ranges)==3) && (type(b_ranges)=="t_MAT"),
             init = b_ranges[i,1]; end = b_ranges[i,2]; step = b_ranges[i,3];
+        ,
+            print("Invalid selection of babystock size ranges");breakpoint();
         );
 
         timeVector =List();         \\ use to track timing changes
@@ -447,7 +449,9 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
             \\time_estimate = pmax_time_estimate(5,4, indexbound);
 
             write(OUTFILE1, "Index bound: ", indexbound, ".   bound calc time: ", precision(boundtime,15)  );
-            \\write(OUTFILE1, "estimated time: ",precision(time_estimate,10));
+
+            \\print("Algorithm has been commented out to test the index bound");
+
             logout = log_pohst_pari(K,lglat_new,unitvector_cpct, indexbound, eps);
             tafter = getabstime();
             outreg = unscaled_determinant(K,logout);
@@ -457,7 +461,7 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
                 write(table_outfile, strprintf("%-20s %-20s %-20s %-20s %s\n", "Log(Disc) ", "Regulator: ", "Disc:", "Time(min)", "IndexBound"));
             );
             write(table_outfile, strprintf("%-20.9F %-20.9F %-20d %-20.9F %d", log(abs(K.disc)), reg1, K.disc, precision((tafter-tbefore)/60000.0 ,10), indexbound ));
-            \\write(precision((tafter-tbefore)/60000.0 ,15), "   ",indexbound);
+
         );
     );
 }

@@ -216,7 +216,7 @@ jump_giant_steps(~G, ~lat_lambda, ~gs_sublattice, ~bstock, avec, eps)={
             for(i=1, length(matches),
                 new_vec = giant_divisor[3][1..r] - matches[i];                  \\ compute difference
                 if(norml2(new_vec) > eps_sqr && is_vec_in_lattice(new_vec~,lat_lambda,eps)==0,
-                    print(matsize(lat_lambda));
+                    print("giant-step jump",matsize(lat_lambda));
                     lat_lambda = my_mlll( matconcat([lat_lambda, new_vec~]),eps);
                     if(1, print("New element found. New regulator = ", precision(matdet(lat_lambda),10)););
                 );
@@ -255,7 +255,7 @@ get_giant_step_increment_vectors_compact(G, giant_sublattice, field_deg, eps)={
 
         GP_ASSERT_TRUE(type(DEBUG_BSGS)=="t_INT");
         if(DEBUG_BSGS,
-            print(precision(log_from_cpct(G, gstep_divisor[3]),10), "  ",precision(giant_sublattice[,j],10));
+            print("BSGS-DEBUG ", precision(log_from_cpct(G, gstep_divisor[3]),10), "  ",precision(giant_sublattice[,j],10));
             GP_ASSERT_TRUE(sqrt(norml2(log_from_cpct(G, gstep_divisor[3])~-giant_sublattice[,j]))<log(abs(G.disc)^(1/2)) );
         );
 
@@ -365,6 +365,9 @@ collision_check_bootstrap_log(G, ~lattice_lambda, r,\
 
     for(i=1, length(matches),
         \\# do this to recalculate the log vector to greater precision
+        if(samevecs(matches[i], [-1.9414062500000000, 2.8828125000000000000000000, \
+        0.4609375000000000000000000, -1.992187500000000000000000, 5.445312500000000000000000000], 1/256),
+        "print(target) ";breakpoint(););
         baby_div = compact_rep_full_input(G, matches[i],giant_divisor[1], eps);
         baby_log = log_from_cpct(G, baby_div);
         new_vec = gd_log - baby_log;
@@ -439,7 +442,7 @@ collision_check2(G, ~lattice_lambda, r, eps,\
 
         print("computing matches babystock element");
         baby_element = compact_rep_full_input(G, matches[i], matchIdeal, compare_precision,1, 2);
-        print("dnoe computing");
+        print("done computing");
         psi_baby = log_from_cpct(G, baby_element);
         if(norml2(matches[i] - psi_baby) > 0.00000001,
             print("CC2 mismatch: ", precision(matches[i],20), "   ", precision(psi_baby,20) );
@@ -588,8 +591,14 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
         EXACT_CHECK = 1;
         \\ use babystock hashmap to check for collisions and update as needed
         if(mapisdefined(babystock, giant_divisor[1]),
-            if(DEBUG_BSGS>0 ||1 ,print("baby-giant match. checking for new vector: ", giant_divisor[1]););
+            if(DEBUG_BSGS>0 ||1 ,print(ctr,"  baby-giant match. checking for new vector: ", giant_divisor[1]););
             matches = mapget(babystock, giant_divisor[1]);
+            if (giant_divisor[1] == [1, 0, 0, 0, 6/43; 0, 1, 0, 0, 128/129; 0, 0, 1, 0, 91/129; 0, 0, 0, 1, 89/129; 0, 0, 0, 0, 1/129],
+                print("gdbad ", precision(giant_divisor[2],50) );
+                bstock_vec = mapget(babystock, giant_divisor[1]);
+                print("bstock ", precision(bstock_vec,50));
+                breakpoint();
+            );
             \\if (giant_divisor[1] == [1, 0, 0, 7804915/15049807; 0, 1, 0, 8863997/15049807; 0, 0, 1, 1043039/15049807; 0, 0, 0, 1/15049807],
             \\    print("gdbad ", precision(giant_divisor[2],50) );
             \\    print("bstock ", precision(mapget(babystock, giant_divisor[1]),50));
@@ -1002,9 +1011,9 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     \\ #THIS OPTION USES NEIGHBORS TO SEARCH THE BABYSTOCK
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    if(alg == "NEIGHBOURS",
+    if(alg != "SCAN",
         \\# note this option has been disabled for some time so it no longer works
-        print("NEIGHBOURS option has been disabled. Rerun using SCAN"); quit;
+        print("SCAN is the only strategy implemented. Rerun using SCAN"); quit;
         neighbour_search(G,lattice_lambda, babystock_region, ~babystock, giant_sublattice, eps);
     );  \\# end neighbors for babystock
 

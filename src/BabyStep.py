@@ -164,7 +164,6 @@ scanball_map(~G, ~bmap, y, u, psimu, web, eps, ~repeated_minima)={
 \\ is provided. In this way, when the ideal y is repeated, we can reduce overall
 \\ number of scans
 \\ bmap is passed by reference, and any new minima are added to it
-\\overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~repeated_minima)={
 overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~repeated_minima)={
     SCAN_STATS = 0;
     if(SCAN_STATS, print("ball dist, eps", precision(ball_distance,10),"  " eps););
@@ -233,8 +232,10 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~rep
                     vec_numerical = (G[5][1]*scan_elements[,ii])~;
                     \\ # Start at 2 because j=1 holds the nu value ( see babystock_scan_jump )
                     add_start = getabstime();
+                    print();
                     for(j = 2, length(log_distance_list),
-                        psi_value = vector_approximate(log(abs(vec_numerical[1..G.r1+G.r2]))+log_distance_list[j][1..G.r1+G.r2],eps);
+                        print("WARNING: Determine what the right level of precision to round these is");
+                        psi_value = vector_approximate(log(abs(vec_numerical[1..G.r1+G.r2]))+log_distance_list[j][1..G.r1+G.r2],eps^2);
                         if(mapisdefined(bmap, new_y, &existing_entry),
                             repeatflag = is_repeat_babystock(existing_entry, psi_value, eps);
                             if(repeatflag==0,
@@ -458,6 +459,7 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
     GP_ASSERT_EQ(r, length(giant_legs));
 
     REQ_BS = babystockPrecision(G, giant_legs);
+    print("prec: ", default(realbitprecision), "  ", REQ_BS);
     default(realbitprecision, REQ_BS);
 
 
@@ -547,6 +549,7 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
             \\ # Important! scanIdeals pushes the nu value of the first
             \\ # occurrence. This is accounted for in overlap_scanball
             mapput(~scanIdeals, baby_divisor[1] ,List([baby_divisor[2], logdist]));
+            \\print("new elements: ",  baby_divisor[1], "  ",precision(logdist,10));
             mapput(~idealCompactGenerator, baby_divisor[1], List([compactTracking] ));
         );
 
@@ -579,6 +582,7 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
     if (length(scanIdeals) < 1, return([lattice_lambda, []]); );
 
     scanIdealsMatrix = Mat(scanIdeals)[,1];
+    print("precision before scanball", default(realbitprecision));
     for(i = 1, length(scanIdealsMatrix),
         distanceList = mapget(scanIdeals, scanIdealsMatrix[i]);
 
@@ -629,6 +633,7 @@ incremental_baby_steps_compact(y, ~lattice_lambda, ~giant_legs,\
     );
     GP_ASSERT_EQ(r, length(giant_legs));
     REQ_BS = babystockPrecision(G, giant_legs);
+
     default(realbitprecision, REQ_BS);  \\\ change precision, switches back in giant step algs
     start_time = getabstime();
 
