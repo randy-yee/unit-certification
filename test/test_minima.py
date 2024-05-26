@@ -6,8 +6,8 @@ read("src/bounds.gp")
 }
 
 {
-    print("Testing minima functions:");
-    print("Test 1 - Gram-schmidt and reduced lattice test");
+    print("--Testing minima functions:");
+    print("--Test 1: Gram-schmidt and reduced lattice test");
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
         lglat, eps = 10^(-20)
     );

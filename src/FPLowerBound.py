@@ -21,7 +21,7 @@ get_index_bound2
 \\ code for computing hermite constants for Pohst Fieker lower bound method.
 \\ adapted from Pari source code
 my_hermiteconstant(n)={
-  /* Original C code for reference
+  /* Original GP/C code for reference
   GEN h,h1;
   pari_sp av;
   switch(n)
@@ -59,7 +59,7 @@ my_hermiteconstant(n)={
 
 \\ SUBROUTINE: Computes the value M* in the P-F lower bound
 \\ G is a number field, const_C and jv are specific constants.
-\\ Returnts the value M* from the Pohst-Fieker.
+\\ Returns the value M* from the Pohst-Fieker.
 m_star(G, const_C, jv)={
   my(val1, val3, dim = length(G.zk));
   val1 = (const_C-jv)/(dim-jv);
@@ -68,11 +68,15 @@ m_star(G, const_C, jv)={
 };
 
 get_pohst_j(G)={
+
+    return(min(2*G.r2, length(G.zk)-2));    \\ choice of j described in in F-P, p2772
+    /*
     if(G.r2 == 0,
-        return(0);
+        return(length(G.zk)-2); \\ PF suggest this is 0. But we have counterexamples
     ,\\ else
-      return(min(2*G.r2, length(G.zk)-2));                                      \\ choice of j described in in F-P, p2772
+      return(min(2*G.r2, length(G.zk)-2));
     );
+    */
 }
 
 get_T2_value(G, element)={
@@ -84,7 +88,6 @@ is_non_torsion_unit(G, candidate_elt, zerovec, eps)={
     if(abs(nfeltnorm(G, candidate_elt)) != 1, return(0),
         if(!samevecs( log(abs(valuationvec(G, candidate_elt, column = 1))), zerovec, eps ), return(1), return(0) );
     );
-    \\return ( abs(nfeltnorm(G, candidate_elt)) == 1 && !samevecs( log(abs(valuationvec(G, candidate_elt, column = 1))), zerovec, eps ));
 }
 
 sort_by_T2(G, unit_set)={
@@ -173,7 +176,7 @@ lower_regbound(G, K, eps, input_j = -1, k_limit = 0)={
     \\if(K < (1+sqrt(2))*length(G.zk), print("Error K is too small. "); return(0));       \\ check if K is big enough
     K_star = m_star(G, K, j_val);                                                         \\ define the value K*
 
-    \\ COMPUTE THE SET SK
+    \\# COMPUTE THE SET SK
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     if(K < k_limit || k_limit == 0,
         tt = getabstime();
@@ -203,7 +206,7 @@ lower_regbound(G, K, eps, input_j = -1, k_limit = 0)={
         [unitmat, lunits, SK_urank] = get_maximal_independent_unitset(G, SK_units,eps);
     );
 
-    \\ BEGIN COMPUTATION OF THE LOWER REGULATOR BOUND
+    \\# BEGIN COMPUTATION OF THE LOWER REGULATOR BOUND
     new_j = j_val;
 
     for(i =1, SK_urank,                                                     \\ this is the value k, the size of the maximal ind. set in S_K
@@ -212,21 +215,16 @@ lower_regbound(G, K, eps, input_j = -1, k_limit = 0)={
         minlog = minlog~ * minlog;
         Mi_tilde = min(K_star, minlog );
 
-        \\ counts number of conjugates with abs value near 1 and adjust j if possible
-        \\ one_conj = 0;
-        \\ numvec = abs(G[5][1]*unitmat[,i]);
-        \\ for(ctr =1, length(numvec), if( abs(numvec[ctr] -1) <eps, one_conj +=1 ));
-        \\ new_j = max(one_conj, new_j);
-        \\ print("M_tilde_",i, " = ", precision(Mi_tilde,8), "   current j= ", new_j );
-
         finalbound *= Mi_tilde;
     );
     if(SK_urank < unit_rank,
-      finalbound *= m_star(G, K, j_val)^(unit_rank - SK_urank);
+      finalbound *= m_star(G, K, new_j)^(unit_rank - SK_urank);
     );
-    finalbound *= (2^G.r2)/ (length(G.zk)*my_hermiteconstant(unit_rank));
+    \\print(unit_rank); print("2^r2/n gamma_r  ",(2^G.r2)/ (length(G.zk)*my_hermiteconstant(unit_rank) ), "  ",(2^G.r2)/ (length(G.zk)*my_hermiteconstant(unit_rank)^(unit_rank) ));
+    finalbound *= (2^G.r2)/ (length(G.zk));
+    finalbound /= my_hermiteconstant(unit_rank)^(unit_rank);
     finalbound = sqrt(finalbound);
-
+    \\print("lower bound ",precision(finalbound,100));
     return(finalbound);
 };
 

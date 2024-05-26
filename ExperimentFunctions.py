@@ -41,8 +41,8 @@ generateFileStrings(signature_string, suffixString, auxilliary)=
 {
     outfilestring = strexpand("data/data-bsgs-",signature_string,suffixString);
 
-    \\infilestring = concat(concat("input/test-poly-",signature_string),".gp");
-    infilestring = concat(concat("input/polynomial-",signature_string),".gp");
+    infilestring = concat(concat("input/test-poly-",signature_string),".gp");
+    \\infilestring = concat(concat("input/polynomial-",signature_string),".gp");
     OUTFILE1 = outfilestring;
 
     if(length(aux) >1 && (type(aux[2]) == "t_STR"),
@@ -81,8 +81,8 @@ outputInstanceInfo(fNum, K, lglat_new, reg1, signature_string, prec)={
     print("Input determinant ", precision(unscaled_determinant(K,lglat_new),10));
     write(OUTFILE1, "\n--------------------------\n", fNum, " Field pol: ", K.pol,
     ".  Sig: (", K.r1, ",", K.r2, ") -- Precision: ", ceil(REQ_BSGS));
-    write(OUTFILE1, strprintf("%-20s %-20s %s\n%-20.9F %-20.9F %d\n", "Log(Disc) ", "Regulator: ", "Disc:", log(abs(K.disc)), reg1, K.disc));
-    write(concat("data/table-bsgs-", signature_string), strprintf("%-20.9F %-20.9F %d", log(abs(K.disc)), reg1, K.disc));
+    write(OUTFILE1, strprintf("%-20s %-20s %s\n%-20.9F %-20.9F %d\n", "Log(Disc) ", "Regulator: ", "Disc:", log(abs(K.disc))/log(2), reg1, K.disc));
+    write(concat("data/table-bsgs-", signature_string), strprintf("%-20.9F %-20.9F %d", log(abs(K.disc))/log(2), reg1, K.disc));
 }
 
 get_baby_stock_fit_size(urank, deg_n, detLambda)=
@@ -95,8 +95,8 @@ get_baby_stock_fit_size(urank, deg_n, detLambda)=
 
     coeffA = 0.000368562*(deg_n^2) -0.002715*deg_n - 0.0000533746*(urank^2)+0.00687096;
     coeffB = (262.421 - 96.1079*deg_n + 10.4862*(deg_n^2) + 171.561*urank - 16.4892*deg_n*urank - 30.3957*(urank^2));
-    coeffC = (-110.308 *(2^urank)+ 221.575*deg_n -15.2457*(deg_n^2)-779.873*sqrt(urank) + 159.539 *(urank^2));
-
+    coeffC = (-110.308 *(2^urank)+ 221.575*deg_n -14*(deg_n^2)-779.873*sqrt(urank) + 159.539 *(urank^2));
+    \\-15.2457*(deg_n^2)
     \\# absolute value on sqrt(log_sqrt_reg) prevents complex numbers. In this case
     \\# the discriminant is so small the calculation barely matters
     estimate = floor(coeffA*sqrt_reg*log_sqrt_reg+coeffB*abs(sqrt(log_sqrt_reg))+coeffC);
@@ -134,10 +134,11 @@ hybrid_balance_calculator(urank, deg_n, detLambda)=
 \\# loop_range is a triple indicating the start, end and increment of the loop
 \\# note tha the input files have a specific form, and the vector read in is always called data
 
-\\# \param: signature_string is used to specify the read in file and the output file
-\\# ex. "1-1", "1-2", "0-3" etc
-\\# \param: loop_range is a length 3 vector which specifies which fields to compute on
-\\# they are the arguments for forstep: ex. [3,7,2], will run fields 3,5,7 from data
+\\# param: signature_string is used to specify the read in file and the output file
+\\#     ex. "1-1", "1-2", "0-3" etc
+\\
+\\# param: loop_range is a length 3 vector which specifies which fields to compute on
+\\#     they are the arguments for forstep: ex. [3,7,2], will run fields 3,5,7 from data
 \\# \param: b_ranges is a matrix of size n x 3, where each row is a triple of forstep arguments
 \\# that specifies a range of babystock volumes
 \\# each corresponds to the field number's ceiling mod 3 , only because this corresponds to a rough
@@ -150,15 +151,17 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
 {
     GP_ASSERT_EQ(length(loop_range),3);
 
-
     suffix = strexpand("(", loop_range[1], ",", loop_range[2], ")");
     [OUTFILE1, infilestring] = generateFileStrings(signature_string, suffix, auxilliary);
 
-    \\\ Note that the input file must define the variable data
+    \\\ Note that variable _data_ must be defined in the input file
     read(infilestring);
-    if(loop_range[2] > length(data), loop_range[2] = length(data));
+
+    GP_ASSERT_TRUE(type(data) == "t_VEC");
     GP_ASSERT_TRUE(loop_range[2] <= length(data));
-    print(loop_range[1], " ", loop_range[2], " ", loop_range[3]);
+    if(type(b_ranges) == "t_MAT", GP_ASSERT_TRUE(loop_range[2] <= matsize(b_ranges)[1]););
+    if(loop_range[2] > length(data), loop_range[2] = length(data));
+
     forstep(i=loop_range[1],loop_range[2],loop_range[3],
         timeout = 12*60*60*1000; \\12 hours
         \\# INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
@@ -166,6 +169,7 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
         \\# in case bnfinit is needed
         \\K1 = bnfinit(data[i][2],1); unit_index = random(length(K1.fu))+1;
 
+        \\# compute expected precision requirements
         [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat, ~reg1);
         default(realprecision, ceil(REQ_BSGS));
 
@@ -174,7 +178,10 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
         outputInstanceInfo(i, K, lglat_new, reg1, signature_string, REQ_BSGS);
 
         cpct_units = cpct_from_loglattice(K, lglat_new, eps);
-        scaleB = 2;          \\ 1 means you scan the whole region
+
+        \\# Fraction of fundamental region to search. Standalone BSGS should use 2 (1/2)
+        \\# 1 means you scan the whole region, but this is not needed
+        scaleB = 2;
 
         original_precision = default(realbitprecision);
 
@@ -187,6 +194,7 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
             scanBallRadius = auxilliary[1];
         );
         if(b_ranges == [],
+            \\# behaviour when 3rd arg is the empty vector
             print("Auto-selecting babystock region size");
             sqrt_disc = sqrt(abs(K.disc));
             estimate = floor(0.4811*(sqrt_disc^0.3222));
@@ -194,14 +202,6 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
             end = estimate + 1*floor(estimate/3);;
             step = floor((end-init)/10);
             write(OUTFILE1,"babystock-range: ", init, " ", end, " ", step);
-        ,
-        length(b_ranges) == 2,
-            print("Auto-selecting babystock region size using provided coeffs");
-            sqrt_disc = sqrt(abs(K.disc));
-            estimate = floor(b_ranges[1]*(sqrt_disc^b_ranges[2]));
-            init = estimate - floor(estimate/3);
-            end = estimate + 2*floor(estimate/3);
-            step = floor((end-init)/10);
         ,
         (length(b_ranges)==3) && (type(b_ranges)!="t_MAT"),    \\elif
             print("Auto-selecting babystock region size based on coeffs");
@@ -213,19 +213,21 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
 
             \\ a*x*log(x) + b*sqrt(log(x)) + c
             estimate = floor(coeff_a*sqrt_reg*log_sqrt_reg+coeff_b*sqrt(log_sqrt_reg)+coeff_c);
-            init = estimate - 2*floor(estimate/4);
-            end = estimate + 1*floor(estimate/4);
-            step = floor((end-init)/10);
+            init = estimate;\\ - 1*floor(estimate/4);
+            end = estimate+1;\\ + 1*floor(estimate/4);
+            step = max(floor((end-init)/3),1);
             write(OUTFILE1,"babystock-range: ", estimate, "  ", init, " ", end, " ", step);
-        ,\\else
+        ,
+        (length(b_ranges)==3) && (type(b_ranges)=="t_MAT"),
             init = b_ranges[i,1]; end = b_ranges[i,2]; step = b_ranges[i,3];
+        ,
+            print("Invalid selection of babystock size ranges");breakpoint();
         );
-
 
         timeVector =List();         \\ use to track timing changes
         mintime = 0;
         minTimeIndex = 0;
-        forstep (j = estimate, estimate, step,
+        forstep (j = init, end, step,
             if(length(timeVector)>0,
                 trials = length(timeVector);
                 if(timeVector[trials][2] > timeout,
@@ -390,10 +392,11 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
 
     \\\ Note that the input file must define the variable data
     read(infilestring);
-    if(loop_ranges[2] > length(data), loop_ranges[2] = length(data));
+    if(loop_ranges[2] > length(data), print("Invalid fields selected: ");loop_ranges[2] = length(data));
     GP_ASSERT_TRUE(loop_ranges[2] <= length(data));
-
+    print(loop_ranges[2], "  ", loop_ranges[3]);
     forstep(i=loop_ranges[1], loop_ranges[2], loop_ranges[3],
+        print("field ", i);
         timeout = 24*60*60*1000; \\12 hours
 
         \\# INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
@@ -441,12 +444,14 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
             t_x = getabstime();
             indexbound = get_index_bound2(K, lglat_new, eps,-1, newKLimit, OUTFILE1);
             t_y = getabstime(); boundtime = (t_y-t_x)/60000.0;
-
+            print("Indexbound: ", indexbound);
             \\indexbound = k*2000000;
             \\time_estimate = pmax_time_estimate(5,4, indexbound);
 
             write(OUTFILE1, "Index bound: ", indexbound, ".   bound calc time: ", precision(boundtime,15)  );
-            \\write(OUTFILE1, "estimated time: ",precision(time_estimate,10));
+
+            \\print("Algorithm has been commented out to test the index bound");
+
             logout = log_pohst_pari(K,lglat_new,unitvector_cpct, indexbound, eps);
             tafter = getabstime();
             outreg = unscaled_determinant(K,logout);
@@ -456,7 +461,7 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
                 write(table_outfile, strprintf("%-20s %-20s %-20s %-20s %s\n", "Log(Disc) ", "Regulator: ", "Disc:", "Time(min)", "IndexBound"));
             );
             write(table_outfile, strprintf("%-20.9F %-20.9F %-20d %-20.9F %d", log(abs(K.disc)), reg1, K.disc, precision((tafter-tbefore)/60000.0 ,10), indexbound ));
-            \\write(precision((tafter-tbefore)/60000.0 ,15), "   ",indexbound);
+
         );
     );
 }
@@ -484,7 +489,35 @@ guess_function(disc, deg, rank)=
     print("\n");
     return();
 }
+skew_lattice(lattice, balanceB, scaling_value)=
+{
+    my(
+        r = length(lattice),
+        last_vector = lattice[,length(lattice)],
+        large_length = sqrt( norml2(last_vector)),
+        target_length = balanceB/scaling_value,
+        second_largest_length,
+        next_last_vector,
+        add_multiple,
+        skew_vector
+    );
+    if(target_length > large_length && (r>1),
 
+        next_last_vector = lglat_new[,length(lglat_new)-1];
+        second_largest_length = sqrt( norml2(next_last_vector));
+        print("lengths: ", precision(large_length,10), "  ", precision(second_largest_length,10));
+
+        add_multiple = ceil((target_length - large_length)/second_largest_length);
+        skew_vector = add_multiple*next_last_vector+last_vector;
+        print("target length: current_length " , precision(target_length,10), " ", precision(sqrt(norml2(skew_vector)),10) );
+
+        lattice[,r] = skew_vector;
+        GP_ASSERT_NEAR(reg1, unscaled_determinant(K, lglat_new), 0.000001);
+        largest_dimension = sqrt(norml2(lglat_new[,r]/balanceB));
+
+    );
+    return(lattice);
+};
 
 hybrid_experiment(start, end, inputFile, outputFile)=
 {
@@ -501,13 +534,15 @@ for(i=start, end,
     n = poldegree(K.pol);
     logdisc = log(abs(K.disc));
 
-
+    \\# initial precision calculations
     sumv = column_sum(lglat);
     [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat, ~reg1);
     REQ_RIG = prec_rigorous(n, logdisc, log(infinity_norm(sumv)),log(abs(reg1))  );
     default(realprecision, ceil(REQ_RIG));
 
-    \\ If this line uncommented, then the input lattice is just the GRH-assumed unit lattice
+    \\# If this line uncommented, then the input lattice is just the GRH-assumed unit lattice
+    \\# for future reference, this would be the place to modify the lattice into a sublattice to test
+    \\# index divisor finding
     lglat_new = lglat;
 
     write(OUTFILE1, "\n--------------------------\n", i, " Field pol: ", K.pol, "Disc: ", K.disc, ".      Signature: ", K.r1, " ", K.r2);
@@ -524,61 +559,40 @@ for(i=start, end,
     \\pchoice = p1+p2;
     pchoice = p1;
 
-    \\ old formula
-    \\balanceB = ((abs(reg1))^(1/3)) * (g_n*b_n)^(1/3); balanceB /= (pchoice^(2/3));
-
+    \\# identify the index of the basis element with largest norm
     maxnorm_index = 1;
     for(i=1, length(lglat_new),
         if(norml2(lglat_new[,i])> norml2(lglat_new[,maxnorm_index]),
-            print("vector norms: ", precision( norml2(lglat_new[,i]),10));
             maxnorm_index = i;
         );
     );
     print("max vector norm index: ", maxnorm_index, " of ", length(lglat_new), ". Length: ",precision( sqrt(norml2(lglat_new[,maxnorm_index])),10) );
+    if (maxnorm_index != r, print("warning, the last element of the integral basis is not the longest."););
 
-
+    \\# old formula for B
+    \\balanceB = ((abs(reg1))^(1/3)) * (g_n*b_n)^(1/3); balanceB /= (pchoice^(2/3));
 
     oldB = abs(log(reg1))*2^poldegree(K.pol)*reg1^(1/3);
     balanceB = hybrid_balance_calculator(r, n, reg1);
-
     balanceB = min(reg1, balanceB);
 
-    print("Degree: ", n, " UnitRank = ",r, " Original B ", floor(oldB));
-    print("Fitted B value: ", precision(hybrid_balance_calculator(r, n, reg1),10));
-    \\breakpoint();
-    \\balanceB = min(balanceB, sqrt( norml2(lglat_new[,length(lglat_new)])  ) );
-    \\balanceB*=2;
-    balanceB = 2000;
-    largest_dimension = sqrt(norml2(lglat_new[,maxnorm_index]/balanceB));
-    /*
-    large_length = sqrt( norml2(lglat_new[,length(lglat_new)]));
-    skew_coefficients = vector(r, i, 0)~;
-    skew_coefficients[r] = 1;
-    while(balanceB > 3*large_length,
-        for(i=1, r-1,
-            skew_coefficients[i]+=1;
+    print("Degree: ", n, " UnitRank: ",r, " Original B ", floor(oldB), " Fitted B: ", precision(hybrid_balance_calculator(r, n, reg1),10));
 
-            lin_comb = lglat*skew_coefficients;
-            current_length = sqrt( norml2(lin_comb));
-            if(current_length > large_length,
-                large_length = current_length;
-            , \\else
-                skew_coefficients[i]-=1;
-            );
-            if(!(balanceB > 2*large_length),
-                break;
-            );
-        )
-    );
-    breakpoint();
-    unimodular = matid(r);
-    unimodular[,r] = skew_coefficients;
-    lglat_new = lglat_new*unimodular;
-    largest_dimension = large_length;
-    sumv = column_sum(lglat_new);
+    \\balanceB = min(balanceB, sqrt( norml2(lglat_new[,length(lglat_new)])  ) ); balanceB*=2;
+
+    \\balanceB = 1900; print("warning, hard coded value for B");
+    largest_dimension = sqrt(norml2(lglat_new[,maxnorm_index]/balanceB));
+
+    last_vector = lglat_new[,length(lglat_new)];
+    large_length = sqrt( norml2(last_vector));
+    target_length = balanceB/3.0;
+
+
+    lglat_new = skew_lattice(lglat_new, balanceB, 3.0);
+    largest_dimension = sqrt(norml2(lglat_new[,r]/balanceB));
+
     [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat_new, ~reg1);
     REQ_RIG = prec_rigorous(n, logdisc, log(infinity_norm(sumv)),log(abs(reg1))  );
-    */
 
     write(OUTFILE1, "hybrid B ", precision(balanceB,10), "  Old B:  ", precision(oldB, 10));
 

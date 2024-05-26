@@ -16,8 +16,8 @@ func(~map)={
     print(Mat(testmap)); breakpoint();
 }
 */
-print("Tests commented out bsgs")
-/*
+
+
 {   \\\ TEST step incrementation
     print("Test 1 - incrementer ");
     my(avec, v, directions, counter = 1);
@@ -76,6 +76,7 @@ print("Tests commented out bsgs")
     K1= nfinit(x^3 - 67*x^2 + 2032*x - 2053);
     K2= bnfinit(x^3 - 67*x^2 + 2032*x - 2053);
     n = poldegree(K1.pol);
+    breakpoint();
     lglat = get_log_lattice_bnf(K2);
     reg1 = unscaled_determinant(K1, lglat);
 
@@ -89,7 +90,7 @@ print("Tests commented out bsgs")
 
     cpct_hashmap = Map();
 
-    incremental_baby_steps_storage(y, L, glegs, ~hashmap1, K1, scan_ball_radius, eps, "COMPACT", cpct_hashmap, []);
+    incremental_baby_steps_compact(y, L, glegs, ~hashmap1, K1, scan_ball_radius, eps, "COMPACT", cpct_hashmap, []);
     \\[L, temp] = babystock_scan_jump(y, L, glegs, ~hashmap1, K1, scan_ball_radius, eps);
     [L1, temp1] = incremental_baby_steps(y, L, glegs, ~hashmap2, K1, scan_ball_radius, eps);
     print("Compare babystock set sizes: ", matsize(Mat(hashmap1)), "  ",matsize(Mat(hashmap2))  );
@@ -102,7 +103,7 @@ print("Tests commented out bsgs")
     incremental_giant_steps(K1, L1, glegs, hashmap2, [10], eps);
     print("TEST 3 Succeeds");
 }
-*/
+
 
 {
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
@@ -113,6 +114,7 @@ print("Tests commented out bsgs")
     \\ D = 3638703101
     K1= nfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
     K2= bnfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
+
     lglat = get_log_lattice_bnf(K2);
     reg1 = unscaled_determinant(K1, lglat);
 
@@ -124,6 +126,7 @@ print("Tests commented out bsgs")
     end_time = getabstime();
     totaltime +=(end_time- start_time);
     print("BSGS time: " ,totaltime, " Expected ", 4900);
+    print("Note that if COMPACT mode is on, expect worse timing");
     GP_ASSERT_WITHIN_RATIO(totaltime, 3700, 0.1);
     \\\log version with exact check is about 4900
     \\\ inexact check was also about 4900

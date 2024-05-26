@@ -1,9 +1,6 @@
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ Functions for generation polynomials with a particular discriminant size
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\p1000
-
-default(parisize,"12G")
 
 print("Loaded polygenerator");
 /************************************************************/
@@ -249,6 +246,100 @@ random_poly(r,s, magnitude)={
 }
 
 
+/************************************************************/
+/************************************************************/
+\\ This function should allow you to select a signature, and then produce an irreducible poly whose
+\\ 							discriminant is close to 2^magnitude
+\\ OUTPUT:
+random_poly_disc_bits(r,s, magnitude)={
+
+    my(r1,s1, candidate, flag, intervalre, offset, sgn, range);
+    flag = 0;
+
+		\\ counting terms in the discriminant formula
+		\\ separated as real products, z*conj(z), and real x imag products + z*w where z, w are complex non-conjugate
+    crossterms = (binomial(2*s,2)-s + r*s*2);																		\\ real x imag, and z*w terms
+    realterms = binomial(r,2);																									\\ r1*r2, real roots
+    imterms = s;																																\\ z * conj(z)
+
+
+		\\ in the totally real case, choose roots so that they are spaced apart somewhat evenly
+		if( s == 0,
+			my(extra_factor = 1);
+			for(i=2, r,
+				extra_factor*= ( i^(r-i) );
+			);
+			extra_factor = round(log(abs(extra_factor))/log(2));
+			magnitude = (magnitude-extra_factor)/(2*realterms);
+		);
+
+
+		if(s != 0,
+			magnitude = (magnitude/2);
+			magnitude = ( (magnitude)/(realterms+imterms+crossterms) );
+		);
+
+  	\\  print(magnitude, " terms ", (realterms+imterms+crossterms));
+
+    range = (2^(magnitude));
+    intervalre = [-range,range];
+    intervalim = [2^(magnitude-1), 2^(magnitude-1) + range];
+    flag = 0;
+    while(flag == 0,
+
+    realroots = [];
+    complexroots = [];
+
+		\\
+    if(s != 0,
+	    for(i = 1, s,
+				s1 = random_croot_norm(range, 1.0);
+	      s1 = random_croot(intervalre, intervalim, 1.0);
+	      complexroots = concat(complexroots, s1);
+
+	    );
+    );
+
+    if(r!=0,
+    intervalre = [0, range];
+    for(i = 1, r,
+      r1 = random_rroot(intervalre, 1.0);
+      realroots = concat(realroots, r1);
+      intervalre+= [2^magnitude, 2^magnitude];
+      \\print(abs(r1));
+    );
+    offset = random(r+1)*magnitude;
+
+    );
+
+	    for(i=1,r,
+	      realroots[i] = realroots[i]-offset
+			);
+
+      candidate = 1;
+
+      for(i =1, r+s,
+          if(i < r+1,
+          candidate*=(x-realroots[i]);,
+          candidate*=(x-complexroots[i-r])*(x-conj(complexroots[i-r]));
+          );
+      );
+      candidate = round(candidate);
+
+			\\ verify the polynomial is irreducible and that it has the correct sig
+      if (polisirreducible(candidate), flag = 1;);
+      if(flag == 1 ,
+          K = nfinit(candidate);
+          if (K.index == 1,
+            flag = 1,
+            flag = 0
+          );
+					if(K.r1 != r, flag = 0);
+      )
+
+    );
+    return(candidate);
+}
 
 generate_polynomial_list(file_prefix, disc_start, disc_cap, interval_gap, sample_size, r1, r2)={
 
@@ -287,21 +378,87 @@ generate_polynomial_list(file_prefix, disc_start, disc_cap, interval_gap, sample
 	);
 }
 
+MY_ASSERT(boolean)=
+{
+	if(!boolean,
+		print("ASSERT fails");breakpoint();
+	);
+}
+
+get_log_base_two(val)=
+{
+	return( log(abs(val))/log(2)  );
+}
+
+generate_polynomial_list_bitsize(file_prefix, disc_start, disc_cap, interval_gap, sample_size, r1, r2)={
+
+	print("Gathering polynomials");
+	TOLERANCE = 0.5;
+	fields_per_magnitude = sample_size;
+	magnitude_jump = interval_gap;
+	for(r =r1, r1,
+		for(s = r2, r2,
+
+		  \\ uses the file prefix and signature to create a filename to write data to
+			writefile = concat([file_prefix, Str(r),"-",Str(s)]);
+
+			\\ change if logic if multiple signatures are desired
+			\\if(r+2*s < 7 || r+2*s > 14 || r+s-1 > 6, ,
+			if(0, ,
+					write(writefile, "\\\\ Signatures ", r, " ",s);
+					write(writefile, data," = [\\" );
+					discsize = disc_start;
+					while(discsize < disc_cap,
+							tally = 0;
+							while(tally < fields_per_magnitude,
+								pol1 = random_poly_disc_bits(r,s, discsize);
+								K1 = nfinit(pol1);
+								while( abs( get_log_base_two(K1.disc) -discsize ) > TOLERANCE,
+									  pol1 = random_poly_disc_bits(r,s, discsize);
+									  K1 = nfinit(pol1);
+										\\print(K1.disc, "  ", abs( get_log_base_two(K1.disc) - discsize));
+								);
+								MY_ASSERT(abs( get_log_base_two(K1.disc)-discsize )<TOLERANCE);
+								K1 = bnfinit(pol1,1);
+								if((K1.clgp.no == 1),
+									  tally+=1;
+									  if(K1.clgp.no != 1, print("error, non-trivial class group");breakpoint());
+									  if(tally == fields_per_magnitude && ((discsize+magnitude_jump) >= disc_cap),
+										    write(writefile, "[" , pol1, ", " , K1.disc, ", \\\n",  K1[3]  , "] \\" );
+									  ,
+										    write(writefile, "[" , pol1, ", " , K1.disc, ", \\\n",  K1[3]  , "], \\" );
+									  );
+							  );
+							);
+
+							discsize += magnitude_jump;
+					);
+					write(writefile, "];");
+			);
+		);
+	);
+}
+
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\\ MAIN
 {
-	OUTPUT_FILE_PREFIX = "extra3-polynomials-";
-	STARTING_DISC_RANGE = 20;
-	ENDING_DISC_RANGE = 30;
-	DISC_GAP_SIZE = 1;
-	DISC_SAMPLE_SIZE = 3;
-	REAL_EMBEDDINGS = 1;
+	OUTPUT_FILE_PREFIX = "final-polynomials-";
+	STARTING_DISC_RANGE = 30;
+	ENDING_DISC_RANGE = 103;
+	DISC_GAP_SIZE = 12;
+	DISC_SAMPLE_SIZE = 5;
+	REAL_EMBEDDINGS = 0;
 	COMPLEX_EMBEDDINGS = 2;
+
+	/*
+	generate_polynomial_list_bitsize(OUTPUT_FILE_PREFIX, \
+													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
+													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
+													REAL_EMBEDDINGS, COMPLEX_EMBEDDINGS);
 	generate_polynomial_list(OUTPUT_FILE_PREFIX, \
 													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
 													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
 													5, 0);
-	/*
 	generate_polynomial_list(OUTPUT_FILE_PREFIX, \
 													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
 													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
@@ -320,39 +477,3 @@ generate_polynomial_list(file_prefix, disc_start, disc_cap, interval_gap, sample
 													0, 3);
 	*/
 }
-
-/*
-{
-print("Gathering polynomials");
-
-file_prefix = "polynomial-new-";
-fields_per_magnitude = 3;
-magnitude_jump = 3;
-
-disc_cap = 30;
-for(r =5, 5,
-	for(s = 0, 0,
-		writefile = concat([file_prefix, Str(r),"-",Str(s)]);
-		\\if(r+2*s < 7 || r+2*s > 14 || r+s-1 > 6, ,
-		if(0, ,
-				write(writefile, "\\\\ Signatures ", r, " ",s);
-				write(writefile, data," = [\\" );
-				discsize = 7;
-				while(discsize<disc_cap,
-						tally = 0;
-						while(tally < fields_per_magnitude,
-							pol1 = random_poly(r,s, discsize);
-							K1 = bnfinit(pol1, 1);
-							if( (  abs( log(abs( poldisc(pol1) ) )/log(10)-discsize )<1.1   )&& K1.clgp.no == 1,
-								tally+=1;
-								write(writefile, "[" , pol1, ", " , poldisc(pol1), ", \\\n",  K1[3]  , "], \\" ); );
-						);
-
-						discsize += magnitude_jump;
-				);
-				write(writefile, "];");
-		);
-	);
-);
-}
-*/

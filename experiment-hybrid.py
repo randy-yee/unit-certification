@@ -5,7 +5,7 @@ read("src/bounds.gp")
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ Starting precision:
 \p500
-default(parisizemax, 8000000000);
+default(parisizemax, 15G);
 \\ Global variables
 eps = 10^(-100);      \\ error tolerance
 sqrt2 = sqrt(2);

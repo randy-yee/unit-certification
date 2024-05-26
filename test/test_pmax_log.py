@@ -61,6 +61,7 @@ testing_setup_pmax_log(pol, input_lattice = [], eps)={
     print("eps: ", eps);
     indexbound = get_index_bound2(K1, lglat, eps,-1, 1000000);
     cpct_units = cpct_from_loglattice(K1, lglat, eps);
+
     pmax_log_output = log_pohst_pari(K1, lglat,cpct_units, indexbound, eps);
     output_regulator = unscaled_determinant(K1, pmax_log_output);
     GP_ASSERT_NEAR(reg1,output_regulator, eps );

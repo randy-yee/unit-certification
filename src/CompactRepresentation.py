@@ -3,17 +3,15 @@
 
 COMPACT REPRESENTATION FUNCTIONS:
 
-- idealsquare
-- minima_from_LLL
+- idealsquare:
 - create_target
+- exponentiate_logvec
+- extra_log_coordinate
+- get_LLL_basis_change
 
 - reddiv_compact
--- find_coprime_divisor_qfminim
--- find_coprime_divisor_lazy
--- find_coprime_divisor_neighbors
--- get_LLL_basis_change
-
 - giantstep
+
 -- get_doubling_number
 -- double_and_reduce
 -- double_and_reduce_divisor_loop
@@ -47,15 +45,8 @@ DEBUG_CPCT=0;
 
 GIANT STEP functions
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-/******************************************************************************/
-/*THE GIANT STEP--RENE'S REDUCTION JUMP ALGORITHM: find a shortest vector of the lattice L = v*I */
-/*Compute the square of a frac. ideal I = y where y is matrix with fractional entries
-  Input: y is a matrix representing a fractional ideal,
-    G is the numberfield produced by nfinit */
 
-\\  Squares the ideal y in the number field G
+\\ # Squares the ideal y in the number field G
 \\ INPUT:
 \\ - y an ideal in terms of integral basis of G
 \\ - G a number field
@@ -81,6 +72,9 @@ create_target(G, s_term, inverse= 0)={
 }
 
 \\ assuming we have r+1 terms already. No extra factor of 2 on complex coords
+\\ r - the unit rank
+\\ s_term - a vector of length (r+1) corresponding to log vector of an element
+\\ inverse - flag indicating whether to compute the inverse element, default 0
 exponentiate_logvec(r, s_term, inverse = 0)={
     my(exponentiated_s, a = (-1)^inverse);
     GP_ASSERT_TRUE(length(s_term) == r+1);
@@ -88,6 +82,8 @@ exponentiate_logvec(r, s_term, inverse = 0)={
     return(exponentiated_s);
 }
 
+\\ function to compute the extra r+1 coordinate, under the assumption that
+\\ s_term is the logarithm vector of a unit
 extra_log_coordinate(r1, r2, s_term)={
     my(new_coord = 0);
     GP_ASSERT_TRUE(length(s_term) == r1+r2-1);
@@ -110,189 +106,81 @@ get_LLL_basis_change(G, ideal_numerical)={
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ The section of functions below is related to UNUSED functionality
-\\ for ensuring that the denominators in a compact representation
-\\ are coprime toa particular integer value
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ INPUTS:
-\\ - G a number field
-\\ - y an ideal and
-\\ - u a real vector. the pair (y,u) is a divisor
-\\ - sv is the numerical vector from an LLL basis
-\\ - beta is the corresponding coefficient vector
-\\ - eps is an error
-\\ OUTPUTS:
-\\ - a reduced ideal new_y
-\\ - beta the element b satisfying (1/beta)y = new_y
-\\ - lmu a log vector representing a distance from the original.
-minima_from_LLL(G, y, u, sv, beta, eps)={
-    my(new_y, nu, lmu, insidepoints,ip_ctr);
-
-    \\UPDATE the ideal, and distance tracking elements nu, lmu,
-    \\ SCAN NORMED BODY OF 1 FOR ELEMENTS
-    new_y = idealdiv(G,y,beta);
-    nu=abs(sv)~;                                                                \\ nu is a t_VEC
-    lmu = log(nu)-log(u);                                                       \\ dimension r t_VEC
-    \\insidepoints = Mat(nfalgtobasis(G,1));
-    insidepoints = [nfalgtobasis(G,1)];
-    while(length(insidepoints) != 0,                                            \\ loop until ideal is reduced (until N(1) is trivial)
-        ip_ctr = 1;
-        while(type(nfbasistoalg(G,insidepoints[ip_ctr]))==t_FRAC , ip_ctr+=1;);   \\ make sure not to choose a rational number.
-
-        beta  = nfeltmul(G, beta, insidepoints[ip_ctr]);
-        new_y = idealdiv(G, new_y, insidepoints[ip_ctr]);
-        new_y = idealhnf(G,new_y);
-
-        lmu += log(abs(nfeltembed(G, insidepoints[ip_ctr])));
-        nu = pointwise_vector_mul(nu, abs(nfeltembed(G,insidepoints[ip_ctr])));
-        insidepoints = cubescan_unequal(new_y, valuationvec(G,1), G, eps);
-
-    );
-    \\print("NU CHECK: ", precision(abs(pointwise_vector_mul(nfeltembed(G, beta),u) ),10) );
-    \\print("NU CHECK: ", precision(nu,10));
-    return([new_y, beta, nu, lmu]);
-
-};
-
-find_coprime_divisor_qfminim(G, coeff_y, numerical_LLL_uy, coeff_LLL_uy, real_uy, p_avoid, expansion_limit, eps)={
-    my(
-        onevec=valuationvec(G,1),
-        qfminim_radius = norml2(real_uy[,1]),
-        checked_elements=Map(),
-        beta_found = 0,
-        expansion_ctr = 1,
-        scan_elts, scan_ctr
-    );
-
-    while(beta_found != 1 && expansion_ctr < expansion_limit,
-        scan_elts = qfminim(real_uy~*real_uy, qfminim_radius+eps,,2)[3];
-        scan_ctr = 1;
-        expansion_ctr += 1;
-
-        print(" - Number of qfminim increases ", expansion_ctr);
-        \\print("shortList: ", scan_elts, "\n", coeff_LLL_uy*scan_elts); \\ get elements in terms of the integral basis now
-
-        while(scan_ctr <= length(scan_elts),
-            \\print("current-element ",scan_elts[,scan_ctr]);
-            if(mapisdefined(checked_elements, scan_elts[,scan_ctr]),
-                \\ Do nothing
-            ,\\else
-                mapput(checked_elements, scan_elts[,scan_ctr], 1);
-                beta = coeff_LLL_uy*scan_elts[,scan_ctr];               \\ in terms of the integral basis
-                shortest_vec = numerical_LLL_uy*scan_elts[,scan_ctr];
-                new_ideal = idealdiv(G, coeff_y, beta);
-                ideal_denom = get_ideal_denom(new_ideal);
-                \\tempvar = cubescan_unequal(new_ideal, onevec, G,eps);if(length(tempvar) < 1,print("CUBESCAN: ", tempvar););
-
-                if(gcd(p_avoid,ideal_denom) ==1 && length(cubescan_unequal(new_ideal, onevec, G,eps)) == 0,
-                    print("Counters: ", scan_ctr, " ", expansion_ctr);
-                    print(" - acceptable beta found via qfminim");
-                    nu=abs(shortest_vec)~;
-                    return([1, new_ideal, nu, beta]);
-                );
-            );
-            scan_ctr += 1;
-        );
-        qfminim_radius = qfminim_radius*2;
-    );
-    if(beta_found == 0, ideal_denom = p_avoid);                         \\ if qfminim failed, ensure we enter neighbours
-
-    return([0,0,0,0]);
-}
-
-\\ subalgorithm for finding a coprime divisor by just checking the other elements of the LLL basis
-find_coprime_divisor_lazy(G, y, u, new_y, p_avoid, LLLcoeffmat, LLL_numerical_uY ,eps)={
-    my(vec_ctr =1, shortest_vec, beta, nu, lmu, ideal_denom);
-    ideal_denom = get_ideal_denom(new_y);
-    while(gcd(p_avoid, ideal_denom)!= 1 && vec_ctr < length(LLLcoeffmat),
-        if(vec_ctr ==1, print("-- NON-COPRIME DENOMS, CHECK LLL BASIS"));
-        vec_ctr +=1;
-
-        shortest_vec = LLL_numerical_uY[,vec_ctr];                                      \\ change mu to reflect choice of beta
-        beta = LLLcoeffmat[,vec_ctr];                                               \\ select beta as corresponding LLL vector
-
-        [new_y, beta, nu, lmu]=minima_from_LLL(G, y, u, shortest_vec, beta, eps);   \\ update all necessary variables to track the ideal
-        ideal_denom = get_ideal_denom(new_y);                                       \\ get new ideal denominator.
-    );
-    return([new_y, beta, nu, lmu, ideal_denom]);
-}
-
-find_coprime_divisor_neighbors(G, y, u, LLLcoeffmat, ideal_denom, p_avoid,eps)={
-            my(
-                beta =LLLcoeffmat[,1],
-                nhood_ctr = 0,
-                beta_neighbours = Set([beta]),
-                nu, lmu, new_ideal,
-                unsearched_neighbours=[],
-                new_neighbours;
-            );
-            print("-- USING NEIGHBORS METHOD ");
-
-            new_neighbours = NEIGHBORS(G, y, beta, eps, p_avoid);
-            unsearched_neighbours = concat(unsearched_neighbours, new_neighbours);
-
-            while(gcd(p_avoid, ideal_denom) != 1,
-                nhood_ctr+=1;
-
-                if(nhood_ctr > length(new_neighbours),
-                    print(" - NEXT NEIGHBOUR LAYER NEEDED");
-
-                    new_neighbours = Set();
-                    while( length(unsearched_neighbours) != 0,
-                        beta = unsearched_neighbours[1];
-                        unsearched_neighbours = unsearched_neighbours[^1];
-
-                        if(setsearch(beta_neighbours,beta) == 0,
-                            new_neighbours = setunion(new_neighbours, NEIGHBORS(G, y, beta, eps, p_avoid));
-                            beta_neighbours = setunion(beta_neighbours, [beta]);
-                        );
-                    );
-
-                    unsearched_neighbours = concat(unsearched_neighbours,new_neighbours);
-                    nhood_ctr=1;
-                );
-
-                if(nhood_ctr > length(new_neighbours),
-                    ideal_denom = p_avoid;
-                ,
-                    new_ideal = idealdiv(G, y, new_neighbours[nhood_ctr]); new_ideal = idealhnf(G,new_ideal);
-                    ideal_denom = get_ideal_denom(new_ideal);
-                );
-            );
-            beta = new_neighbours[nhood_ctr];
-            nu = abs(pointwise_vector_mul(nfeltembed(G,new_neighbours[nhood_ctr]), u));
-            lmu = log(abs(nfeltembed(G, new_neighbours[nhood_ctr])));
-
-            return([new_ideal, nu, lmu, beta, ideal_denom]);
-
-}
-
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
+/******************************************************************************/
+/*THE GIANT STEP--RENE'S REDUCTION JUMP ALGORITHM: find a shortest vector of the lattice L = v*I */
 
 /******************************************************************************/
 /*REDUCE THE DIVISOR (y, u) where y is a fractional ideal and u is a totally
-\\ positive vector in R^n
+\\ positive vector in R^(r+1)
 \\ Given a divisor (y,u), finds a reduced divisor (new_y, nu) close to it.
-\\ Necessarily, new_y is a reduced ideal, nu corresponds to a minimum of new_y */
+\\ new_y is a reduced ideal, nu corresponds to a minimum beta of y such that
+\\ new_y = y/beta
+*/
 \\ INPUT:
 \\  - y is a coefficient matrix of a fractional ideal,
-\\  - u is a totally positive vector in R^(r1+r2). Later converted to a vector in R^n.
+\\  - u is a totally positive vector in R^(r1+r2).
 \\  - G is the number field
-\\  - M1 is the (r1+r2 x n) matrix of conjugates of elements of the integral basis
+\\  - M1 is the (r1+r2 x n) conjugate embedding matrix of the integral basis
 \\  - p_avoid is optional, will force a choice of beta so that the ideal new_y has denom coprime to p_avoid */
 \\ OUTPUT:
 \\ - new_y, the coefficient matrix of a reduced ideal,
 \\ - nu, corresponds to u*beta, where beta is a minimum such that new_y = (1/beta)*y is reduced
-\\ - lmu is the distance from the original divisor i.e. y/u as compared to new_y/nu. equal to log(nu)-log(u) = log(beta)
+\\ - lmu is equal to log(nu)-log(u) = log(beta). In some sense meaures distance btwn (y,u) as compared to (new_y,nu).
 
 /******************************************************************************/
+reddiv2(y,u,G,m1)=
+{
+    print(G.r1, " ", G.r2 );
+    n=G[2][1]+2*G[2][2];
+    y1=m1*y;
+    u=vector(length(u), i, 1/u[i]);
+    ymu=mulvec(y1,u);\\lattice I/u
+    red1=ymu*qflll(ymu);
+
+    shorts = qfminim(red1*red1~,,,2)[3];
+    print(length(shorts));
+    c1=shorts[,1];
+    print("2 ", c1, "  ",precision(norml2(red1*c1),10), "  ", precision(norml2(red1*[1,0,0]~),10));
+    comu1=(y*qflll(ymu))*c1;
+    ny=idealdiv(G,y,comu1);
+    nu=abs(red1*c1)*idealnorm(K,ny)^(-1/n);
+    lmu=-log(abs(red1*c1));
+    return([ny,nu,lmu,comu1]);
+}
+
+\\
+reddiv_compact_invert_u(~y,~u,~G,~M1, p_avoid=1)={
+    my(ideal_uY, numerical_mat_Y, red1, shortest_vec, nu, lmu,
+        ideal_denom,vec_ctr,beta_found =0,
+        comp = 2^(-ceil((poldegree(G.pol)^2 +2)*log(infinity_norm(u))+2*poldegree(G.pol)^2 +5))
+    );
+    \\ inverts so that we compute the lattice u^(-1)I
+    u = vector(length(u), i, 1/u[i]);
+    numerical_mat_Y = M1*y;                                                     \\ complex embedding matrix of y
+    ideal_uY = mulvec(~numerical_mat_Y, ~u);                                    \\ ideal u*y
+    LLL_change_of_basis = get_LLL_basis_change(G, ideal_uY);                    \\ qflll output has columns which are coords wrt the input matrix NOT the integral basis
+    LLL_numerical_uY = ideal_uY*LLL_change_of_basis;                            \\ Obtain LLL basis of u*y in numerical form (possibly complex)
+    LLLcoeffmat = y*LLL_change_of_basis;                                        \\ LLL basis, coords wrt the integral basis
+
+    \\ need to scan to make sure the first basis vector is a shortest one
+    real_mat_uY = embed_real(~G, ~LLL_numerical_uY);
+
+    true_shortest = qfminim(real_mat_uY~*real_mat_uY,,,2);
+    \\print("1 ", true_shortest[3][,1], "  ",precision(norml2(LLL_numerical_uY*true_shortest[3][,1]),10));
+    beta = LLLcoeffmat*true_shortest[3][,1];
+    new_y = idealdiv(G,y,beta); new_y = idealhnf(G,new_y);                      \\ the reduced ideal y / mu, in hnf form
+
+    nu = pointwise_vector_mul(abs(M1*beta),u)~;
+    lmu = log(nu)-log(u);                           \\ this is log of beta
+    \\lmu = -log(abs(LLL_numerical_uY*true_shortest[3][,1]))~;
+    \\print("compare: ", precision(log(abs(nfeltembed(G,beta))),10), "  ", precision(lmu,10), "\n");
+    \\nu*=idealnorm(G, new_y)^(-1/poldegree(G.pol));   \\ account for ideal norm (see schoof formula for v)
+    nu = vector(length(nu), i , 1/nu[i]);           \\ embedding of u/beta
+    return([new_y, nu, lmu, beta]);
+}
 
 reddiv_compact(~y,~u,~G,~M1, p_avoid=1)={
-    my(y1, ideal_uY, numerical_mat_Y, red1, shortest_vec, nu, lmu,
+    my(ideal_uY, numerical_mat_Y, red1, shortest_vec, nu, lmu,
         ideal_denom,vec_ctr,beta_found =0,
         comp = 2^(-ceil((poldegree(G.pol)^2 +2)*log(infinity_norm(u))+2*poldegree(G.pol)^2 +5))
     );
@@ -303,19 +191,67 @@ reddiv_compact(~y,~u,~G,~M1, p_avoid=1)={
     LLL_numerical_uY = ideal_uY*LLL_change_of_basis;                            \\ Obtain LLL basis of u*y in numerical form (possibly complex)
     LLLcoeffmat = y*LLL_change_of_basis;                                        \\ LLL basis, coords wrt the integral basis
 
-    beta= LLLcoeffmat[,1];                                                      \\ beta holds coordinates of mu wrt the integral basis
     \\ need to scan to make sure the first basis vector is a shortest one
     real_mat_uY = embed_real(~G, ~LLL_numerical_uY);
+
     true_shortest = qfminim(real_mat_uY~*real_mat_uY,,,2);
     beta = LLLcoeffmat*true_shortest[3][,1];
 
-    nu = pointwise_vector_mul(abs(M1*beta),u)~;
-
-    \\GP_ASSERT_VEC_NEAR(nu,abs(shortest_vec), comp  );
-    lmu = log(nu)-log(u);
-
     new_y = idealdiv(G,y,beta); new_y = idealhnf(G,new_y);                      \\ the reduced ideal y / mu, in hnf form
+
+    nu = pointwise_vector_mul(abs(M1*beta),u)~;
+    lmu = log(nu)-log(u);
+    \\nu*=idealnorm(G, new_y)^(1/poldegree(G.pol));
+    \\ multiply by norm of the new ideal to the power (-1/poldegree(G.pol))
+
+    \\print("compare: ", precision(log(abs(nfeltembed(G,beta))),10), "  ", precision(lmu,10), "\n");
+    \\print("nu: ", precision(log(nu),10));
+    \\print("reduction end: "); breakpoint();
     return([new_y, nu, lmu, beta]);
+}
+
+
+
+\\\ # The reduction algorithm as described in Jacobson-Tran-Yee
+\\ Input:
+\\ - nf_K is the number field
+\\ - phi_Omega is the precomputed Minkowski matrix for the integral basis
+\\ - idealI is the input ideal, given as a coefficient matrix wrt integral basis
+reduction(~nf_K, ~phi_Omega, ~idealI, ~u)=
+{
+    my(
+        nf_K_degree = poldegree(nf_K.pol),
+        minkowski_I,
+        lattice_uI,
+        LLL_transform_mat,
+        minkowski_uI_LLL,
+        transformed_I,
+        real_lattice_uI,
+        shortest_vec, beta, nu, lmu, idealJ,
+        comp = 2^(-ceil((nf_K_degree^2 +2)*log(infinity_norm(u))+2*nf_K_degree^2 +5))
+    );
+
+    minkowski_I = phi_Omega*idealI;                                             \\ minkowski embedding matrix of idealI
+    lattice_uI = mulvec(~minkowski_I, ~u);                                      \\ the lattice u*idealI in minkowski space
+    LLL_transform_mat = get_LLL_basis_change(nf_K, lattice_uI);               \\ qflll output has columns which are coords wrt the input matrix NOT the integral basis
+    minkowski_uI_LLL = lattice_uI*LLL_transform_mat;                          \\ Obtain LLL basis of u*idealI in numerical form (possibly complex)
+    transformed_I = idealI*LLL_transform_mat;                                   \\ LLL basis, coords wrt the integral basis
+
+    \\ # Embed to real space (R^n) and use enumeration to ensure shortest vector
+    real_lattice_uI = embed_real(~nf_K, ~minkowski_uI_LLL);
+    shortest_vec = qfminim(real_lattice_uI~*real_lattice_uI,,,2);
+
+    \\ # compute coordinates of minimum beta (c_beta) and the reduced ideal I/beta
+    beta = transformed_I*shortest_vec[3][,1];
+    idealJ = idealdiv(nf_K, idealI, beta);
+
+    \\ # compute the distance from the original target vector
+    nu = pointwise_vector_mul(abs(phi_Omega*beta),u)~;
+    lmu = log(nu)-log(u);
+    \\GP_ASSERT_VEC_NEAR(nu,abs(shortest_vec), comp  );
+    \\print(precision(log(abs(nfeltembed(nf_K,beta))),10), "  ", precision(lmu,10), "\n");
+
+    return([idealJ, nu, lmu, beta]);
 }
 
 
@@ -338,10 +274,45 @@ double_and_reduce(G, div_ideal, div_u,log_distance, avp =1)={
     my(u_square, log_mu_k,beta);
     div_ideal = idealsquare(div_ideal, G);
     u_square = pointwise_vector_mul(div_u,div_u)~;
-    [div_ideal,div_u,log_mu_k,beta] = reddiv_compact(div_ideal, u_square, G, G[5][1],avp);
-    log_distance = 2*log_distance+log_mu_k;
 
-    if(DEBUG_CPCT, print("log_beta = ", precision(log_mu_k,10)));
+    \\print("REMOVE!!!");
+    [div_ideal,div_u,log_mu_k,beta] = reddiv_compact(div_ideal, u_square, G, G[5][1],avp);
+    \\tempvec = reddiv2(div_ideal, u_square, G, G[5][1]);
+    \\[div_ideal,div_u,log_mu_k,beta] = reddiv_compact_invert_u(div_ideal, u_square, G, G[5][1],avp);
+
+   \\ print("INVERTED ", precision([div_ideal,div_u,log_mu_k,beta],10));
+    \\print("REDDIV 2" , precision(tempvec,10));
+    /*
+    if (beta != tempvec[4],
+        beta1 = beta;
+        logbeta1 = log(abs(nfeltembed(G, beta1)));
+        beta2 = tempvec[4]; \\ non inverted u
+        logbeta2 = log(abs(nfeltembed(G, beta2)));
+        print("    inverted distance: l_inf: ", precision(normlp(log(u_square)-logbeta1),10), " l_2: ", precision(norml2(log(u_square)-logbeta1),10));
+        print("non-inverted distance: l_inf: ", precision(normlp(log(u_square)-logbeta2),10),  " l_2: ", precision(norml2(log(u_square)-logbeta2),10));
+        breakpoint();
+        \\ need to figure out why log nu and these outputs are different.
+        \\ remember that you altered reddiv_compact and double reduce and compact_rep_full
+    );
+    */
+    log_distance = 2*log_distance+log_mu_k;
+    if(0, print("log_beta = ", precision(log_mu_k,10)));
+    return([div_ideal, div_u, log_distance,beta]);
+}
+
+\\ This is the inner loop operation for the giantstep function
+double_and_reduce_invert(G, div_ideal, div_u,log_distance, avp =1)={
+    my(u_square, log_mu_k,beta);
+    div_ideal = idealsquare(div_ideal, G);
+    u_square = pointwise_vector_mul(div_u,div_u)~;
+
+    \\[div_ideal,div_u,log_mu_k,beta] = reddiv_compact(div_ideal, u_square, G, G[5][1],avp);
+    \\tempvec = reddiv2(div_ideal, u_square, G, G[5][1]);
+    [div_ideal,div_u,log_mu_k,beta] = reddiv_compact_invert_u(div_ideal, u_square, G, G[5][1],avp);
+
+
+    log_distance = 2*log_distance+log_mu_k;
+    if(0, print("log_beta = ", precision(log_mu_k,10)));
     return([div_ideal, div_u, log_distance,beta]);
 }
 
@@ -360,6 +331,18 @@ double_and_reduce_divisor_loop(G, double_num, div_ideal, div_u, log_distance)={
     return([div_ideal, div_u, log_distance]);
 }
 
+norm_FR(G, vec)=
+{
+    entry_sum = 0;
+    for(i =1, length(vec),
+        if (i <= G.r1,
+            entry_sum += vec[i];
+        ,
+            entry_sum += 2*vec[i];
+        );
+    );
+    return(entry_sum);
+}
 
 \\ INPUTS:
 \\ - y is an ideal
@@ -380,9 +363,16 @@ giantstep(y,v,G,n,eps)={
     );
 
     shrunken_v=2^(-t)*v;                                                        \\ this is y_sigma
-    shrunken_target = create_target(G, shrunken_v, 1);
-    [idealB,u,log_distance,beta]=reddiv_compact(y,shrunken_target,G,G[5][1]);   \\ (Ideal, minimum, log distance)
+    shrunken_target = create_target(G, shrunken_v, 1);                          \\ adds the (r+s)th coord, so that the sum of the log embeddings is 0
 
+
+    \\print("shrunken dist: ", precision(norm_FR(G, shrunken_target),10));
+    \\print(length(shrunken_v), "  ", G.r1+G.r2);
+    print("WARNING: Giant step is being deprecated. Please ensure appropriate use");
+
+
+    [idealB,u,log_distance,beta]=reddiv_compact(y,shrunken_target,G,G[5][1]);   \\ (Ideal, minimum, log distance)
+    \\print("reduced shrunken dist: ", precision(sumvec(log_distance),10));
     [idealB, u, log_distance] = double_and_reduce_divisor_loop(G, t, idealB, u, log_distance);
 
     return( [idealB,u,vector_approximate(log_distance,eps)] );
@@ -501,6 +491,8 @@ if(type(v) == "t_COL", v = v~);
     return( [idealB, u, myCompactRep] );
 }
 
+\\ Input: G - a number field, and a compact cpct_rep
+\\ Return: The inverse element
 invert_compact(~G, ~cpct_rep)=
 {
     nf_argcheck(G);
@@ -517,7 +509,7 @@ invert_compact(~G, ~cpct_rep)=
     return(inverse_rep)
 }
 
-\\ accept a number field, two compact representations
+\\ Input: a number field, two compact representations
 \\ return the product as a compact representation
 \\ Function does not check for redundant terms (leading powers of 1)
 mul_compact(~G, ~cpct1, ~cpct2)=
@@ -550,7 +542,7 @@ mul_compact(~G, ~cpct1, ~cpct2)=
         product_denominator = concat(product_denominator, denom/common);
     );
 
-    recompactify(G, product_numerator, product_denominator);
+    \\recompactify(G, product_numerator, product_denominator);
     \\print("Expensive verification in mul_compact. Delete once confirmed");
     \\GP_ASSERT_TRUE(compact_reconstruct(G, product_numerator, product_denominator) ==
     \\nfeltmul(G, compact_reconstruct(G, cpct1[1], cpct1[2]), compact_reconstruct(G, cpct2[1], cpct2[2])));
@@ -578,6 +570,7 @@ recompactify(G, cpctNum, cpctDenom)={
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
+\\ Mainly use for testing and debugging.
 \\ Converts the compact representation form of a number field element to standard form
 \\ INPUT:
 \\ - G a number field
@@ -598,6 +591,8 @@ for(j=1, length(vec_alpha),
   return(alphafinal);
 }
 
+\\ Input: Number field G and a compact representation
+\\ compute the complex logarithm vector (no absolute values on the minkowski embedding)
 complex_log_from_cpct(G, cpct_rep)={
     my(intermediate, lvec_complex = vector(G.r1+G.r2,k,0) ) ;
     for(j=1, length(cpct_rep[1]),
@@ -611,18 +606,22 @@ complex_log_from_cpct(G, cpct_rep)={
       return(lvec_complex);
 }
 
+\\ Input: Number field G and a compact representation
+\\ compute the logarithm vector of absolute values
 log_from_cpct(G, cpct_rep)={
-    my(intermediate, lvec_complex = vector(G.r1+G.r2,k,0) ) ;
+    my(intermediate, log_vector = vector(G.r1+G.r2,k,0) ) ;
     nf_argcheck(G);
     cpct_rep_argcheck(cpct_rep);
     for(j=1, length(cpct_rep[1]),
-        lvec_complex*=2;
+        log_vector*=2;
         intermediate = log(abs(nfeltembed(G, nfeltdiv(G, cpct_rep[1][j], cpct_rep[2][j]))));
-        lvec_complex+= intermediate;
-        \\print("************** Loop ", j, " **************\n  alpha/d: ", intermediate);
+        log_vector+= intermediate;
       );
-      return(lvec_complex);
+      return(log_vector);
 }
+
+\\ Given a list of compact representations
+\\ Compute the corresponding log-vector matrix
 log_lattice_from_compact_set(G, cpct_reps)={
     my(logarithm_lattice, urank = G.r1+G.r2-1);
     logarithm_lattice = Mat(log_from_cpct(G, cpct_reps[1])[1..urank]~);
@@ -631,6 +630,9 @@ log_lattice_from_compact_set(G, cpct_reps)={
     );
     return(logarithm_lattice);
 }
+
+\\ strictly a test function used to verify ideal generators within Jump and
+\\ compact representation algorithm
 intermediate_check(G, alphavec, dvec, ideal1)={
     my(reconstruction, intermediate_norm, intermediate, finalnorm =1);
     for(j=1, length(alphavec),
@@ -685,6 +687,7 @@ get_alpha_and_d(G, idealB, beta, inverseflag)={
 \\ subalgorithm of compact representation function for updating the values s_term and desired_beta_log
 update_tracking_values(s_term, log_rho)={
     my(double_s = 2*s_term);
+
     return([double_s, double_s- 2*log_rho]);
 }
 
@@ -692,6 +695,8 @@ cpct_rep_final_collect(G, idealB, log_beta, desired_betalog, eps)={
     my(neighbours_output, checkvec, boundary_vector, ctr=1, unit_rank = G.r1+G.r2-1);
     if(DEBUG_CPCT >0, print("USING COLLECT\nFinal Beta is not equal to the desired value. Using NEIGHBOURS Function"););
 
+    \\new_eps = ceil(log(abs(G.disc))/(2*n) + 3/2)+1;
+    \\new_eps = 2^(-new_eps);
     if(length(log_beta) == G.r1+G.r2,
         boundary_vector = abs(desired_betalog - log_beta);
         bv2 = vector(unit_rank, j, 4* sqrt(abs(G.disc)));
@@ -730,52 +735,83 @@ cpct_rep_final_collect(G, idealB, log_beta, desired_betalog, eps)={
     return([idealB, log_beta, beta]);
 }
 
-cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, eps, testFlag = 0)={
+cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, alphaOK, eps, testFlag = 0)={
+
+    my(DEBUG_CPCT_ENUM = 0,
+        unit_rank = G.r1+G.r2-1,
+        degree = poldegree(G.pol),
+        new_eps);
+
     if (type(testFlag) == "t_INT" && (testFlag == 1),
-        print("final enum");
+        DEBUG_CPCT_ENUM = testFlag;
+        print("Debugging CPCT Enumeration step");
     );
 
-    my(neighbours_output, boundary_vector, ctr=1, unit_rank = G.r1+G.r2-1,
+    if (DEBUG_CPCT_ENUM, print("final enum target: ", precision(desired_betalog, 10)));
+
+    \\#see thesis Prop 3.4.3. The addition 5 bits of precision is just a precaution
+    new_eps = ceil(log(abs(G.disc))/(2*n*log(2)) + 3/2)+1;
+    new_eps = 2^(-(new_eps +5 ));
+
+    my(neighbours_output, boundary_vector, ctr=1,
         exp_boundary, latticeB, lll_basis_change_matrix, latticeB_lll, scan_elements);
     GP_ASSERT_EQ(length(log_beta), G.r1+G.r2);
 
+    \\#determine the radius we expect to need to search for the desired element
+    \\#there 'should' be an element in the search region, assuming the input
+    \\#of cpct rep was the log vector of an element.
     boundary_vector = (desired_betalog - log_beta);
 
+    \\#temporarily change precision
     temp_precision = ceil(idealPrecision(G, idealB, normlp(boundary_vector)));
     oldbitprecision = change_precision(temp_precision);
 
-    degree = poldegree(G.pol);
-
+    \\# scale the ideal lattice and convert to real entries
     exp_bvec = exponentiate_logvec(G.r1+G.r2-1, boundary_vector, 1);
-    if(matsize(G[5][1])[1] != G.r1+G.r2, print("final_enum vector length mismatch"); breakpoint(); );
     scaled_latticeB = mulvec(G[5][1]*idealB, exp_bvec);
     scaled_latticeB = embed_real(G, scaled_latticeB);
 
-    lll_CoB = qflll(scaled_latticeB);
-    lll_ideal = idealB*lll_CoB;
+    \\# determine the LLL reduced basis and enumerate
+    lll_CoB = qflll(scaled_latticeB);   \\# LLL transformation matrix
+    lll_ideal = idealB*lll_CoB;         \\# LLL reduced coeff matrix
+    scaled_lll_lattice = scaled_latticeB*lll_CoB; \\# LLL-reduced real matrix
+    scan_elements = qfminim(scaled_lll_lattice~*scaled_lll_lattice,degree+new_eps*1.0,,2)[3];
 
-    scaled_lll_lattice = scaled_latticeB*lll_CoB;
-
-    scan_elements = qfminim(scaled_lll_lattice~*scaled_lll_lattice,degree+eps*1.0,,2)[3];
-
+    if (DEBUG_CPCT_ENUM,
+        print("number of scanned elements: ", length(scan_elements), "  scanned radius = ", degree+new_eps*1.0);
+        for(i=1, length(scan_elements),
+            check_beta = scaled_lll_lattice*scan_elements[,i];
+            print("elt: ", scan_elements[,i], " ",   precision(norml2(check_beta),10));
+        );
+    );
+    \\# loop through returned elements and hope the droid we are looking for is here
     for(i=1, length(scan_elements),
-        check_beta = lll_ideal*scan_elements[,i];          \\# beta wrt integral basis
+        check_beta = lll_ideal*scan_elements[,i];    \\# beta wrt integral basis
         checkvec = log_beta + log(abs( nfeltembed(G, check_beta)));
+        \\print("boundary: ", precision(boundary_vector[1..2],10));
+        \\print("log beta" , precision(log_beta[1..2],10));
 
-        if(samevecs(desired_betalog, checkvec, eps),
+        if(samevecs(desired_betalog, checkvec, new_eps),
             idealB = idealdiv(G, idealB, check_beta);
             change_precision(oldbitprecision);
+            \\# the below should never happen
+            if(alphaOK != idealB, print("(1) Vector match, but ideal mismatch in cpct enum"); breakpoint(););
             return([idealB, checkvec, nfeltmul(G,beta,check_beta)]);
         );
+
+        \\# if the above doesn't work, try the inverse
         checkvec = log_beta - log(abs( nfeltembed(G, check_beta)));
-        if(samevecs(desired_betalog, checkvec, eps),
+        if(samevecs(desired_betalog, checkvec, new_eps),
             idealB = idealmul(G, idealB, check_beta);
             change_precision(oldbitprecision);
+            \\# the below should never happen
+            if(alphaOK != idealB, print("(2) Vector match, but ideal mismatch in cpct enum");breakpoint());
             return([idealB, checkvec, nfeltmul(G,beta,check_beta)]);
         );
     );
+    \\# produces a 'bad return value' that should be caught in the calling function
     print("No elements satisfy the condition. Error.");
-    return(-1);
+    return([-1,-1,-1]);
 }
 
 cpct_rep_final_enum2(G, idealB, target, desired_betalog, eps, testFlag = 0)={
@@ -797,11 +833,11 @@ cpct_rep_final_enum2(G, idealB, target, desired_betalog, eps, testFlag = 0)={
     print(precision(exponentiate_logvec(G.r1+G.r2-1, abs(desired_betalog), 1),10), "  ", precision(u_square, 10));
 
     \\\ reddiv but look for specific beta
-    numerical_ideal = G[5][1]*square_ideal;                                                     \\ complex embedding matrix of y
-    ideal_uY = mulvec(~numerical_ideal, ~u_square);                                    \\ ideal u*y
+    numerical_ideal = G[5][1]*square_ideal;                                     \\ complex embedding matrix of y
+    ideal_uY = mulvec(~numerical_ideal, ~u_square);                             \\ ideal u*y
     LLL_change_of_basis = get_LLL_basis_change(G, ideal_uY);                    \\ qflll output has columns which are coords wrt the input matrix NOT the integral basis
     LLL_numerical_uY = ideal_uY*LLL_change_of_basis;                            \\ Obtain LLL basis of u*y in numerical form (possibly complex)
-    LLLcoeffmat = square_ideal*LLL_change_of_basis;                                        \\ LLL basis, coords wrt the integral basis
+    LLLcoeffmat = square_ideal*LLL_change_of_basis;                             \\ LLL basis, coords wrt the integral basis
     real_mat_uY = embed_real(~G, ~LLL_numerical_uY);
     scan_elements = qfminim(real_mat_uY~*real_mat_uY, field_deg,,2)[3];
     print("-- elts scanned: ", length(scan_elements));
@@ -823,7 +859,7 @@ cpct_rep_final_enum2(G, idealB, target, desired_betalog, eps, testFlag = 0)={
     );
 
     print("No elements satisfy the condition. Error."); breakpoint();
-    return(-1);
+    return([-1,-1,-1]);
 }
 /******************************************************************************/
 \\ INPUT:
@@ -856,7 +892,7 @@ compact_rep_buchmann(G, alpha, alphaOK , eps, avp=1)={
   if(type(alpha) == "t_COL", alpha = alpha~);
   kbound = log(sqrt( abs(G.disc) ))/log(2)/2;                 \\ defines the boundary of the area W
 
-  print("This is the old compact representation algorithm!"); breakpoint();
+  print("This is the old compact representation algorithm! No longer verified in the test cases, use at own risk"); breakpoint();
   \\# MAIN LOOP: following the algorithm of Thiel, under the assumption alpha is a unit.
   \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   \\# Note: In this case, gamma = 1, and beta1 = 1 also. This means we can skip iteration 1
@@ -883,6 +919,9 @@ compact_rep_buchmann(G, alpha, alphaOK , eps, avp=1)={
 
   for(i=3, kprime,
       [s_term, desired_betalog] = update_tracking_values(s_term, log_rho[1..unit_rank]);  \\s_i and the target beta
+      for(ind =1, length(desired_betalog),
+        if(desired_betalog[i] < 0, print("negative input"));
+      );
       [idealB, target, log_rho, beta] = double_and_reduce(G, idealB, target,log_rho,avp);
 
       log_beta= log(abs(G[5][1]*beta));
@@ -927,14 +966,20 @@ compact_rep_buchmann(G, alpha, alphaOK , eps, avp=1)={
 } \\ end compact_rep_buchmann
 
 
-\\ This is just compact_rep_buchmann, but it assumes we have r+1 coordinates
+\\ # This is compact_rep_buchmann, but it assumes we have r+1 coordinates
+\\ # modified so that alphaOK is used as part of the check to ensure the cpct rep
+\\ # is corresponding to the same element.
+\\ # Note that the minima is always computed assuming it is in Ok. This function is not able to
+\\ # is no longer able to use a different ideal as the starting point. See comment [*]
 compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
-    \\print("Input alpha: ", precision(alpha, 10), "  ", normlp(alpha));
+    checkalpha = [-1.941406250000000000000000000000000000000000000000000000000, 2.882812500000000000000000000000000000000000000000000000000, 0.4609375000000000000000000000000000000000000000000000000000, -1.992187500000000000000000000000000000000000000000000000000, 5.445312500000000000000000000000000000000000000000000000000];
+    if(samevecs(alpha, checkalpha, 1/1000), print("test alpha"); breakpoint());
+    \\print("Inside compact rep ");logsum =0;for(i=1, length(alpha),logsum += alpha[i];if (i > G.r1, logsum += alpha[i]););print("log sum : ", precision(logsum,10));breakpoint();
     my(
         unit_rank = G.r1 +G.r2 -1,
         kprime = 1,                                               \\ determines no. steps the algorithm runs for
         kbound,                                                   \\ holds the boundary of the area W
-        idealB = alphaOK,                                         \\ variable for the ideal B
+        idealB = matid(poldegree(G.pol)),
         beta = 1,                                                 \\ holds the beta
         d_vec = [1],                                              \\ holds the d_i values
         ideal_denom = 1,                                          \\ used to determine d_i
@@ -947,10 +992,12 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
         exp_s
     );
     GP_ASSERT_EQ(length(alpha), unit_rank+1);
+
     if(type(alpha) == "t_COL", alpha = alpha~);
     kbound = log(sqrt( abs(G.disc) ))/log(2)/2;                 \\ defines the boundary of the area W
-    \\cpct_prec = prec_compact(poldegree(G.pol), ceil(log(abs(G.disc))/log(2)), normlp(alpha));
-    \\print(default(realbitprecision), "  ", cpct_prec); breakpoint();
+
+    new_eps = 2^(- (ceil(log(4*poldegree(G.pol))/log(2))+1 + ceil(0.5*log(poldegree(G.pol))/log(2))) );
+
     \\# MAIN LOOP: following the algorithm of Thiel, under the assumption alpha is a unit.
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     \\# Note: In this case, gamma = 1, and beta1 = 1 also. This means we can skip iteration 1
@@ -959,7 +1006,8 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
     [s_term, kprime] = compute_initial_s(alpha, kbound);
 
     parF = ((2/Pi)^(G.r2))*sqrt(abs(G.disc));               \\\ used to define how much to shrink alpha
-    if(normlp(alpha) < eps,
+
+    if(normlp(alpha) < ceil(log(parF/poldegree(G.pol))),
         new_t = 0;
     ,
         new_k = floor(log( normlp(alpha)*poldegree(G.pol)/ log(parF)) / log(2) )+1;
@@ -967,18 +1015,31 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
         kprime = new_t+1;
     );
     s_term = 2^(-new_t)*alpha;
+    \\exp_s =  exponentiate_logvec(unit_rank, s_term, 1);
+    exp_s =  exponentiate_logvec(unit_rank, s_term);
 
-    exp_s =  exponentiate_logvec(unit_rank, s_term, 1);
-
-  [idealB, target, log_beta, beta] = reddiv_compact(idealB, exp_s, G, G[5][1],avp);        \\ reddiv_compact computes A_2, target, Log(beta_2), beta2
+    \\ # [*] observe here that the initial ideal reduction is always done in matid(poldegree(G.pol))
+    \\#print("temporary extra reddiv call here: remove!!!");
+    \\#tempvec = reddiv_compact_no_inversion(idealB, exp_s, G, G[5][1],avp);
+    \\#[idealB, target, log_beta, beta] = reddiv_compact(idealB,exp_s , G, G[5][1],avp);
+    [idealB, target, log_beta, beta] = reddiv_compact_invert_u(idealB,exp_s, G, G[5][1],avp);
+    \\print("Initial reddiv difference inf norm: ", ceil(normlp(target)));
 
   s_term = 2*s_term;                                                                      \\ this is s2
   log_rho = log_beta;                                                                      \\ rho2 = beta2
-
+  \\print("s_term2: ", precision(s_term,10), " log_rho= ", precision(log_rho,10));
   [alpha_i, ideal_denom]=get_alpha_and_d(G, idealB, beta, 0);
   d_vec = concat(d_vec,ideal_denom);                                                       \\ Get d_i= d(A) and append to tracking vector
   alpha_vec = concat(alpha_vec, alpha_i);                                                  \\ compute alpha_i = d/beta and append to tracking vector
 
+  if ((idealB == alphaOK) && (normlp(log_rho-alpha) < new_eps),
+    if (testFlag == 2,
+        \\#early return statement for cpct rep
+        GP_ASSERT_TRUE(idealB == alphaOK);
+    );
+
+    return([alpha_vec, d_vec]);
+  );
   if(DEBUG_CPCT > 0,
     print("log beta and s: ", precision(log_beta,10), "   ", precision(s_term,10));
     print(" - ROUND ", 2, ": beta close enough?: ", samevecs(log_beta, s_term, kbound),
@@ -987,48 +1048,68 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
 
   for(i=3, kprime,
       [s_term, desired_betalog] = update_tracking_values(s_term, log_rho);  \\s_i and the target beta
-      [idealB, target, log_rho, beta] = double_and_reduce(G, idealB, target,log_rho,avp);
+      [idealB, target, log_rho, beta] = double_and_reduce_invert(G, idealB, target,log_rho,avp);
+      \\print(i ,"  iteration reddiv difference inf norm: ", ceil(normlp(target)), "  ", floor(sqrt(abs(G.disc))) );
+      \\print("inf-norm target : ", i, "  ", precision(normlp(target),10), "  ", precision((sqrt(abs(G.disc))*(2/Pi)^(G.r2))^(1/poldegree(G.pol)),10) );
+      if(abs(ceil(normlp(target))) > floor(sqrt(abs(G.disc))),
+          print("WARNING: CPCT REP - target norm is too large");
+      );
       log_beta= log(abs(G[5][1]*beta));
-
       [alpha_i, ideal_denom]=get_alpha_and_d(G, idealB, beta, 0);
       d_vec = concat(d_vec,ideal_denom);
       alpha_vec = concat(alpha_vec, alpha_i);
 
       if(DEBUG_CPCT,
-        print("logbeta and s: ", precision(log_beta,10), "   ", precision(s_term,10));
+        print("- logbeta ", precision(log_beta,10));
+        print("- log rho ", precision(log_rho,10), "   ", precision(s_term,10));
         print(" - ROUND ", i, ": beta close enough?: ", samevecs(log_beta, desired_betalog, kbound),
             ".\nNORMCHECK: ", intermediate_check(G, alpha_vec, d_vec, idealB) );
       );
   ); \\# end main for loop
+    \\print("Check same: ", precision(log_from_cpct(G, [alpha_vec, d_vec]),10), "  " precision(log_rho,10));
     GP_ASSERT_NEAR(norml2(log_from_cpct(G, [alpha_vec, d_vec])- log_rho),0, 2^(-10) );
-    \\print("rho after loop: ", precision(log_rho,10));
+
     \\\#  ENTER THE FINAL ITERATION OF THE ALGORITHM, WHICH IS SPECIAL
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     s_term = 2*s_term;                                              \\# this is s_{k'+1} = log rho
     desired_betalog = (alpha) - (2*log_rho);                       \\# this equation is "rho - 2*rho_{k'}"
 
-    [idealB, target, log_rho, beta] = double_and_reduce(G, idealB, target,log_rho);
+    [idealB, target, log_rho, beta] = double_and_reduce_invert(G, idealB, target,log_rho);
     log_beta= log(abs(G[5][1]*beta))~;
 
     \\# use enumeration to find the right value for beta
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     \\# this is a debug setting for the tests
     if (type(testFlag) == "t_INT" && (testFlag == 1),
-        if(!samevecs(abs(desired_betalog), abs(log_beta),eps),
-            [idealB, log_beta, beta] = cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, eps, testFlag);
+        if(!samevecs(abs(desired_betalog), abs(log_beta),new_eps),
+            [idealB, log_beta, beta] = cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, alphaOK, new_eps, testFlag);
+            if(idealB == -1, ,\\do nothing in this case, this is an error and we need to print the instance
+                log_rho += log_beta;
+            );
+        );
+    );
+    if(!samevecs(abs(desired_betalog), abs(log_beta),new_eps),
+        [idealB, log_beta, beta] = cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, alphaOK, new_eps, testFlag);
+        if(idealB == -1, ,\\do nothing in this case, this is an error and we need to print the instance
             log_rho += log_beta;
         );
     );
-    if(!samevecs(abs(desired_betalog), abs(log_beta),eps),
-        [idealB, log_beta, beta] = cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, eps, testFlag);
-        log_rho+= log_beta;
+    \\#clause to catch when cpct_enum fails
+    if(idealB == -1,
+        print("Final Enum has Failed, printing instance data for debugging: ");
+        print(G.pol, "\n ", alphaOK, "  alpha: ", precision(alpha ,50), "  eps: ", new_eps);
+        breakpoint();
     );
-    \\print("ending rho ", precision((log_rho),10));
+
+    \\# finalize the alpha and denom vectors
     [alpha_i, ideal_denom]=get_alpha_and_d(G, idealB, beta, 0);
     d_vec = concat(d_vec,ideal_denom);
     alpha_vec = concat(alpha_vec, alpha_i);
 
     if(DEBUG_CPCT, print(" -- final rho_i ", precision(2*log_rho[1..length(log_beta)] + log_beta,10)););
+    if (testFlag == 2,
+        GP_ASSERT_TRUE(idealB == alphaOK);
+    );
 
     return( [alpha_vec, d_vec] );
 } \\ end compact_rep_enum
@@ -1048,6 +1129,7 @@ cpct_from_loglattice(G, lglat, eps, avp=1)={
     GP_ASSERT_EQ(matsize(lglat)[1], G.r1+G.r2-1);
     for (i=1, length(lglat),
         extended_log = concat(lglat[,i], extra_log_coordinate(G.r1, G.r2, lglat[,i]));
+        \\print("cpct-loglattice: Unit number: ", i, " ", precision(extended_log,25));
         crnew = compact_rep_full_input(G, extended_log, aOK, eps, avp);
         c_rep_list = concat(c_rep_list, [crnew]);
     );
@@ -1078,12 +1160,38 @@ cpct_denom_switch(G, lglat, cpct_list, eps, p)={
     return(cpct_list);
 };
 
+\\ G is a number field
+\\ r is the unit rank
+\\ tracker is a specific vector used in BSGS where
+\\ The first r entries are pairs of (compact representation, exponent)
+\\ Sub-function of baby-step giant step to compute the logarithm of a list of compact representations/minima
+trackerLogarithm(~G, ~tracker, r)={
+    logResult = vector(r+1,j,0);
+    for(i=1, length(tracker),
+        if(i <= r,
+            GP_ASSERT_TRUE(length(tracker[i]) == 2);
+            logResult += tracker[i][2]*log_from_cpct(G, tracker[i][1]);
+        ,\\else
+            logResult+= tracker[i][2]*log(abs(nfeltembed(G, tracker[i][1])));
+        );
+    );
+    return(logResult);
+};
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\ # FUNCTIONS USED FOR PMAX algorithm (Rigorous index divisor test)
+\\ # Utilize a specific means of storing an element as a logarithm matrix along
+\\ # with a matrix indicating their exponent
+\\ # the exponent matrix is updated at each step by this function
+\\ # since it is done per prime, the exponents can be reduced modulo p
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ INPUT:
-\\ - lglat a log lattice corresponding to an independent set of units
-\\ - G a number field,
-\\ - eps some precision value
+\\ - eta_exp_mat is a integer matrix of exponents
+\\ - updatevec indicates how to adjust the new exponent matrix
+\\ - k indicates which eta_i need to be updated
+\\ - p is the prime index divisor being tested
 \\ OUTPUT:
-\\ - a vector of compact representations for each of the units in lglat
+\\ - eta_exp_mat is an updated exponent matrix
 update_expmat(eta_exp_mat, updatevec,k,p )={
     for(j = k+1, length(eta_exp_mat),
         eta_exp_mat[,j] = eta_exp_mat[,j] + updatevec[j-k]*eta_exp_mat[,k];         \\ add the correct multiple of the kth column
@@ -1097,6 +1205,7 @@ update_expmat(eta_exp_mat, updatevec,k,p )={
     ));
     return(eta_exp_mat);
 }
+
 
 \\ INPUT:
 \\ - units: a log matrix of units
@@ -1113,7 +1222,13 @@ build_unit(units, exponent_mat,k)={
     return(test_eta_k);
 }
 
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\ # THE FUNCTIONS HERE ARE USED FOR THE HEURISTIC INDEX DIVISOR TEST
+\\ # REFERRED TO HERE AS pari_prime_check
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
+\\ #This function is used in the in the heuristic index divisor test to embed
+\\ #a compact representation into a residue field
 \\ INPUT:
 \\ - G a number field
 \\ - res_field a residue field generated from a prime ideal
@@ -1141,7 +1256,15 @@ cpct_rep_modp(G,cpct, res_field)={
     return(alphafinal);
 }
 
-\\ Obtain the compact representation of an element which is given in terms of an exponent vector of length r, and r compact representations
+\\ # Embed the element alpha of G represented by a list of cpct reps and exponent
+\\ # into a residue field. alpha = prod_{i=1}^{r} (cpct_list[i]^(expvec[i]))
+\\ # INPUT:
+\\ # - G is a number field
+\\ # - cpct_list is a list of r cpct reps
+\\ # - expvec is a length r vector
+\\ # - res_field is the residue field (a pari object, see function nfmodprinit)
+\\ # OUTPUT:
+\\ # -
 cpct_modp_from_factors(G, cpct_list, expvec, res_field)={
     my(finalproduct, intermediate);
     finalproduct = nfmodpr(G, 1, res_field);
@@ -1153,22 +1276,9 @@ cpct_modp_from_factors(G, cpct_list, expvec, res_field)={
     return(finalproduct);
 }
 
-compute_subgroup(G, unimat, modpair, extype=0)={
-    my(coord = modpair[1], pow = modpair[2]);
-    unimat[,coord] = nfeltpow(G, unimat[,coord], pow);
-    if(extype ==0,
-        return(unimat);
-    );
-    coord2 = modpair[3]; pow = modpair[4];
-    if(extype ==1,
-        unimat[,coord2] = nfeltpow(G, unimat[,coord2], pow);
-        return(unimat);
-    );
-    if(extype ==2,
-        unimat[,coord] = nfeltmul(G, unimat[,coord], nfeltpow(G, unimat[,coord2], pow));
-        return(unimat);
-    );
-}
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\ # Functions used for testing and debugging
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 \\#brief - Ensure that ideal = Ok/cpct
 \\#param G is a number field
@@ -1196,6 +1306,13 @@ verify_generator(G, ideal, cpct)=
     GP_ASSERT_EQ(ideal, quotientIdeal);
 }
 
+\\# Debugging function to verify that ideal is generated the product of all
+\\# elements in cpctlist
+\\# cpct list takes a special form where the firt r elements are cpct reps,
+\\# all later elements are just number field elements.
+\\ # variable quotientIdeal is computed in the 'obvious way' by reconstructing
+\\ # compact reps and dividing the ideal by each of them
+\\ # tempIdeal uses the 'better' that does not reconstruct each cpct rep
 verify_generator_with_list(G, ideal, cpctlist)=
 {
     if(VERIFY_GENERATORS,
@@ -1231,17 +1348,3 @@ verify_generator_with_list(G, ideal, cpctlist)=
     GP_ASSERT_EQ(tempIdeal, quotientIdeal);
     GP_ASSERT_EQ(ideal, quotientIdeal);
 }
-
-
-
-trackerLogarithm(~G, ~tracker, r)={
-    logResult = vector(r+1,j,0);
-    for(i=1, length(tracker),
-        if(i <= r,
-            logResult += tracker[i][2]*log_from_cpct(G, tracker[i][1]);
-        ,\\else
-            logResult+= tracker[i][2]*log(abs(nfeltembed(G, tracker[i][1])));
-        );
-    );
-    return(logResult);
-};
