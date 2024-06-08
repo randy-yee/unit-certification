@@ -28,9 +28,10 @@ print("debugging : test case");
     cpct_rep = compact_rep_full_input(G1, alpha, alpha_OK , epsilon,1,2);
     GP_ASSERT_VEC_NEAR(log_from_cpct(G1, cpct_rep)[1..urank], alpha[1..urank], 1/10000);
     print("the issue here seems to be that alpha1 is actually a crappy approximation, so we aren't getting the right value");
-    breakpoint();
+    \\breakpoint();
 
 }
+
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ test cases for compact_rep_buchmann and compact_reconstruct
 {

@@ -232,9 +232,9 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~rep
                     vec_numerical = (G[5][1]*scan_elements[,ii])~;
                     \\ # Start at 2 because j=1 holds the nu value ( see babystock_scan_jump )
                     add_start = getabstime();
-                    print();
+
                     for(j = 2, length(log_distance_list),
-                        print("WARNING: Determine what the right level of precision to round these is");
+                        \\print("WARNING: Determine what the right level of precision to round these is");
                         psi_value = vector_approximate(log(abs(vec_numerical[1..G.r1+G.r2]))+log_distance_list[j][1..G.r1+G.r2],eps^2);
                         if(mapisdefined(bmap, new_y, &existing_entry),
                             repeatflag = is_repeat_babystock(existing_entry, psi_value, eps);
@@ -582,7 +582,7 @@ incremental_baby_steps(y, ~lattice_lambda, ~giant_legs,\
     if (length(scanIdeals) < 1, return([lattice_lambda, []]); );
 
     scanIdealsMatrix = Mat(scanIdeals)[,1];
-    print("precision before scanball", default(realbitprecision));
+    print("precision before scanball ", default(realbitprecision));
     for(i = 1, length(scanIdealsMatrix),
         distanceList = mapget(scanIdeals, scanIdealsMatrix[i]);
 
