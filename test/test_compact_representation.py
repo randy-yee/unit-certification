@@ -32,8 +32,6 @@ print("debugging : test case");
 
 }
 
-Final Enum has Failed, printing instance data for debugging:
-x^5 - x^4 - 16*x^3 - x^2 + 32*x + 9
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ test cases for compact_rep_buchmann and compact_reconstruct
 {
