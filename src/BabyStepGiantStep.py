@@ -365,9 +365,6 @@ collision_check_bootstrap_log(G, ~lattice_lambda, r,\
 
     for(i=1, length(matches),
         \\# do this to recalculate the log vector to greater precision
-        if(samevecs(matches[i], [-1.9414062500000000, 2.8828125000000000000000000, \
-        0.4609375000000000000000000, -1.992187500000000000000000, 5.445312500000000000000000000], 1/256),
-        "print(target) ";breakpoint(););
         baby_div = compact_rep_full_input(G, matches[i],giant_divisor[1], eps);
         baby_log = log_from_cpct(G, baby_div);
         new_vec = gd_log - baby_log;
@@ -593,12 +590,12 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
         if(mapisdefined(babystock, giant_divisor[1]),
             if(DEBUG_BSGS>0 ||1 ,print(ctr,"  baby-giant match. checking for new vector: ", giant_divisor[1]););
             matches = mapget(babystock, giant_divisor[1]);
-            if (giant_divisor[1] == [1, 0, 0, 0, 6/43; 0, 1, 0, 0, 128/129; 0, 0, 1, 0, 91/129; 0, 0, 0, 1, 89/129; 0, 0, 0, 0, 1/129],
-                print("gdbad ", precision(giant_divisor[2],50) );
-                bstock_vec = mapget(babystock, giant_divisor[1]);
-                print("bstock ", precision(bstock_vec,50));
-                breakpoint();
-            );
+            \\if (giant_divisor[1] == [1, 0, 0, 0, 6/43; 0, 1, 0, 0, 128/129; 0, 0, 1, 0, 91/129; 0, 0, 0, 1, 89/129; 0, 0, 0, 0, 1/129],
+            \\    print("gdbad ", precision(giant_divisor[2],50) );
+            \\    bstock_vec = mapget(babystock, giant_divisor[1]);
+            \\    print("bstock ", precision(bstock_vec,50));
+            \\    breakpoint();
+            \\);
             \\if (giant_divisor[1] == [1, 0, 0, 7804915/15049807; 0, 1, 0, 8863997/15049807; 0, 0, 1, 1043039/15049807; 0, 0, 0, 1/15049807],
             \\    print("gdbad ", precision(giant_divisor[2],50) );
             \\    print("bstock ", precision(mapget(babystock, giant_divisor[1]),50));
