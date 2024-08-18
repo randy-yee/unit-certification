@@ -205,17 +205,17 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
         ,
         (length(b_ranges)==3) && (type(b_ranges)!="t_MAT"),    \\elif
             print("Auto-selecting babystock region size based on coeffs");
-            sqrt_reg = sqrt(abs(reg1));
-            log_sqrt_reg = log(sqrt_reg);
+            sqrt_reg = sqrt(abs(reg1)); \\ this is 'X' in the curve fit fcn
+            log_sqrt_reg = log(sqrt_reg); \\ this is Log[x] in the curve fit fcn
             coeff_a = b_ranges[1];
             coeff_b = b_ranges[2];
             coeff_c = b_ranges[3];
 
             \\ a*x*log(x) + b*sqrt(log(x)) + c
-            estimate = floor(coeff_a*sqrt_reg*log_sqrt_reg+coeff_b*sqrt(log_sqrt_reg)+coeff_c);
-            init = estimate;\\ - 1*floor(estimate/4);
-            end = estimate+1;\\ + 1*floor(estimate/4);
-            step = max(floor((end-init)/3),1);
+            estimate = max(floor(coeff_a*sqrt_reg*log_sqrt_reg+coeff_b*sqrt(log_sqrt_reg)+coeff_c),10);
+            init = estimate - 1*floor(estimate/5);
+            end = estimate + 1*floor(estimate/5);
+            step = max(floor((end-init)/8),1);
             write(OUTFILE1,"babystock-range: ", estimate, "  ", init, " ", end, " ", step);
         ,
         (length(b_ranges)==3) && (type(b_ranges)=="t_MAT"),
