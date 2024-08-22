@@ -972,8 +972,8 @@ compact_rep_buchmann(G, alpha, alphaOK , eps, avp=1)={
 \\ # Note that the minima is always computed assuming it is in Ok. This function is not able to
 \\ # is no longer able to use a different ideal as the starting point. See comment [*]
 compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
-    checkalpha = [-1.941406250000000000000000000000000000000000000000000000000, 2.882812500000000000000000000000000000000000000000000000000, 0.4609375000000000000000000000000000000000000000000000000000, -1.992187500000000000000000000000000000000000000000000000000, 5.445312500000000000000000000000000000000000000000000000000];
-    if(samevecs(alpha, checkalpha, 1/1000), print("test alpha"); breakpoint());
+    \\checkalpha = [-1.94140625, 2.8828125, 0.46093750, -1.99218750, 5.44531250];
+    \\if(samevecs(alpha, checkalpha, 1/1000), print("test alpha"); breakpoint());
     \\print("Inside compact rep ");logsum =0;for(i=1, length(alpha),logsum += alpha[i];if (i > G.r1, logsum += alpha[i]););print("log sum : ", precision(logsum,10));breakpoint();
     my(
         unit_rank = G.r1 +G.r2 -1,
@@ -1002,28 +1002,21 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     \\# Note: In this case, gamma = 1, and beta1 = 1 also. This means we can skip iteration 1
     \\# If alphaOK is reduced, we should always be able to pick gamma = 1
-
-    [s_term, kprime] = compute_initial_s(alpha, kbound);
-
     parF = ((2/Pi)^(G.r2))*sqrt(abs(G.disc));               \\\ used to define how much to shrink alpha
 
     if(normlp(alpha) < ceil(log(parF/poldegree(G.pol))),
-        new_t = 0;
+        new_t = 0; \\# kprime is by default 1
     ,
         new_k = floor(log( normlp(alpha)*poldegree(G.pol)/ log(parF)) / log(2) )+1;
         new_t = max(0, new_k);
         kprime = new_t+1;
     );
     s_term = 2^(-new_t)*alpha;
-    \\exp_s =  exponentiate_logvec(unit_rank, s_term, 1);
     exp_s =  exponentiate_logvec(unit_rank, s_term);
 
     \\ # [*] observe here that the initial ideal reduction is always done in matid(poldegree(G.pol))
-    \\#print("temporary extra reddiv call here: remove!!!");
-    \\#tempvec = reddiv_compact_no_inversion(idealB, exp_s, G, G[5][1],avp);
-    \\#[idealB, target, log_beta, beta] = reddiv_compact(idealB,exp_s , G, G[5][1],avp);
     [idealB, target, log_beta, beta] = reddiv_compact_invert_u(idealB,exp_s, G, G[5][1],avp);
-    \\print("Initial reddiv difference inf norm: ", ceil(normlp(target)));
+    \\#print("Initial reddiv difference inf norm: ", ceil(normlp(target)));
 
   s_term = 2*s_term;                                                                      \\ this is s2
   log_rho = log_beta;                                                                      \\ rho2 = beta2
@@ -1033,11 +1026,8 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
   alpha_vec = concat(alpha_vec, alpha_i);                                                  \\ compute alpha_i = d/beta and append to tracking vector
 
   if ((idealB == alphaOK) && (normlp(log_rho-alpha) < new_eps),
-    if (testFlag == 2,
-        \\#early return statement for cpct rep
-        GP_ASSERT_TRUE(idealB == alphaOK);
-    );
-
+    if (testFlag == 2, GP_ASSERT_TRUE(idealB == alphaOK);); \\#ensure correct ideal returned
+    \\#early return statement for cpct rep
     return([alpha_vec, d_vec]);
   );
   if(DEBUG_CPCT > 0,
@@ -1069,7 +1059,7 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
     \\print("Check same: ", precision(log_from_cpct(G, [alpha_vec, d_vec]),10), "  " precision(log_rho,10));
     GP_ASSERT_NEAR(norml2(log_from_cpct(G, [alpha_vec, d_vec])- log_rho),0, 2^(-10) );
 
-    \\\#  ENTER THE FINAL ITERATION OF THE ALGORITHM, WHICH IS SPECIAL
+    \\\# FINAL PART OF THE ALGORITHM
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     s_term = 2*s_term;                                              \\# this is s_{k'+1} = log rho
     desired_betalog = (alpha) - (2*log_rho);                       \\# this equation is "rho - 2*rho_{k'}"
@@ -1080,6 +1070,7 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
     \\# use enumeration to find the right value for beta
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     \\# this is a debug setting for the tests
+
     if (type(testFlag) == "t_INT" && (testFlag == 1),
         if(!samevecs(abs(desired_betalog), abs(log_beta),new_eps),
             [idealB, log_beta, beta] = cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, alphaOK, new_eps, testFlag);
@@ -1108,6 +1099,7 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
 
     if(DEBUG_CPCT, print(" -- final rho_i ", precision(2*log_rho[1..length(log_beta)] + log_beta,10)););
     if (testFlag == 2,
+        if(idealB != alphaOK, print("Error!: ", G.pol, "\n", idealB," ", alphaOK, "\n", alpha ));
         GP_ASSERT_TRUE(idealB == alphaOK);
     );
 

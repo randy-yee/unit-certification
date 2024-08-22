@@ -81,7 +81,7 @@ outputInstanceInfo(fNum, K, lglat_new, reg1, signature_string, prec)={
     print("Input determinant ", precision(unscaled_determinant(K,lglat_new),10));
     write(OUTFILE1, "\n--------------------------\n", fNum, " Field pol: ", K.pol,
     ".  Sig: (", K.r1, ",", K.r2, ") -- Precision: ", ceil(REQ_BSGS));
-    write(OUTFILE1, strprintf("%-20s %-20s %s\n%-20.9F %-20.9F %d\n", "Log(Disc) ", "Regulator: ", "Disc:", log(abs(K.disc))/log(2), reg1, K.disc));
+    write(OUTFILE1, strprintf("%-20s %-20s %s\n%-20.9F %-20.9F %d\n", "Log(Disc) ", "Regulator: ", "Disc:", log(abs(K.disc))/log(2), reg1, K.disc), " ",precision(avec,10));
     write(concat("data/table-bsgs-", signature_string), strprintf("%-20.9F %-20.9F %d", log(abs(K.disc))/log(2), reg1, K.disc));
 }
 
@@ -205,17 +205,17 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
         ,
         (length(b_ranges)==3) && (type(b_ranges)!="t_MAT"),    \\elif
             print("Auto-selecting babystock region size based on coeffs");
-            sqrt_reg = sqrt(abs(reg1));
-            log_sqrt_reg = log(sqrt_reg);
+            sqrt_reg = sqrt(abs(reg1)); \\ this is 'X' in the curve fit fcn
+            log_sqrt_reg = log(sqrt_reg); \\ this is Log[x] in the curve fit fcn
             coeff_a = b_ranges[1];
             coeff_b = b_ranges[2];
             coeff_c = b_ranges[3];
 
             \\ a*x*log(x) + b*sqrt(log(x)) + c
-            estimate = floor(coeff_a*sqrt_reg*log_sqrt_reg+coeff_b*sqrt(log_sqrt_reg)+coeff_c);
-            init = estimate;\\ - 1*floor(estimate/4);
-            end = estimate+1;\\ + 1*floor(estimate/4);
-            step = max(floor((end-init)/3),1);
+            estimate = max(floor(coeff_a*sqrt_reg*log_sqrt_reg+coeff_b*sqrt(log_sqrt_reg)+coeff_c),10);
+            init = estimate - 1*floor(estimate/5);
+            end = estimate + 1*floor(estimate/5);
+            step = max(floor((end-init)/8),1);
             write(OUTFILE1,"babystock-range: ", estimate, "  ", init, " ", end, " ", step);
         ,
         (length(b_ranges)==3) && (type(b_ranges)=="t_MAT"),

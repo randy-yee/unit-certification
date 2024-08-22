@@ -195,7 +195,8 @@ get_real_vec(~G, ~v)={
 \\ - G a number field
 \\ - M a (complex) matrix of dimension (r x n), where r = r1 +r2
 \\ OUTPUT:
-\\ - A matrix M' which has dimension n x n, obtained by splitting complex rows into real and imag parts, scaling them by sqrt2
+\\ - A matrix M' which has dimension n x n, obtained by splitting complex rows
+\\   into real and imag parts, scaling them by sqrt(2)
 embed_real(~G,~M)={
     my(
       outmatrix,                                                  \\ holder for the output matrix
@@ -338,7 +339,6 @@ checkred_old(y,G,eps)={
             gramy = y1~*y1;
             lisy=qfminim(gramy,n,,2)[3];                                        \\ This function uses qfminim with radius n
             for (i = 1, length(lisy),
-                \\print("embedding value: ",precision(y1*lisy[,i],10), "  ", lisy[,i]);
                 if ( check0(y1*lisy[,i],eps) != 0, return(0))
             );
             return(1),
@@ -432,10 +432,10 @@ column_sum(latticeL)=
 
 verify_lattice_containment(~G, ~new_vec)=
 {
-print("New vector found: Initial reg = ", precision(matdet(lattice_lambda),10));
-print("WARNING: Expensive verification. Check if new found vector is truly a unit");
+print("New vector found: Initial reg = ", precision(matdet(lattice_lambda),10), "\n
+    WARNING: Expensive verification. Check if new found vector is truly a unit");
 bnflattice = get_log_lattice_bnf(bnfinit(G));
-print(precision(bnflattice^(-1)*new_vec~,10));
+print("coefficients: ",precision(bnflattice^(-1)*new_vec~,10));
 
 breakpoint();
 }

@@ -207,6 +207,7 @@ print("debugging : test case");
     G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     n = poldegree(G1.pol);
+    breakpoint();
     O_K = matid(n);
     logarithm_lattice = get_log_lattice_bnf(G2);
 
