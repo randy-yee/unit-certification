@@ -248,7 +248,7 @@ change_precision(newbitprec)=
 }
 
 \\ BRIEF:
-\\ - perform gram schmidt on the input matrix over the reals
+\\ - perform gram schmidt on the input matrix over the reals (DEBUGSCALING- norml2)
 \\ INPUT:
 \\ - real_lattice is a matrix
 \\ OUTPUT:
@@ -267,7 +267,7 @@ gram_schmidt(~real_lattice)=
 
 \\ BRIEF:
 \\ - determine a vector indicating the maximum possible coefficients of a
-\\ - a shortest vector; used to determine which vectors need to be checked
+\\ - a shortest vector; used to determine which vectors need to be checked (DEBUGSCALING- norml2)
 \\ INPUT:
 \\ - degree of underlying number field,
 \\ - an matrix representation of a lattice (LLL-reduced)
@@ -342,7 +342,8 @@ check_ideal_reduced(G, ideal)=
     one_vec = vector(G.r1+G.r2, i , 1);
     for(i=1, length(check_elements[3]),
         \\#if there were elements in the scan region, check if they are in the normed body of 1
-        test_vector_real = abs(G[5][1]*lll_ideal*check_elements[3][,i]);
+        \\(DEBUGSCALING- abs vs norm)
+        test_vector_real = norm(G[5][1]*lll_ideal*check_elements[3][,i]);
         if(vec_less_than(test_vector_real, one_vec),
             return(0)
         );
