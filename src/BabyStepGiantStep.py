@@ -1018,13 +1018,14 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
     \\ #THIS SECTION SEARCHES USING THE SCAN ALGORITHM
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     minimal_vec_length = get_minimal_length(giant_sublattice);
-    \\print(precision(scanballRadius,10), "  ", precision(minimal_vec_length,10));
+
+    aprod = 1; for(i=1, length(avec), aprod*=avec[i]);
     if(minimal_vec_length < scanballRadius,
         scanballRadius = max(minimal_vec_length, 0.01);
 
-        write(FILE1,"Adjusted scan radius: ", precision(scanballRadius,10), "  aVec =", precision(avec, 10));
+        write(FILE1,strprintf("Adjusted scan radius: %-10.9F  Aproduct: %-10.9F", scanballRadius, aprod),"  aVec =", precision(avec, 10));
         ,
-        write(FILE1, "Scan radius: ", precision(scanballRadius,10), "  aVec =", precision(avec, 10));
+        write(FILE1,strprintf("Scan scan radius: %-10.9F  Aproduct: %-10.9F", scanballRadius, aprod),"  aVec =", precision(avec, 10));
     );
     if(alg == "SCAN",
         my(foundflag = 1, num_elts_found = []);

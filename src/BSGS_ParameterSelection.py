@@ -100,6 +100,7 @@ get_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock_scale_fa
         if(avec[i] == 0, avec[i]+=1);
     );
     print("BSGS: Babystock a_i=",avec, ". a_i product=", finalproduct, " target=", round(fullregion_to_babystock_ratio));
+
     return(avec);
 }
 
@@ -116,6 +117,7 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
         fullregion_to_babystock_ratio= 1);
 
     \\# This is the basic calculation for the babystock region
+    \\# It is currently overriden
     g_n = giant_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
     b_n =  baby_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
     smallsquare = sqrt(  (abs(detLambda)/B)*g_n/b_n  );
@@ -123,32 +125,35 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
 
     \\# Compute ratio of (full search region / babystock region)
     \\# any modification of the scale factor will shrink the babystock region
-    \\fullregion_to_babystock_ratio = (babystock_scale_factor)*abs(detLambda)/(smallsquare*B);
+    \\#fullregion_to_babystock_ratio = (babystock_scale_factor)*abs(detLambda)/(smallsquare*B);
 
-    \\# assigning a volume of the babystock
+    \\# assigning a volume of the babystock. This is an input to bsgs
     smallsquare = babystock_scale_factor;
 
-    \\# the product of the a_i should be roughly equal to this value
+    \\# the product of the a_i should be roughly equal to the value below
     fullregion_to_babystock_ratio = abs(detLambda)/(smallsquare*B);
-    print("babystock size in subdivisions function: ", precision(smallsquare,10), " " , precision(fullregion_to_babystock_ratio,10));
+    print("babystock volume: ", precision(smallsquare,10), " B = ", B , ".  ratio: ", precision(fullregion_to_babystock_ratio,10));
     write(OUTFILE1, " babystock_vol = ", precision( smallsquare,10),".  Region/babystock ratio: ", strprintf("%10.5f",fullregion_to_babystock_ratio) );
 
-    if(DEBUG_BSGS,
-        print("G_n, B_n  ",ceil(g_n), "   ", ceil(b_n));
-        print("a_I product target: ", ceil(fullregion_to_babystock_ratio), "   " );
-    );
-
-    norm_vr = sqrt(norml2(lattice_lambda[,dimensions] ));
     GP_ASSERT_TRUE(dimensions == unit_rank);
 
-    \\# product of the a_i should equal to the (size of search region)/(size of babystock region)
-    if(unit_rank == 1,
-        avec = vector(unit_rank, i , fullregion_to_babystock_ratio);
-    , \\else
-        \\
-        if (norm_vr/B > 1, dimensions++);
+    \\#scaling complex embeddings by 2 results in greater flexibility for
+    \\# baby stock volume.
+    if(dimensions > G.r1,
+        norm_vr = sqrt(norml2(2*lattice_lambda[,dimensions] ));
+    ,
+        norm_vr = sqrt(norml2(lattice_lambda[,dimensions] ));
+    );
 
-        \\if (1, dimensions++);
+    \\# product of the a_i should equal (size of search region)/(size of babystock region)
+    \\# calculation below aims to achieve this
+    if(unit_rank == 1,
+        avec = vector(unit_rank, i , fullregion_to_babystock_ratio); \\#easy case
+    , \\else
+        \\# when this if fails, we exclude the last vector from the calculation
+        \\# and set a_r = 1
+        if(norm_vr/B > 1, dimensions++);
+
         sides = max(1,sqrtn(fullregion_to_babystock_ratio, dimensions-1));
 
         if(DEBUG_BSGS,print("(r-1)th root of target area  ", precision(sides,10)););
@@ -161,7 +166,11 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
 
         \\# adjust in case the r-1 th root is larger than the vector's norm
         for(i=1, dimensions-1,
-            vecnorm =  sqrt(norml2(lattice_lambda[,i] ));
+            if(i > G.r1,
+                vecnorm =  sqrt(norml2(2*lattice_lambda[,i] ));
+            ,
+                vecnorm =  sqrt(norml2(lattice_lambda[,i] ));
+            );
             if (i == unit_rank, vecnorm/=B);
             print(i, " ", precision(vecnorm,10), "  ", precision(sides,10));
             avec = concat(avec, min(vecnorm, sides));
@@ -178,6 +187,8 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
             );
         );
 
+        \\# this will only be the case if (norm_vr/B <= 1), which meant we
+        \\# excluded a_r from the calculation and set it to be 1
         if (dimensions !=unit_rank+1,
             print("Final a_i: ", precision(norm_vr/B,10), "   ",precision(fullregion_to_babystock_ratio/ai_product,10));
             avec = concat(avec ,  1  );
@@ -192,6 +203,10 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
         if(avec[i] < 1, print("warning, the a_i is less than one for i = ",i));
     );
     print(precision(fullregion_to_babystock_ratio, 10), "  ", precision(finalproduct,10));
+    miniLambda = lattice_lambda;
+    for(i=1, length(avec), miniLambda[,i] /= avec[i]);
+    print("determinant of babystock region: ", precision(abs(matdet(miniLambda)),10));
+    breakpoint();
     return(avec);
 }
 
