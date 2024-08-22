@@ -343,7 +343,7 @@ check_ideal_reduced(G, ideal)=
     for(i=1, length(check_elements[3]),
         \\#if there were elements in the scan region, check if they are in the normed body of 1
         \\(DEBUGSCALING- abs vs norm)
-        test_vector_real = norm(G[5][1]*lll_ideal*check_elements[3][,i]);
+        test_vector_real = abs(G[5][1]*lll_ideal*check_elements[3][,i]);
         if(vec_less_than(test_vector_real, one_vec),
             return(0)
         );
@@ -352,6 +352,18 @@ check_ideal_reduced(G, ideal)=
 
 }
 
+get_scaled_M(K)=
+{
+    my(
+        scaled_M = K[5][1];
+        num_embeddings = K.r1 + K.r2;
+        fld_degree = length(K.zk);
+    );
+    for(i = K.r1+1, num_embeddings,
+        scaled_M[i,] = 2*scaled_M[i,];
+    );
+    return scaled_M;
+}
 /*
 \\ BRIEF:
 \\ - DEPRECATED
