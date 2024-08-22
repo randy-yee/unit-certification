@@ -81,9 +81,6 @@ log_determinant(G, unitmat)={
     square_matrix = log(abs(square_matrix));
     for(i = 1, length(square_matrix), if(i > G.r1, square_matrix[i,]*=2; ));
 
-    print("Field sig: ",G.r1, " ", G.r2);
-    print(precision(abs(matdet(square_matrix)),10), "  " precision(abs(matdet(log(abs(get_scaled_M(G)[1..length(unitmat),]*unitmat)))),10));
-    breakpoint();
     return(abs(matdet(square_matrix)));
 };
 
