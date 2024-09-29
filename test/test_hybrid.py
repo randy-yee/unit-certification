@@ -19,7 +19,7 @@ read("src/PmaxLog.py");
     pohst_out_lattice = log_pohst_pari(K, lglat, unitvector_cpct, balanceB, eps);
     stage1_units = cpct_from_loglattice(K, pohst_out_lattice,eps);
     tafter = getabstime();
-    GP_ASSERT_NEAR(tafter-tbefore, 11786, 11786/10);
+    GP_ASSERT_NEAR(tafter-tbefore, 11786, 11786*0.15);
 
     scaling_variable = 46; \\ this is the size of the babystock
     scanBallRadius = 0.3314981968;

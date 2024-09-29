@@ -53,7 +53,7 @@ TIMING = 1;
     \\print(precision(lglat,10)); breakpoint();
     index_bound = 83718;
     pmax_log_output = log_pohst_pari(K1,lglat,cpct_units, index_bound, eps);
-    output_regulator = unscaled_determinant(K1, pmax_log_output);
+    output_regulator = get_abs_determinant(pmax_log_output);
     GP_ASSERT_NEAR(K2.reg,output_regulator, eps );
 
 }

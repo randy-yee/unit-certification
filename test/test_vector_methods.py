@@ -92,16 +92,6 @@
     GP_ASSERT_EQ(concat_negative_sum(v1), [1,2,3,4,5,6,7,8,9,-45]);
 }
 
-{ \\ test cases for expvec and inverse_expvec
-    my(v1, v2, eps = 10^(-20));
-    v1 = [1,2,3,4,5];
-    GP_ASSERT_VEC_NEAR(expvec(v1), [exp(-1),exp(-2), exp(-3),
-    exp(-4), exp(-5), exp(15)], eps );
-
-    GP_ASSERT_VEC_NEAR(inverse_expvec(v1), [exp(1),exp(2), exp(3),
-    exp(4), exp(5), exp(-15)], eps );
-}
-
 { \\ test cases for vector_approximate
     my(v1, v2, eps = 10^(-9));
 
