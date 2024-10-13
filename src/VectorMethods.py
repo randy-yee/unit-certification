@@ -8,7 +8,6 @@ dividevector
 pointwise_vector_div
 concat_negative_sum
 sumvec
-expvec
 logvector
 vector_approximate
 is_trace_zero
@@ -58,7 +57,7 @@ pointwise_vector_mul(~u1, ~u2) = vector(length(u1),{i},{u1[i]*u2[i]})~;
 
 /*3. multiply a matrix y with the inverse of a vector v.
   Note that invert_coordinates(u) inverts entries coordinate wise, then apply mulvec */
-dividevector(y,u) = mulvec(y,invert_coordinates(u));
+dividevector(~y,~u) = mulvec(y,invert_coordinates(u));
 
 /* Coordinate-wise multiply vector u1 with the inverse of vector u2 in R^n*/
 pointwise_vector_div(~u1,~u2) = pointwise_vector_mul(u1,invert_coordinates(u2));
@@ -81,21 +80,7 @@ sumvec(~v)= {
     );
     return(entry_sum);
 }
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ INPUT: A vector v
-\\ OUTPUT: A vector [exp(-v[1]),exp(-v[2]), ... exp(sum)]
-\\ Note that the output has length one more than v
-expvec(~v) = {
-    my(xn);
-    xn = concat(v,-sumvec(v));                \\ compute the negative sum of x, concatenate to xn
-    vector(length(xn), i, exp(-xn[i]) );    \\ create a vector [exp(-x[1]),exp(-x[2]), ... exp(sum)]
-}
-inverse_expvec(v) = {
-    my(xn);
-    xn = concat(v,-sumvec(v));                  \\ compute the negative sum of x, concatenate to xn
-    xn = vector(length(xn), i, exp(xn[i]) );    \\ create a vector [exp(x[1]),exp(x[2]), ... exp(sum)]
-    return(xn);
-}
+
 
 /******************************************************************************/
 /* Returns an approximation of the vector v */
@@ -116,7 +101,7 @@ is_trace_zero(v,eps)={
 
 /******************************************************************************/
 /*9. check that the coordinates of vector v in R^n are all abs. val. less than 1 or not (PRECISION for comparisons all coordinates of v with 1)*/
-check0(v,eps) = {
+check0(~v,eps) = {
     for (ctr = 1, length(v),
         if ( 1-abs(v[ctr]) < eps,
             return(0)
@@ -130,7 +115,7 @@ check0(v,eps) = {
 \\ - v1 and v2 are both vectors, eps is the acceptable error
 \\ OUTPUT:
 \\ - 0 if the entries of v1 and v2 are not each within eps of each other, 1 otherwise.
-samevecs(~v1,~v2, eps)={
+samevecs(~v1,~v2, ~eps)={
   if(length(v1) != length(v2), return(0));
 
   for (i = 1, length(v1),
@@ -176,12 +161,20 @@ vec_less_than(~v1,~v2, axis = 0)={
 	return(1);
 }
 
+double_complex_coordinates(~r1, ~v)=
+{
+    for(i=r1+1, length(v),
+        v[i] *=2
+    );
+    return(v);
+}
+
 \\ Computes the infinity norm of a vector v
 \\ INPUT:
 \\ - A real vector v
 \\ OUTPUT:
 \\ - Real number corresponding to the infinity norm of v
-infinity_norm(v)={
+infinity_norm(~v)={
   my(len=length(v), abv, val = 0);
   for (i=1, len,
     abv = abs(v[i]);
@@ -273,7 +266,7 @@ gram_schmidt(~real_lattice)=
 \\ - an matrix representation of a lattice (LLL-reduced)
 \\ OUTPUT:
 \\ - a vector whose size matches the number of columns of the input matrix
-get_enumeration_bounds(degree, lll_lattice)=
+get_enumeration_bounds(degree, ~lll_lattice)=
 {
     my(rank = length(lll_lattice),
         ortho_basis, norm_vector, k_vector
@@ -313,6 +306,26 @@ compute_subgroup(G, unimat, modpair, extype=0)={
         return(unimat);
     );
 }
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\# IDEAL METHODS
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+\\ - K is a number field
+\\ - ideal_I is a coefficient matrix for an ideal of K
+\\ - scale_vector is a length r+s+1 vector.
+\\ OUTPUT - the ideal lattice corresponding to ideal_I; with ith row scaled
+\\          by the ith entry of scale_vector
+get_scaled_ideal_lattice(K, ideal_I, scale_vector)=
+{
+    my(result);
+    result = K[5][1]*ideal_I;
+    result = mulvec(result, scale_vector);
+    return(embed_real(K, result));
+
+}
+
+
 \\ BRIEF:
 \\ -
 \\ INPUT:
@@ -320,7 +333,7 @@ compute_subgroup(G, unimat, modpair, extype=0)={
 \\ - ideal is a coefficient matrix of an ideal wrt integral basis of G
 \\ OUTPUT:
 \\ - boolean indicating whether the ideal is reduced or not
-check_ideal_reduced(G, ideal)=
+check_ideal_reduced(~G, ~ideal)=
 {
     \\# if the norm is too small, then its not reduced
     if(abs(1/idealnorm(G, ideal))>sqrt(abs(G.disc)), return(0));
@@ -355,9 +368,9 @@ check_ideal_reduced(G, ideal)=
 get_scaled_M(K)=
 {
     my(
-        scaled_M = K[5][1];
-        num_embeddings = K.r1 + K.r2;
-        fld_degree = length(K.zk);
+        scaled_M = K[5][1],
+        num_embeddings = K.r1 + K.r2,
+        fld_degree = length(K.zk)
     );
     for(i = K.r1+1, num_embeddings,
         scaled_M[i,] = 2*scaled_M[i,];
@@ -399,4 +412,6 @@ check_ideal_reduced_old(G, ideal)=
     default(realbitprecision, mainbitprecision);    \\#restore precision
     return(1);  \\# no minima found inside of the normed body of 1
 }
+
+
 */

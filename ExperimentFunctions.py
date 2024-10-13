@@ -11,7 +11,7 @@ DEBUG_BSGS = 0;
 setInstanceVariables(readData)={
   K = nfinit(readData[1]);
   lglat = process_complex_loglattice(K ,readData[3]);
-  reg1 = unscaled_determinant(K, lglat);
+  reg1 = abs(matdet(lglat));
   r = K.r1+K.r2 -1;
   return([K, lglat, reg1,r]);
 }
@@ -77,10 +77,17 @@ generateFileStringsGeneral(signature_string, experimentString, suffixString, aux
 }
 
 outputInstanceInfo(fNum, K, lglat_new, reg1, signature_string, prec)={
-    \\inputreg = unscaled_determinant(K,lglat_new);
-    print("Input determinant ", precision(unscaled_determinant(K,lglat_new),10));
+    print("DEPRECATE due to scaling:  Input determinant ", precision(get_abs_determinant(lglat_new),10));
     write(OUTFILE1, "\n--------------------------\n", fNum, " Field pol: ", K.pol,
-    ".  Sig: (", K.r1, ",", K.r2, ") -- Precision: ", ceil(REQ_BSGS));
+    ".  Sig: (", K.r1, ",", K.r2, ") -- Precision: ", ceil(prec));
+    write(OUTFILE1, strprintf("%-20s %-20s %s\n%-20.9F %-20.9F %d\n", "Log(Disc) ", "Regulator: ", "Disc:", log(abs(K.disc))/log(2), reg1, K.disc), " ",precision(avec,10));
+    write(concat("data/table-bsgs-", signature_string), strprintf("%-20.9F %-20.9F %d", log(abs(K.disc))/log(2), reg1, K.disc));
+}
+
+writeInfo(fNum, K, lglat_new, reg1, signature_string, prec)={
+    print("Input determinant ", precision(abs(matdet(lglat_new)),10));
+    write(OUTFILE1, "\n--------------------------\n", fNum, " Field pol: ", K.pol,
+    ".  Sig: (", K.r1, ",", K.r2, ") -- Precision: ", ceil(prec));
     write(OUTFILE1, strprintf("%-20s %-20s %s\n%-20.9F %-20.9F %d\n", "Log(Disc) ", "Regulator: ", "Disc:", log(abs(K.disc))/log(2), reg1, K.disc), " ",precision(avec,10));
     write(concat("data/table-bsgs-", signature_string), strprintf("%-20.9F %-20.9F %d", log(abs(K.disc))/log(2), reg1, K.disc));
 }
@@ -175,7 +182,7 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
 
         lglat_new = lglat;
 
-        outputInstanceInfo(i, K, lglat_new, reg1, signature_string, REQ_BSGS);
+        writeInfo(i, K, lglat_new, reg1, signature_string, REQ_BSGS);
 
         cpct_units = cpct_from_loglattice(K, lglat_new, eps);
 
@@ -245,9 +252,9 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
             t10 = getabstime();
 
             bsgs_out_lattice = log_lattice_from_compact_set(K,bsgs_output);
-            print("result regulator: ", precision(unscaled_determinant(K, bsgs_out_lattice),10));
+            print("result regulator: ", precision(get_abs_determinant(bsgs_out_lattice),10));
             print("actual regulator: ", precision(reg1,10));
-            write(OUTFILE1, "Overall   time: ",precision(t10-t9,10), "  In mins: " ,precision((t10-t9)/60000.0,10),"  reg ratio: ", precision(unscaled_determinant(K, bsgs_out_lattice)/reg1, 10),"\n");
+            write(OUTFILE1, "Overall   time: ",precision(t10-t9,10), "  In mins: " ,precision((t10-t9)/60000.0,10),"  reg ratio: ", precision(get_abs_determinant(bsgs_out_lattice)/reg1, 10),"\n");
             overallTime = t10-t9;
             listput(~timeVector, [j,overallTime]);
             if (j == init,
@@ -329,7 +336,7 @@ run_bsgs_experiment_single(signature_string, fieldnum, single_range, auxilliary)
         print("REQBSGS", default(realbitprecision), "  ", ceil(REQ_BSGS));
         lglat_new = lglat;
 
-        outputInstanceInfo(i, K, lglat_new, reg1, signature_string, REQ_BSGS);
+        writeInfo(i, K, lglat_new, reg1, signature_string, REQ_BSGS);
 
         cpct_units = cpct_from_loglattice(K, lglat_new, eps);
         scaleB = 2;          \\ 1 means you scan the whole region
@@ -370,9 +377,9 @@ run_bsgs_experiment_single(signature_string, fieldnum, single_range, auxilliary)
             t10 = getabstime();
 
             bsgs_out_lattice = log_lattice_from_compact_set(K,bsgs_output);
-            print("result regulator: ", precision(unscaled_determinant(K, bsgs_out_lattice),10));
+            print("result regulator: ", precision(get_abs_determinant(bsgs_out_lattice),10));
             print("actual regulator: ", precision(reg1,10));
-            write(OUTFILE1, "Overall   time: ",precision(t10-t9,10), "  In mins: " ,precision((t10-t9)/60000.0,10),"  reg ratio: ", precision(unscaled_determinant(K, bsgs_out_lattice)/reg1, 10));
+            write(OUTFILE1, "Overall   time: ",precision(t10-t9,10), "  In mins: " ,precision((t10-t9)/60000.0,10),"  reg ratio: ", precision(get_abs_determinant(bsgs_out_lattice)/reg1, 10));
             write(strexpand("bsgs-b-",sigstring, suffix), j, " , ",precision(t10-t9,10));
             if (j == init, timeout = min(timeout, max(2*(t10-t9), 30*60000)); );
         );
@@ -402,8 +409,6 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
         \\# INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
         \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
         \\K1 = bnfinit(data[i][2],1); unit_index = random(length(K1.fu))+1;
-        \\lglat = process_complex_loglattice(K ,data[i][3]);
-        \\reg1 = unscaled_determinant(K, lglat);
 
         [K, lglat, reg1, r2] = setInstanceVariables(data[i]);
         [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat, ~reg1);
@@ -454,7 +459,7 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
 
             logout = log_pohst_pari(K,lglat_new,unitvector_cpct, indexbound, eps);
             tafter = getabstime();
-            outreg = unscaled_determinant(K,logout);
+            outreg = get_abs_determinant(logout);
             \\write(OUTFILE1,"Output Regulator: ", precision(outreg,10 ), "  quot: ", precision(inputreg/outreg,10), "YN? ",norml2(outreg*quot - inputreg) < eps, ". Ratios: ", (modpair1[2]-inputreg/outreg)< eps);
             write(OUTFILE1, "Output Regulator: ", precision(outreg,10 ), "\n  lpohst time ",precision((tafter-tbefore),10), " Below is in Minutes: ", precision((tafter-tbefore)/60000.0 ,10));
             if (i == loop_ranges[1],
@@ -512,7 +517,7 @@ skew_lattice(lattice, balanceB, scaling_value)=
         print("target length: current_length " , precision(target_length,10), " ", precision(sqrt(norml2(skew_vector)),10) );
 
         lattice[,r] = skew_vector;
-        GP_ASSERT_NEAR(reg1, unscaled_determinant(K, lglat_new), 0.000001);
+        GP_ASSERT_NEAR(reg1, get_abs_determinant(lglat_new), 0.000001);
         largest_dimension = sqrt(norml2(lglat_new[,r]/balanceB));
 
     );
@@ -549,7 +554,7 @@ for(i=start, end,
     write(OUTFILE1, "\nRegulator: ", precision(reg1,10),"--------------------------precision value ", ceil(REQ_BSGS));
 
     \\write(OUTFILE1,""\nModified lglat ", precision(lglat_new,10));
-    \\inputreg = unscaled_determinant(K,lglat_new);
+    \\inputreg = get_abs_determinant(lglat_new);
     \\write(OUTFILE1," Input Regulator: ", precision(inputreg,10), "  Original Regulator: ", precision(reg1,10)  );
 
     p1 = pmax_p1(n,logdisc, log(abs(reg1)) );
@@ -590,7 +595,8 @@ for(i=start, end,
 
     lglat_new = skew_lattice(lglat_new, balanceB, 3.0);
     largest_dimension = sqrt(norml2(lglat_new[,r]/balanceB));
-
+    
+    print("ensure compute precision is using B as part of the precision computation");
     [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat_new, ~reg1);
     REQ_RIG = prec_rigorous(n, logdisc, log(infinity_norm(sumv)),log(abs(reg1))  );
 
@@ -614,7 +620,7 @@ for(i=start, end,
 
     print("Running BSGS Algorithm");
     default(realprecision, ceil(REQ_BSGS));
-    detLambda = unscaled_determinant(K, pohst_out_lattice);
+    detLambda = get_abs_determinant(pohst_out_lattice);
     \\print("REQ_BSGS ",floor(REQ_BSGS) );
     t9 = getabstime();
 
@@ -631,7 +637,7 @@ for(i=start, end,
     \\ This is the basic calculation for the babystock region
     scaling_variable = sqrt(  (abs(reg1)/balanceB)*g_n/b_n  )/2;
 
-    detLambda = unscaled_determinant(K, pohst_out_lattice);
+    detLambda = get_abs_determinant(pohst_out_lattice);
     fitted_scale_variable = get_baby_stock_fit_size(K.r1+K.r2 -1, poldegree(K.pol), detLambda/balanceB);
 
     print("default Bstock Size: ", precision(scaling_variable,10), ". Fitted Size: ", precision(fitted_scale_variable,10));
@@ -646,7 +652,7 @@ for(i=start, end,
     t10 = getabstime();
     bsgstime = t10-t9;
     bsgs_out_lattice = log_lattice_from_compact_set(K, bsgs_output);
-    outreg = unscaled_determinant(K,bsgs_out_lattice);
+    outreg = get_abs_determinant(bsgs_out_lattice);
 
     write(OUTFILE1, "bsgs time ",precision(bsgstime,10), " In minutes: ", precision(bsgstime/60000.0,15) );
     write(OUTFILE1,"Overall time: ", precision(bsgstime+lptime , 10) , " In minutes: ", precision((bsgstime+lptime)/60000.0,15) );

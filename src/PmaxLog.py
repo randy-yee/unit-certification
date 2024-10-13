@@ -118,7 +118,7 @@ check_in_unitlattice(G, v, eps)={
             extra_coord-=2*v[i];
         );
     );
-    if (G.r2 != 0, extra_coord/=2;);
+    if (G.r2 != 0, extra_coord/=2;); \\DEBUGSCALING remove this line
     v2= concat(v, extra_coord);
 
     log_mu = jump_output[3];                                                \\# this is a log vector of mu,  Psi(mu) in the Fonteine-Jacobson paper
@@ -166,11 +166,12 @@ check_in_unitlattice(G, v, eps)={
         );
     );
     for(i=1, length(babystock),
+        \\DEBUGSCALING
         babystock_log = log(abs(valuationvec(G,new_y*change_of_basis*babystock[,i], column=1)));
         babystock_log = unsquare_log_embeddings(G, babystock_log);
         \\print( "  UNITLATTICE CHECK babystock log", precision(babystock_log, 10),
         \\            "\n log_mu_p ",precision(log_mu_p,10),"\n difference: ", precision(abs(log_mu_p) - abs(babystock_log[1..r]),10));
-        if(norml2(abs(log_mu_p) - abs(babystock_log[1..r])) < eps && idealdiv(G, matid(n), babystock[i]) == new_y,
+        if(norml2(abs(log_mu_p) - abs(babystock_log[1..r])) < eps && idealdiv(G, matid(n), babystock[,i]) == new_y,
             print("  UNIT_LATTICE_CHECK SUCCEEDS");
             return(1);
         );
@@ -312,8 +313,10 @@ get_search_ideal_cpct(G,p, k, cpctreps, expmat, logmat, torsion_coeffs=[])={
             factor_candidate = prime_decomposition[i];                          \\ holds the ith ideal of the decomposition, call it P
 
             res_field = nfmodprinit(G,factor_candidate);                        \\ converts prime ideal P into residue field OK/P
-            cpctreps = cpct_denom_switch(G, logmat, cpctreps, eps, prime_q);    \\ ensure the component representations are coprime modulo prime_q
 
+            \\#ensure prime_q has gcd 1 with the cpctrep denominators
+            GP_ASSERT_TRUE(gcd(denom_lcm, prime_q) == 1);
+            
             \\ handles the torsion case
             if(k == 0,
                 embedded_eta = nfmodpr(G, nfalgtobasis(G,nfrootsof1(G)[2]),res_field);
@@ -326,11 +329,9 @@ get_search_ideal_cpct(G,p, k, cpctreps, expmat, logmat, torsion_coeffs=[])={
                 );
             );
 
-
             \\ irreducibility check of Pohst/Arenz
             if (embedded_eta^( (factor_candidate[1]^factor_candidate.f-1)/p) != 1,
-                \\write("findingQ.log", "p = ",p, ". Ideals checked = ",prime_ctr, " Q = ", (prime_q-1)/p , "*", p, "+1. Ideal norm ", idealnorm(G,factor_candidate)  );
-                return([factor_candidate,cpctreps]);                                           \\ Should always exit the function here unless the input is invalid
+                return([factor_candidate,cpctreps]);                            \\ Should always exit the function here unless the input is invalid
             );
             prime_ctr+=1;
         );
@@ -549,7 +550,7 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
             betavec = unitvector_cpct;
             compact_lcm = lcm_denominators(unitvector_cpct);                    \\ used as the 'bad' input to pari_prime_check, ignores non-coprime primes during the equation finding step
         );
-        \\if(p>500,
+        \\if((p%5000) == 1,
         \\    print("PthRoot: ", time_pthRoot, "\nUpdate: ", time_update ); breakpoint());
 
         if (getabstime()-initialTime > (12*60*60*1000), write(OUTFILE1, G.pol, " time exceeds 12 hours");break;);

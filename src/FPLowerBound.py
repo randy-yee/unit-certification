@@ -248,6 +248,5 @@ get_index_bound2(nf,lattice_lambda, eps, jval = -1, search_limit = 0, outstring 
         );
     );
     lrb = lower_regbound(nf, constK, eps, jval, search_limit);
-    \\write("bound2.txt", "LOGLAT: ", type(lattice_lambda),precision(lattice_lambda,10),"\nDET: ", precision(abs(matdet(lattice_lambda)),10), "  \nLowerbound: ", lrb );
-    ceil(unscaled_determinant(nf, lattice_lambda)/lrb );
+    ceil(get_abs_determinant(lattice_lambda)/lrb );
 }

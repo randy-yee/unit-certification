@@ -25,7 +25,7 @@ one_massive_qfminim
 
 bsgs
 */
-DEBUG_BSGS = 1;
+DEBUG_BSGS = 0;
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ BBBBBBB    SSSSSS    GGGGGG     SSSSSS
@@ -250,13 +250,18 @@ get_giant_step_increment_vectors_compact(G, giant_sublattice, field_deg, eps)={
     \\ loop through each dimension of the lattice
     for(j = 1, length(giant_sublattice),
         new_vec = giant_sublattice[,j];
+
         gstep_divisor = jump_compact(matid(field_deg), new_vec, G, field_deg, eps);
         listput(~giant_step_ideals, gstep_divisor);
 
         GP_ASSERT_TRUE(type(DEBUG_BSGS)=="t_INT");
         if(DEBUG_BSGS,
-            print("BSGS-DEBUG ", precision(log_from_cpct(G, gstep_divisor[3]),10), "  ",precision(giant_sublattice[,j],10));
+
+            print("1:" , gstep_divisor[1], " ", precision(gstep_divisor[2],10));
+            print(gstep_divisor[3]);
+            print("BSGS-DEBUG ", precision(log_from_cpct(G, gstep_divisor[3]),10), "  ",precision(giant_sublattice[,j],10), "  ", precision(log(abs(G.disc)^(1/2)),10) );
             GP_ASSERT_TRUE(sqrt(norml2(log_from_cpct(G, gstep_divisor[3])~-giant_sublattice[,j]))<log(abs(G.disc)^(1/2)) );
+
         );
 
         gstep_divisor[3] = invert_compact(G, gstep_divisor[3]);
@@ -472,7 +477,7 @@ collision_check2(G, ~lattice_lambda, r, eps,\
 incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec,\
                         eps, outFileInfo=[])=
 {
-    my(timeout, OUTFILE_GS
+    my(timeout, OUTFILE_GS,
         localbitprecision = 50;\\prec_compact(field_deg, log(abs(G.disc)), log(normlp(max_element)));
     );
     if(length(outFileInfo) == 2,
@@ -484,6 +489,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
     );
 
     my(
+        LOG_REFRESH_RATE = 500,
         field_deg = poldegree(G.pol),   r = G.r1 + G.r2 -1,
         zero_vec = vector(r, i , 0),    identity = matid(field_deg),
         giant_coeffs = zero_vec,
@@ -550,7 +556,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
             compactTracking[place_marker][2] += 1;
             default(realbitprecision, localbitprecision);
             expected_position += giant_sublattice[,place_marker];
-            trackingLog += log_from_cpct(G, direction_elements[place_marker][3]);
+            trackingLog += log_from_cpct(G, direction_elements[place_marker][3]); \\ MARK_OPTIMIZE
             default(realbitprecision, mainbitprecision);
         ,\\else
             giant_divisor = [idealmul(G, giant_divisor[1], inverse_direction_elements[place_marker][1]),
@@ -559,7 +565,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
             compactTracking[place_marker][2] -= 1;
             default(realbitprecision, localbitprecision);
             expected_position -= giant_sublattice[,place_marker];
-            trackingLog -= log_from_cpct(G, direction_elements[place_marker][3]);
+            trackingLog -= log_from_cpct(G, direction_elements[place_marker][3]); \\ MARK_OPTIMIZE
             default(realbitprecision, mainbitprecision);
         );
 
@@ -574,7 +580,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
 
         default(realbitprecision, localbitprecision);
         if(wasModified,
-            trackingLog += log(abs(nfeltembed(G, compactTracking[length(compactTracking)][1])));
+            trackingLog += embeddings_to_normalized_logvec(G, nfeltembed(G, compactTracking[length(compactTracking)][1]));
         );
 
         default(realbitprecision, mainbitprecision);
@@ -588,7 +594,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
         EXACT_CHECK = 1;
         \\ use babystock hashmap to check for collisions and update as needed
         if(mapisdefined(babystock, giant_divisor[1]),
-            if(DEBUG_BSGS>0 ||1 ,print(ctr,"  baby-giant match. checking for new vector: ", giant_divisor[1]););
+            \\if(DEBUG_BSGS>0 ||1 ,print(ctr,"  baby-giant match. checking for new vector: ", giant_divisor[1]););
             matches = mapget(babystock, giant_divisor[1]);
             \\if (giant_divisor[1] == [1, 0, 0, 0, 6/43; 0, 1, 0, 0, 128/129; 0, 0, 1, 0, 91/129; 0, 0, 0, 1, 89/129; 0, 0, 0, 0, 1/129],
             \\    print("gdbad ", precision(giant_divisor[2],50) );
@@ -610,8 +616,9 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
             );
         );
         \\if(ctr < 50, print(giant_coeffs, "   ", precision(giant_divisor[1],10)));
-        if ((ctr%500 == 0) && ctr > 0,
 
+        \\ refresh the logarithm using compact reps to eliminate precision losses
+        if ((ctr%LOG_REFRESH_RATE == 0) && ctr > 0,
             base_value = compact_rep_full_input(G, trackingLog, giant_divisor[1], eps,1,2);
             trackingLog = log_from_cpct(G, base_value);
         );
@@ -767,7 +774,7 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
 
         if(storage == "LOG",
             default(realbitprecision, localbitprecision);
-            trackingLog += log(abs(nfeltembed(G, compactTracking[length(compactTracking)][1])));
+            trackingLog += embeddings_to_normalized_logvec(G, nfeltembed(G, compactTracking[length(compactTracking)][1]));
             default(realbitprecision, mainbitprecision);
             trackingLog = bitprecision(trackingLog, mainbitprecision);
             if (ctr > 0 && (ctr%200 == 0),
@@ -792,20 +799,20 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
         EXACT_CHECK = 1;
         \\ use babystock hashmap to check for collisions and update as needed
         if(mapisdefined(babystock, giant_divisor[1]),
-            if(1 ,print("baby-giant match. checking for new vector:", giant_divisor[1]););
+            if(0 ,print("baby-giant match. checking for new vector:", giant_divisor[1]););
 
             matches = mapget(babystock, giant_divisor[1]);
             if (storage == "COMPACT",
                 matches_cpct = mapget(cpct_bstock, giant_divisor[1]);
             );
-            if (giant_divisor[1] == [1, 0, 0, 7804915/15049807; 0, 1, 0, 8863997/15049807; 0, 0, 1, 1043039/15049807; 0, 0, 0, 1/15049807],
-                print("gdbad ", precision(giant_divisor[2],50) );
-                print("bstock ", precision(mapget(babystock, giant_divisor[1]),50));
-                for(i=2, length(matches_cpct),
-                    print(precision(log_from_cpct(G,~matches_cpct[i][1])+trackerLogarithm(G, ~matches_cpct[i][2], r),50));
-                );
-                breakpoint();
-            );
+            \\#if (giant_divisor[1] == [1, 0, 0, 7804915/15049807; 0, 1, 0, 8863997/15049807; 0, 0, 1, 1043039/15049807; 0, 0, 0, 1/15049807],
+            \\#    print("gdbad ", precision(giant_divisor[2],50) );
+            \\#    print("bstock ", precision(mapget(babystock, giant_divisor[1]),50));
+            \\#    for(i=2, length(matches_cpct),
+            \\#        print(precision(log_from_cpct(G,~matches_cpct[i][1])+trackerLogarithm(G, ~matches_cpct[i][2], r),50));
+            \\#    );
+            \\#    breakpoint();
+            \\#);
             if (storage == "LOG",
                 if (!EXACT_CHECK,
                     lattice_lambda = collision_check1(G, ~lattice_lambda, r, eps,
@@ -862,7 +869,7 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
 \\ - log_coordinates_Rn is the log vector (length = equal to unit rank)
 \\ - inverse is an optional argument that will compute the inverse instead if set to 1
 get_nearby_rdivisor(G, idealmat, log_coordinates_Rn, inverse=1)={
-    exponentiated_coordinates = exponentiate_logvec(G.r1+G.r2-1, log_coordinates_Rn, inverse);
+    exponentiated_coordinates = exponentiate_logvec(G.r1+G.r2-1, unsquare_log_embeddings(G, log_coordinates_Rn), inverse);
     \\exponentiated_coordinates = create_target(G, log_coordinates_Rn, inverse);
     return( reddiv_compact(idealmat,exponentiated_coordinates, G, G[5][1] ); );
 }
@@ -937,6 +944,7 @@ get_next_giant_divisor(G, giant_divisor)={
 
 
 get_next_giant_divisor_cpct(~G, ~giant_divisor, ~tracker)={
+    \\ MARK_OPTIMIZE if new_divisor was a reference input, would not need to create/destroy it
     my(new_divisor, oneVector = vector(poldegree(G.pol), i, 0)~);
 
     oneVector[1] = 1;
@@ -1034,6 +1042,8 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
             [lattice_lambda, num_elts_found] =
                 incremental_baby_steps_compact(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps, storage, ~cpct_bstock, [FILE1, timeout]);
         ,
+            \\b_scan(G, matid(field_deg),~lattice_lambda, ~giant_sublattice,
+                \\~babystock, scanballRadius, eps, [FILE1, timeout]);
             [lattice_lambda, num_elts_found] =
                 incremental_baby_steps(matid(field_deg),~lattice_lambda, ~giant_sublattice, ~babystock, G, scanballRadius, eps, [FILE1, timeout]);
         );

@@ -21,7 +21,7 @@ testing_setup_pmax_log(pol, input_lattice = [], eps)={
         noinput = true;
     );
     GP_ASSERT_TRUE(unit_rank > 0);
-    input_regulator = unscaled_determinant(K1, input_lattice);
+    input_regulator = get_abs_determinant(input_lattice);
     ratio = input_regulator/K2.reg;
     GP_ASSERT_NEAR( abs(ratio -round(ratio)) ,0,eps);
 
@@ -44,7 +44,7 @@ testing_setup_pmax_log(pol, input_lattice = [], eps)={
     K2= bnfinit(x^3 - x^2 - 3872*x - 91215);
     n = poldegree(K1.pol);
     lglat = get_log_lattice_bnf(K2);
-    reg1 = unscaled_determinant(K1, lglat);
+    reg1 = get_abs_determinant(lglat);
     GP_ASSERT_NEAR(reg1, K2.reg, eps);
 
     sumv = lglat[,1];
@@ -63,7 +63,7 @@ testing_setup_pmax_log(pol, input_lattice = [], eps)={
     cpct_units = cpct_from_loglattice(K1, lglat, eps);
 
     pmax_log_output = log_pohst_pari(K1, lglat,cpct_units, indexbound, eps);
-    output_regulator = unscaled_determinant(K1, pmax_log_output);
+    output_regulator = get_abs_determinant(pmax_log_output);
     GP_ASSERT_NEAR(reg1,output_regulator, eps );
 }
 
@@ -93,7 +93,7 @@ testing_setup_pmax_log(pol, input_lattice = [], eps)={
     indexbound = get_index_bound2(K1, lglat, eps,-1, 1000000);
     cpct_units = cpct_from_loglattice(K1, lglat, eps);
     pmax_log_output = log_pohst_pari(K1, lglat,cpct_units, indexbound, eps);
-    output_regulator = unscaled_determinant(K1, pmax_log_output);
+    output_regulator = get_abs_determinant(pmax_log_output);
     GP_ASSERT_NEAR(bnf_regulator,output_regulator, eps );
 }
 

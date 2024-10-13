@@ -35,7 +35,6 @@ func(~map)={
 }
 
 {
-    print("Test 2 - BSGS on complex cubic ");
 
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
         lglat, eps = 10^(-20)
@@ -43,9 +42,9 @@ func(~map)={
     B = 1;
     K1= nfinit(x^3 - x^2 - 3872*x - 91215);
     K2= bnfinit(x^3 - x^2 - 3872*x - 91215);
-
+    print("Test 2 - BSGS: Sublattice on complex cubic ", precision(K2.reg,10));
     lglat = get_log_lattice_bnf(K2);
-    reg1 = unscaled_determinant(K1, lglat);
+    reg1 = get_abs_determinant(lglat);
     GP_ASSERT_NEAR(reg1, K2.reg, eps);
     scaled_lglat =lglat*2;
     sumv = scaled_lglat[,1];
@@ -62,8 +61,9 @@ func(~map)={
     cpct_units = cpct_from_loglattice(K1, scaled_lglat, eps);
     bsgs_out= bsgs(K1,cpct_units, B, sqrt(abs(matdet(scaled_lglat))), scanRadius, eps,REQ_BSGS);
     bsgs_out_lattice = log_lattice_from_compact_set(K1,bsgs_out);
-    GP_ASSERT_NEAR(reg1, unscaled_determinant(K1, bsgs_out_lattice), eps );
-    print(precision(lglat,10));
+    GP_ASSERT_NEAR(reg1, get_abs_determinant(bsgs_out_lattice), eps );
+    print("returned log lattice: ", precision(lglat,10));
+    breakpoint();
 }
 
 {
@@ -76,9 +76,9 @@ func(~map)={
     K1= nfinit(x^3 - 67*x^2 + 2032*x - 2053);
     K2= bnfinit(x^3 - 67*x^2 + 2032*x - 2053);
     n = poldegree(K1.pol);
-    breakpoint();
+
     lglat = get_log_lattice_bnf(K2);
-    reg1 = unscaled_determinant(K1, lglat);
+    reg1 = get_abs_determinant(lglat);
 
     y = [1, 0, 0; 0, 1, 0; 0, 0, 1];
     L = Mat(-6970.84528270648362176158817493947745897457384631054091381075996);
@@ -110,27 +110,25 @@ func(~map)={
         lglat, eps = 10^(-20)
     );
     B = 1;
-    scanRadius =1;
+    scanRadius =0.5;
     \\ D = 3638703101
     K1= nfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
     K2= bnfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
 
     lglat = get_log_lattice_bnf(K2);
-    reg1 = unscaled_determinant(K1, lglat);
+    reg1 = get_abs_determinant(lglat);
 
     cpct_units = cpct_from_loglattice(K1, lglat, eps);
     totaltime = 0;
     start_time = getabstime();
 
-    bsgs_output= bsgs(K1,cpct_units, B, 25, scanRadius, eps,20,"alltest.txt");
+    bsgs_output= bsgs(K1,cpct_units, B, 18, scanRadius, eps,20,"alltest.txt");
     end_time = getabstime();
     totaltime +=(end_time- start_time);
-    print("BSGS time: " ,totaltime, " Expected ", 4900);
-    print("Note that if COMPACT mode is on, expect worse timing");
-    GP_ASSERT_WITHIN_RATIO(totaltime, 3700, 0.1);
-    \\\log version with exact check is about 4900
-    \\\ inexact check was also about 4900
-    \\\ exact check was about 3700
+    print("BSGS time: " ,totaltime, " Expected ", 2200);
+    GP_ASSERT_WITHIN_RATIO(totaltime, 2200, 0.15);
+    \\\# Modifying the scan radius and babystock size parameters can speed it up greatly
+    \\\# babystock 18 with scan radius 0.5 runs in about 2200 seconds.
     y = [1, 0, 0; 0, 1, 0; 0, 0, 1];
     glegs = [4.619061865536216760, -16.675036477848972758, 14.169130776523246111;
     3.705556112720428534, 14.697056881773186001, -26.315297544331964588;

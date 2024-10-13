@@ -9,6 +9,7 @@ read("src/BSGSHelper.py")
 
 
 {
+
 print("debugging : test case");
 
     my(G1, G2, O_K, n, eps = 10^(-9));
@@ -19,6 +20,7 @@ print("debugging : test case");
     O_K = matid(n);
     alpha_OK =  [1, 0, 0, 0, 6/43; 0, 1, 0, 0, 128/129; 0, 0, 1, 0, 91/129; 0, 0, 0, 1, 89/129; 0, 0, 0, 0, 1/129];
     alpha = [-1.94007873535156250, 2.884353637695312500000000000000000000000000, 0.46249389648437500000000000000, -1.9906616210937500000, 5.443695068359375000000000000];
+    alpha = double_complex_coordinates(G1.r1, alpha);
     alpha1 = [-1.9414062500000000000000000000000, 2.8828125000000000000000000000, 0.46093750000000000000000000000, -1.9921875000000000000000000000000, 5.4453125000000000000000000];
     epsilon = 1/256;
     logarithm_lattice = get_log_lattice_bnf(G2);
@@ -35,11 +37,10 @@ print("debugging : test case");
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ test cases for compact_rep_buchmann and compact_reconstruct
 {
-    print("--Cpct Rep test case 1");
-
     my(G1, G2, O_K, n, eps = 10^(-9));
     G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
+    print("--Cpct Rep test case 1. Signature: ", G1.sign);
     n = poldegree(G1.pol);
     O_K = matid(n);
     logarithm_lattice = get_log_lattice_bnf(G2);
@@ -48,22 +49,23 @@ print("debugging : test case");
 
     for(i=1, length(G2.fu),
         cpct_rep = compact_rep_full_input(G1, logarithm_lattice[,i]~, O_K , eps);
-        GP_ASSERT_EQ(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2]), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
+        GP_ASSERT_EQ(vec_flip_positive(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2])), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
     );
 }
 
 { \\ test cases for compact_rep_full_input and cpct_from_loglattice
-    print("Cpct Rep test case 2");
+
     my(G1, G2, O_K, n, logarithm_lattice, cpct_rep,cpct_list, eps = 10^(-9));
     G1 = nfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
     G2 = bnfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
+    print("--Cpct Rep test case 2 ", G1.sign);
     n = poldegree(G1.pol);
     O_K = matid(n);
     logarithm_lattice = get_log_lattice_bnf(G2);
     extra_log_coords = vector(length(logarithm_lattice), i, extra_log_coordinate(G1.r1, G1.r2, logarithm_lattice[,i]));
     logarithm_lattice = matconcat([logarithm_lattice; extra_log_coords]);
     for(i=1, length(G2.fu),
-        cpct_rep = compact_rep_full_input(G1, logarithm_lattice[,i], O_K , eps, avp=1);
+        cpct_rep = compact_rep_full_input(G1, logarithm_lattice[,i], O_K , eps);
         GP_ASSERT_EQ(vec_flip_positive(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2])), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
     );
 
@@ -160,12 +162,15 @@ print("debugging : test case");
     );
 
     G1 = nfinit(x^4 - 63*x^3 + 1511*x^2 - 18407*x + 96112);
+    print("sign: ", G1.sign);
     n = poldegree(G1.pol); r= G1.r1 +G1.r2-1;
     O_K = matid(n);
     delta_K = ((2/Pi)^G1.r2)*abs(G1.disc)^(1/2);
 
     new_minima = giantstep(O_K, [1000,1000], G1, n ,eps);
-    jump_compact(O_K, [1000,1000,1000], G1, n ,eps);
+    new_minima2 = jump_compact(O_K, [1000,1000,-1000], G1, n ,eps);
+
+    GP_ASSERT_EQ(new_minima[1], new_minima2[1]);
     GP_ASSERT_TRUE(norml2(new_minima[2]) <= delta_K);
 }
 
@@ -207,7 +212,6 @@ print("debugging : test case");
     G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     n = poldegree(G1.pol);
-    breakpoint();
     O_K = matid(n);
     logarithm_lattice = get_log_lattice_bnf(G2);
 
@@ -312,13 +316,13 @@ print("debugging : test case");
     print("--Cpct Rep : Slow Cpct Rep Example");
     \\\ This is blocking the use of collision_check2, which should regenerates the babystock elements from their logs
     K = nfinit(x^3 + 46*x^2 + 1188*x - 50115);
-    print("Log Disc K = ", precision(log(abs(K.disc)),10));
+    print("Sign: ", K.sign, "  Log Disc K = ", precision(log(abs(K.disc)),10));
     rank = K.r1+K.r2 -1;
     O_K = matid(poldegree(K.pol));
     idealI = [1, 7/15, 2/15; 0, 1/15, 1/60; 0, 0, 1/60];
     GP_ASSERT_TRUE(check_ideal_reduced(K,idealI));
     minima_log = [-79.52467739064149897915521144256478187720261777135775275592590392467599353174402354871259680758462182345330502892968935896300664012414927128702402114868164062500000000000000000000,
-    43.1635360769829048649908424128892808508499009321350992754371391316717261637843958634880003464571566631011144291805688502638993497839692281559109687805175781250000000000000000000000];
+    2*43.1635360769829048649908424128892808508499009321350992754371391316717261637843958634880003464571566631011144291805688502638993497839692281559109687805175781250000000000000000000000];
 
     \\[-79.524677390641498979155211442564781877202617771361888392885097233928656039614443794032615095049170274292811009641293407281666210969359472421285352382868781967095862388134724868004120031774674049308643743895568826060785175731729997259316330145181418113243185067256304432519009437631559071908339611471778796247403475890558928414394398638309970902233715196080626667281982446892787229718292245859343796694677791, \\43.163536076982904864990842412889280850849900932132466624210570851569394922703183344125920507427915524276343317928890818016610635175693062788361765431300450083634001171576298482025233609557931183086457947573545702284167025946981892264411325126112832946299167029849414931998545555260813883711610523331293077620243529968879997290054287906033130704074628262268977931198000813282364858607381478137316194276427522]
 
