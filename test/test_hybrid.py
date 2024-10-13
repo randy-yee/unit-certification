@@ -21,10 +21,13 @@ read("src/PmaxLog.py");
     tafter = getabstime();
     GP_ASSERT_NEAR(tafter-tbefore, 11786, 11786*0.15);
 
-    scaling_variable = 46; \\ this is the size of the babystock
+    scaling_variable = 20; \\ this is the size of the babystock
     scanBallRadius = 0.3314981968;
     REQ_BSGS = 4095;
     timeout = 43200000;
     OUTFILE1 = "data/test-hybrid-log.txt";
+    tbefore = getabstime();
     bsgs_output= bsgs(K,stage1_units, balanceB, scaling_variable, bitprecision(scanBallRadius, REQ_BSGS), eps,REQ_BSGS, OUTFILE1, [timeout]);
+    tafter = getabstime();
+    print("BSGS time: ", tafter-tbefore );
 }
