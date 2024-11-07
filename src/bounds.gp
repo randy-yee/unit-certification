@@ -89,8 +89,8 @@ prec_reduce(G)=
   print(ceil(oldprec), "  ", ceil(prec));
   return(ceil(prec));
 }
-prec_baby(n,logdisc, infsumt)={
-  expression = (4*(n^2)*logdisc +2*n^4+(-n^3+24*n^2+6)*log(n) +7 +(n^2+4)*log(infsumt + (sqrt(n)/4)*logdisc) );
+prec_baby(n,log_disc, infsumt)={
+  expression = (4*(n^2)*log_disc +2*n^4+(-n^3+24*n^2+6)*log(n) +7 +(n^2+4)*log(infsumt + (sqrt(n)/4)*log_disc) );
 }
 prec_giant(n, logdisc, logdetlamp, infsumu)={
   expression = (4*n^2 +1)*logdisc +2*n^4 -(n^3-24*n^2)*log(n);

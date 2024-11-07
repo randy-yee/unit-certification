@@ -51,8 +51,11 @@ invert_coordinates(~y)=vector({length(y)},{i},{1/y[i]})~;
 /* Outputs a matrix with the same dimensions as mat. The rows of the new matrix are v[i]*row[i] */
 mulvec(~mat,~vec) = matrix({matsize(mat)[1],matsize(mat)[2]},{i},{j},{mat[i,j]*vec[i]});
 
-/*2b. multiply 2 vectors in the ring R^n (pointwise) */
-\\ Note that again, columns make more sense than row vectors, but both work
+/*2b. multiply 2 vectors/columns in the ring R^n (pointwise)
+\\ OUTPUT:
+\\ - coordinate-wise product of the two inputs, as a column
+*/
+\\ Note that it's a bit confusing if vectors are input but a column returned.
 pointwise_vector_mul(~u1, ~u2) = vector(length(u1),{i},{u1[i]*u2[i]})~;
 
 /*3. multiply a matrix y with the inverse of a vector v.
@@ -91,16 +94,15 @@ vector_approximate(~v,eps)= {
 }
 
 /******************************************************************************/
-/*12. test that v has sum of the coordinate = 0 --> precision for comparision to 0 - similar to the comparision to 1 in the function check0 */
+/*12. sum coordinates, and see if close enough to 0 */
 /******************************************************************************/
 is_trace_zero(v,eps)={
-    if(sumvec(v)<eps^2,
-        1,
-    0);       \\ else
+    if(sumvec(v)<eps^2, return(1), return(0));
 }:bool
 
 /******************************************************************************/
-/*9. check that the coordinates of vector v in R^n are all abs. val. less than 1 or not (PRECISION for comparisons all coordinates of v with 1)*/
+/*9. check that the coordinates of vector v in R^n are all abs. val. less than
+1 or not (PRECISION for comparisons all coordinates of v with 1)*/
 check0(~v,eps) = {
     for (ctr = 1, length(v),
         if ( 1-abs(v[ctr]) < eps,
@@ -117,7 +119,6 @@ check0(~v,eps) = {
 \\ - 0 if the entries of v1 and v2 are not each within eps of each other, 1 otherwise.
 samevecs(~v1,~v2, ~eps)={
   if(length(v1) != length(v2), return(0));
-
   for (i = 1, length(v1),
     if( abs(v1[i] - v2[i]) > eps, return(0));
   );
@@ -161,6 +162,14 @@ vec_less_than(~v1,~v2, axis = 0)={
 	return(1);
 }
 
+\\ BRIEF:
+\\ - Assuming the input is a log vector for some number field element
+\\ - doubles the entries corresponding to the complex embeddings.
+\\ INPUT:
+\\ - r1 is the number of real coordinates
+\\ - v is the vector
+\\ OUTPUT:
+\\ - double the coordinates of v that do not correspond to complex embeddings
 double_complex_coordinates(~r1, ~v)=
 {
     for(i=r1+1, length(v),
@@ -169,42 +178,39 @@ double_complex_coordinates(~r1, ~v)=
     return(v);
 }
 
-\\ Computes the infinity norm of a vector v
+\\ wrapper function for normlp(v), because I forgot that function existed..
 \\ INPUT:
 \\ - A real vector v
 \\ OUTPUT:
 \\ - Real number corresponding to the infinity norm of v
 infinity_norm(~v)={
-  my(len=length(v), abv, val = 0);
-  for (i=1, len,
-    abv = abs(v[i]);
-    if (abv > val, val = abv);
-  );
-  return(val);
+  \\my(len=length(v), abv, val = 0);for (i=1, len,abv = abs(v[i]);if (abv > val, val = abv););
+  return(normlp(v));
 }
 
 \\ BRIEF:
 \\ - Simulates addition by 1, where current_vec is a vector of digits
-\\   and a_vec is the roll-over value.
-\\   ex) a_vec = [4,5,6], Then increment_coordinates(a_vec, [2,3,5]) = [2,4,0]
-\\   ex) increment_coordinates(a_vec, [3,4,5]) = [0,0,0]
+\\   and a_vec are the maximums at each position.
+\\   ex1) Let a_vec = [4,5,6]. Then increment_coordinates([2,3,4]) = [2,3,5]
+\\   ex2) increment_coordinates(a_vec, [2,3,5]) = [2,4,0]
+\\   ex3) increment_coordinates(a_vec, [3,4,5]) = [0,0,0]
 \\ INPUT:
-\\ - A vector of integers A
-\\ - A vector of integers V such that  for all i, V[i] < A[i]
+\\ - a_vec: A vector of integers denoted by A
+\\ - current_vec: A vector of integers V such that  for all i, V[i] < A[i]
 \\ OUTPUT:
 \\ - MODIFY IN PLACE: V -> V' incremented in the way described above
+\\ - Note that when called, the argument current_vec MUST be provided with a '~' character in front
 increment_coordinates(a_vec, ~current_vec)={
-    \\# Note that it is assumed that a_vec[i] > current_vec[i] for all i
-    \\# but this is not checked!
+    \\# It is assumed that a_vec[i] > current_vec[i] for all i, but not checked!
     my(place = length(current_vec), carryflag = 0;);
     current_vec[place]+=1;
     if(current_vec[place] >= a_vec[place], carryflag =1);
     while(carryflag == 1,
         current_vec[place] = 0; carryflag = 0; \\# implies rollover; set value to 0
-        if(place == 1, return);                \\# if this was the leftmost place value, return
-        place -= 1;                            \\# move one place-value left
-        current_vec[place]+=1;                 \\# apply the carryover +1
-        if(current_vec[place] >= a_vec[place], carryflag =1); \\#determine if this value rolls over and repeat
+        if(place == 1, return);                \\# if at leftmost place value, return
+        place -= 1;                            \\# move place-value left
+        current_vec[place]+=1;                 \\# apply carryover +1
+        if(current_vec[place] >= a_vec[place], carryflag =1); \\#determine if this value rolls over
     );
     return;
 }
@@ -316,10 +322,11 @@ compute_subgroup(G, unimat, modpair, extype=0)={
 \\ - scale_vector is a length r+s+1 vector.
 \\ OUTPUT - the ideal lattice corresponding to ideal_I; with ith row scaled
 \\          by the ith entry of scale_vector
-get_scaled_ideal_lattice(K, ideal_I, scale_vector)=
+get_scaled_ideal_lattice(K, ~ideal_I, scale_vector=0)=
 {
     my(result);
     result = K[5][1]*ideal_I;
+    if(scale_vector == 0, return(embed_real(K, result)););
     result = mulvec(result, scale_vector);
     return(embed_real(K, result));
 
@@ -339,9 +346,8 @@ check_ideal_reduced(~G, ~ideal)=
     if(abs(1/idealnorm(G, ideal))>sqrt(abs(G.disc)), return(0));
     my(rank = length(ideal),
         k_vector, zero_vec, iteration_vector);
-    ideal_lattice = G[5][1]*ideal;
-    ideal_lattice = embed_real(G, ideal_lattice);
-
+    
+    ideal_lattice = get_scaled_ideal_lattice(G, ~ideal);
     lll_basis_change_matrix = qflll(ideal_lattice);
     lll_lat = ideal_lattice*lll_basis_change_matrix;    \\#real lattice
     lll_ideal = ideal*lll_basis_change_matrix;          \\#ideal representation
