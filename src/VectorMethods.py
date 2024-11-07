@@ -363,7 +363,7 @@ check_ideal_reduced(~G, ~ideal)=
     check_elements = qfminim(real_basis_lll~*real_basis_lll,poldegree(G.pol)+0.065,,2);
     \\#if no elements, then the normed body only contains the 0 vector
     if(check_elements[1] == 0, return(1));
-    one_vec = vector(G.r1+G.r2, i , 1);
+    one_vec = vector(G.r1+G.r2, i, 1);
     for(i=1, length(check_elements[3]),
         \\#check if any elements are in the normed body of 1
         \\(DEBUGSCALING - verify abs vs norm)
@@ -374,17 +374,4 @@ check_ideal_reduced(~G, ~ideal)=
     );
     return(1);
 
-}
-
-get_scaled_M(K)=
-{
-    my(
-        scaled_M = K[5][1],
-        num_embeddings = K.r1 + K.r2,
-        fld_degree = length(K.zk)
-    );
-    for(i = K.r1+1, num_embeddings,
-        scaled_M[i,] = 2*scaled_M[i,];
-    );
-    return scaled_M;
 }
