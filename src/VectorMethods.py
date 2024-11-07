@@ -321,7 +321,7 @@ compute_subgroup(G, unimat, modpair, extype=0)={
 \\ - ideal_I is a coefficient matrix for an ideal of K
 \\ - scale_vector is a length r+s+1 vector.
 \\ OUTPUT - the ideal lattice corresponding to ideal_I; with ith row scaled
-\\          by the ith entry of scale_vector
+\\          by the ith entry of scale_vector, converted to a real matrix
 get_scaled_ideal_lattice(K, ~ideal_I, scale_vector=0)=
 {
     my(result);
@@ -329,7 +329,6 @@ get_scaled_ideal_lattice(K, ~ideal_I, scale_vector=0)=
     if(scale_vector == 0, return(embed_real(K, result)););
     result = mulvec(result, scale_vector);
     return(embed_real(K, result));
-
 }
 
 
@@ -346,23 +345,29 @@ check_ideal_reduced(~G, ~ideal)=
     if(abs(1/idealnorm(G, ideal))>sqrt(abs(G.disc)), return(0));
     my(rank = length(ideal),
         k_vector, zero_vec, iteration_vector);
-    
-    ideal_lattice = get_scaled_ideal_lattice(G, ~ideal);
-    lll_basis_change_matrix = qflll(ideal_lattice);
-    lll_lat = ideal_lattice*lll_basis_change_matrix;    \\#real lattice
-    lll_ideal = ideal*lll_basis_change_matrix;          \\#ideal representation
-    if(norml2(lll_lat[,1]) < 1, return(0));
-    ortho_basis = gram_schmidt(lll_lat);                \\#orthogonalized
-    k_vector = get_enumeration_bounds(rank, lll_lat);  \\# compute the k vector
 
-    check_elements = qfminim(lll_lat~*lll_lat,poldegree(G.pol)+0.1,,2);
+    complex_basis = G[5][1]*ideal;
+    real_basis = embed_real(G, complex_basis);
+
+    basis_change = qflll(real_basis);
+    real_basis_lll = real_basis*basis_change;    \\#real lattice (LLL)
+
+    \\# first element is in normed body of 1, so not reduced
+    if(norml2(real_basis_lll[,1]) < 1, return(0));
+
+    #complex lattice (LLL)
+    complex_lattice_lll = complex_basis*basis_change;
+
+    \\# scan radius with a small error factor, capture potential elements
+    \\# in the the normed body of 1
+    check_elements = qfminim(real_basis_lll~*real_basis_lll,poldegree(G.pol)+0.065,,2);
     \\#if no elements, then the normed body only contains the 0 vector
     if(check_elements[1] == 0, return(1));
     one_vec = vector(G.r1+G.r2, i , 1);
     for(i=1, length(check_elements[3]),
-        \\#if there were elements in the scan region, check if they are in the normed body of 1
-        \\(DEBUGSCALING- abs vs norm)
-        test_vector_real = abs(G[5][1]*lll_ideal*check_elements[3][,i]);
+        \\#check if any elements are in the normed body of 1
+        \\(DEBUGSCALING - verify abs vs norm)
+        test_vector_real = abs(complex_lattice_lll*check_elements[3][,i]);
         if(vec_less_than(test_vector_real, one_vec),
             return(0)
         );
@@ -383,41 +388,3 @@ get_scaled_M(K)=
     );
     return scaled_M;
 }
-/*
-\\ BRIEF:
-\\ - DEPRECATED
-\\ INPUT:
-\\ - G a number field
-\\ - ideal is a coefficient matrix of an ideal wrt integral basis of G
-\\ OUTPUT:
-\\ - boolean indicating whether the ideal is reduced or not
-check_ideal_reduced_old(G, ideal)=
-{
-    \\ if num elts is 0, reduced, else check each of them if they are in the normed body of 1
-    k_vector = vector(rank, i, k_vector[i]+1);
-    print(k_vector);
-    zero_vec = vector(rank, i , 0);
-    iteration_vector = zero_vec;
-    increment_coordinates(k_vector, ~iteration_vector);
-    one_vec = vector(G.r1+G.r2, i , 1);
-    temp_bit_precision = max(10, ceil(log(denominator(ideal))+4+(rank^2*log(4*denominator(ideal)^2))+2));
-    mainbitprecision = default(realbitprecision);
-    default(realbitprecision, temp_bit_precision);  \\#save and change precision
-
-    complex_ideal_lattice = G[5][1]*lll_ideal;
-    while(iteration_vector != zero_vec,
-        \\test_vector = column_lin_comb(~lll_ideal, ~iteration_vector);
-        test_vector_real = abs(complex_ideal_lattice*iteration_vector~);
-        \\print(precision(abs(nfeltembed(G, test_vector)),10), "  \n", precision(test_vector_real,10), "\n");
-        if(vec_less_than(test_vector_real, one_vec),
-            default(realbitprecision, mainbitprecision);    \\#restore precision
-            return(0)
-        );
-        increment_coordinates(k_vector, ~iteration_vector);
-    );
-    default(realbitprecision, mainbitprecision);    \\#restore precision
-    return(1);  \\# no minima found inside of the normed body of 1
-}
-
-
-*/
