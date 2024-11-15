@@ -112,6 +112,7 @@ scanball_map(~G, ~bmap, y, u, psimu, web, eps, ~repeated_minima)={
     x = G[5][1]*y;                                                              \\ numerical representation of y (complex)
     x = mulvec(x,u);                                                            \\ compute y*u
     x = embed_real(G,x);
+
     LLL_reduced_yu = x*qflll(x);                                                \\ lll reduce y*u
     vecholder = LLL_reduced_yu[,1];                                             \\ short vector, 1st element of LLL basis
     scan_bound = sqrt(n)*exp(2*web)*sqrt(norml2(vecholder));                    \\ See schoof alg 10.7, e^(2*var_eps)*sqrt(n)*sqrt(norml2(col))
@@ -147,7 +148,7 @@ scanball_map(~G, ~bmap, y, u, psimu, web, eps, ~repeated_minima)={
                 if(checkred_old(new_y,G,eps)==1,
                     vec_numerical = (G[5][1]*scan_elements[,ii])~;
                     \\psi_value = log(abs(vec_numerical[1..G.r1+G.r2-1]))+psimu;
-                    psi_value = embeddings_to_normalized_logvec(~G,vec_numerical[1..G.r1+G.r2-1] )+psimu;
+                    psi_value = embeddings_to_normalized_logvec(~G,vec_numerical[1..G.r1+G.r2] )+psimu;
                     if(mapisdefined(bmap, new_y, &existing_entry),
                         repeatflag = is_repeat_babystock(existing_entry, psi_value, eps);
                         if(repeatflag==0,
@@ -198,7 +199,6 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~rep
     gram_mat=LLL_reduced_yu~*LLL_reduced_yu;                                    \\ get the gram matrix
 
     alt_scan_bound = sqrt(n)*exp(ball_distance);
-    print("scan bounds: ", precision(scan_bound^2,10), "  ", precision(alt_scan_bound^2,10));
     scan_elements = qfminim(gram_mat,scan_bound^2,,2)[3];
 
     scan_elements = y*lll_basis_change_matrix*scan_elements;                    \\ get scanned elements wrt integral basis
@@ -234,8 +234,6 @@ overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_distance, eps, ~rep
                     print(G.pol, "  ", new_y, "  ", eps);
 
                 );
-                \\print("comparing reduced ideal checks. delete when resolved");
-                \\if(checkred_old(new_y,G,eps)==1,
             */
                 checkstart = getabstime();
                 if(check_ideal_reduced(G, new_y),
@@ -362,7 +360,7 @@ compact_storage_overlap_scanball(~G, ~bmap, ~y, ~u, ~log_distance_list, ball_dis
 \\ is provided. In this way, when the ideal y is repeated, we can reduce overall
 \\ number of scans
 \\ bmap is passed by reference, and any new minima are added to it
-scan_ball_new(~G, ~bmap, ~y, ~u, ~log_distance, ball_distance, eps)={
+scan_ball_new(~G, ~bmap, ~y, ~u, ~log_distance, ball_distance, delta_K, expected_position, eps)={
     SCAN_STATS = 0;
     GP_ASSERT_TRUE(type(y)=="t_MAT");
     if(SCAN_STATS, print("ball dist, eps", precision(ball_distance,10),"  " precision(u,10)););
@@ -384,7 +382,6 @@ scan_ball_new(~G, ~bmap, ~y, ~u, ~log_distance, ball_distance, eps)={
 
     vecholder = LLL_reduced_yu[,1];
 
-    scan_bound = sqrt(n)*exp(2*ball_distance)*sqrt(norml2(vecholder));          \\ See schoof alg 10.7, e^(2*var_eps)*sqrt(n)*sqrt(norml2(col))
     \\print("scan bounds: ", precision(scan_bound,10), "  ", precision(sqrt(n)*exp(ball_distance),10));
     alt_scan_bound = sqrt(n)*exp(2*ball_distance);
 
@@ -1103,7 +1100,108 @@ b_scan(G, y, ~lattice_lambda, ~giant_legs,\
     return([lattice_lambda, []]);
 }
 
+b_scan_jump(G, y, ~lattice_lambda, ~giant_legs,\
+                        ~baby_hashmap, scan_radius, eps, outFileInfo=[])={
 
+    my(timeout, OUTFILE_BS);
+    if(length(outFileInfo) == 2,
+        timeout = outFileInfo[2];
+        OUTFILE_BS = outFileInfo[1];
+    ,
+        timeout = 0;
+        OUTFILE_BS = 0;
+    );
+
+    my(
+        field_deg = poldegree(G.pol),   r = G.r1+G.r2-1,
+        zero_vec = vector(r, i, 0),     identity = matid(field_deg),
+        web_coords = zero_vec,          place_marker = r,
+        directions = vector(r, i, 1),
+        denoms,
+        scan_shrink_factor,
+        babystock_t,
+        expected_position = vector(r+1, i, 0)~,
+        delta_K = ((2/Pi)^(G.r2))*abs(G.disc)^(1/2),
+        start_time
+    );
+
+    GP_ASSERT_TRUE(eps > 0); GP_ASSERT_EQ(r, length(giant_legs));
+    REQ_BS = babystockPrecision(G, giant_legs);
+    print("b_scan prec: ", default(realbitprecision), "  ", REQ_BS);
+    default(realbitprecision, REQ_BS);
+
+    start_time = getabstime();
+
+    [babystock_t, denoms] = initialize_babystock_edges(~giant_legs, scan_radius, r);
+    increment_coordinates(denoms, web_coords);
+
+    my(
+        direction_elements,
+        inverse_direction_elements,
+        scanIdeals = Map(),
+        distanceList = List(),
+        scanIdealsMatrix,
+        repeat_counter = 0,
+        repeated_minima = 0,
+        logdist,
+        compactTracking = List(),
+        trackingLog = vector(r+1, i, 0),
+        idealCompactGenerator = Map(),
+        base_value = [[1], [1]],
+        s_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));
+    );
+
+    \\ #vectors of length r which are used to compute an adjacent element in
+    \\ #a particular direction in log space
+    \\ #direction_elements[i] and inverse_direction_elements[i] are multiplicative inverses
+
+    my(baby_t1, baby_tn, baby_tmid, ctr);
+    baby_t1 = getabstime();
+    baby_tmid = baby_t1;
+
+    while(web_coords != zero_vec,
+        old_expected_position = expected_position;
+
+        if(directions[place_marker] == 1,
+            expected_position += babystock_t[,place_marker];
+        ,\\else
+            expected_position -= babystock_t[,place_marker];
+        );
+
+        test_giant = jump_compact(identity,expected_position,G,field_deg,eps);
+        test_giant_log = log_from_cpct(G, test_giant[3]);
+
+        \\# verify that nu is exp(m_x - x). i.e exponentiated distance from point x
+        ball_minima = scan_ball_new(~G, ~baby_hashmap, ~test_giant[1], ~test_giant[2], ~test_giant_log, scan_radius, delta_K, expected_position, eps);
+
+        place_marker = increment_with_place_marker(~denoms, ~web_coords);
+        updateDirections(~directions, ~place_marker);
+
+        \\#the counter and if clause below are mainly for debugging purposes
+        ctr++;
+        if((ctr % 2000) == 0,
+            print(ctr, "  ", web_coords);
+            baby_tn = getabstime();
+            baby_tmid = baby_tn;
+            if((timeout > 0)&&(baby_tn - start_time > timeout),
+                write(OUTFILE_BS, "babystock computation ", (baby_tn - start_time)/60000.0, " mins. Exceeds timeout.");return([lattice_lambda, []]);
+            );
+        );
+    );
+
+    \\# End of function: print out some details and return basis matrix
+    print("scan time: ", getabstime() - baby_t1, " Babysteps stored ", length(baby_hashmap));
+
+    [lattice_lambda, newctr] = check_units_bstock(~baby_hashmap,~lattice_lambda,~G,eps);
+    if(newctr != 0,
+        print("Found unit in babystock. New reg = ", precision(abs(matdet(lattice_lambda)),10) );
+        print("Babysteps stored ", length(Mat(baby_hashmap)~), "  Number of times ideals were repeats: ", repeat_counter);
+        return([lattice_lambda, [1] ]);
+    );
+    return([lattice_lambda, []]);
+}
+
+\\# old version, as of Nov 2024
 \\ this is Schoofs scan algorithm, modified so that if we find a new element of Lambda, we add it to Lambda' and recompute it
 \\ Given an axis aligned box (b1, b2), where b1 = coords of the smallest corner, and b2 is the largest corner
 \\ we divide the sides into m_i pieces so that the volume of each cell is 'small' .
