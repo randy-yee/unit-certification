@@ -5,7 +5,7 @@ read("ExperimentFunctions.py");
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ Starting precision:
 \p500
-default(parisizemax, 15G);
+default(parisizemax, 25G);
 \\ Global variables
 eps = 10^(-80);      \\ error tolerance
 sqrt2 = sqrt(2);
@@ -21,21 +21,20 @@ DEBUG_REDDIV = 0;
 OUTFILE1 = "data/lpohst-3-0.txt";
 
 
-
-\\read("input/test-poly-1-1.gp");  ;
-\\read("input/test-poly-3-0.gp");  ;
-
 \\INPUT_FILE = "input/extra-polynomials-3-0";
 \\OUTPUT_FILE = "data/pmax-extra-";
-INPUT_FILE = "input/test-poly-3-0.gp";
-OUTPUT_FILE = "data/pmax-large-";
+\\INPUT_FILE = "input/test-poly-3-0.gp";
+
+INPUT_FILE = "input/experiment-polynomials-3-0";
+
+OUTPUT_FILE = "data/pmax-Bsize-";
 \\ if the input file and output file strings are removed, then default files
 \\ will be used
 {
     sigstring = "3-0";
     OUTPUT_FILE = concat(OUTPUT_FILE, sigstring);
-    start = 19;
-    end   = 19;
+    start = 17;
+    end   = 17;
     step  = 1;
     loop_ranges = [start, end, step];
     pmax_log_experiment(sigstring, loop_ranges, [INPUT_FILE, OUTPUT_FILE]);
@@ -50,7 +49,7 @@ for(i=1,1,
     lglat = process_complex_loglattice(K ,data[i][3]);
     cpct_units = cpct_from_loglattice(K, lglat, eps);
     reg1 = unscaled_determinant(K, lglat);
-
+    
 
     sumv = lglat[,1];
     for(j=2, length(lglat), sumv+=lglat[,j]);

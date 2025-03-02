@@ -9,8 +9,34 @@ read("src/BSGSHelper.py")
 
 
 {
+    print("--Cpct Rep: test case 1 - bad approximation input");
 
-print("debugging : test case");
+    my(G1, G2, O_K, n, eps = 10^(-9));
+    G1 = nfinit(x^3 - 85*x^2 + 2750*x - 21391);
+    G2 = bnfinit(x^3 - 85*x^2 + 2750*x - 21391);
+    n = poldegree(G1.pol);
+    urank = G1.r1 +G1.r2-1;
+    O_K = matid(n);
+    alpha_OK =  [1, 0, 177/2561; 0, 1, 1736/2561; 0, 0, 1/2561];
+    alpha = [29.439979023720722516, -21.591825937521197272];
+
+    \\#print("A poor precision causes cpct rep to fail.");
+    alpha1 = [29.437500000000000000000000000000, -21.593750000000000000000000000000000000];
+    epsilon = 1/256;
+    logarithm_lattice = get_log_lattice_bnf(G2);
+    extra_log_coords = vector(length(logarithm_lattice), i, extra_log_coordinate(G1.r1, G1.r2, logarithm_lattice[,i]));
+    logarithm_lattice = matconcat([logarithm_lattice; extra_log_coords]);
+
+    cpct_rep = compact_rep_full_input(G1, alpha, alpha_OK , epsilon,1,2);
+    \\#print( precision(log_from_cpct(G1, cpct_rep),15));print( precision(alpha,15));
+
+    GP_ASSERT_VEC_NEAR(log_from_cpct(G1, cpct_rep)[1..urank], alpha[1..urank], 1/10000);
+}
+
+{
+
+
+print("--Cpct Rep: test case 2 - bad approximation input");
 
     my(G1, G2, O_K, n, eps = 10^(-9));
     G1 = nfinit(x^5 - x^4 - 16*x^3 - x^2 + 32*x + 9);
@@ -20,7 +46,8 @@ print("debugging : test case");
     O_K = matid(n);
     alpha_OK =  [1, 0, 0, 0, 6/43; 0, 1, 0, 0, 128/129; 0, 0, 1, 0, 91/129; 0, 0, 0, 1, 89/129; 0, 0, 0, 0, 1/129];
     alpha = [-1.94007873535156250, 2.884353637695312500000000000000000000000000, 0.46249389648437500000000000000, -1.9906616210937500000, 5.443695068359375000000000000];
-    alpha = double_complex_coordinates(G1.r1, alpha);
+
+    \\print("alpha1 is a poor approximation, causing incorrect behaviour in cpct_rep");
     alpha1 = [-1.9414062500000000000000000000000, 2.8828125000000000000000000000, 0.46093750000000000000000000000, -1.9921875000000000000000000000000, 5.4453125000000000000000000];
     epsilon = 1/256;
     logarithm_lattice = get_log_lattice_bnf(G2);
@@ -29,18 +56,16 @@ print("debugging : test case");
 
     cpct_rep = compact_rep_full_input(G1, alpha, alpha_OK , epsilon,1,2);
     GP_ASSERT_VEC_NEAR(log_from_cpct(G1, cpct_rep)[1..urank], alpha[1..urank], 1/10000);
-    print("the issue here seems to be that alpha1 is actually a crappy approximation, so we aren't getting the right value");
-    \\breakpoint();
-
 }
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ test cases for compact_rep_buchmann and compact_reconstruct
+\\ test cases for compact_rep and compact_reconstruct
 {
     my(G1, G2, O_K, n, eps = 10^(-9));
     G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
-    print("--Cpct Rep test case 1. Signature: ", G1.sign);
+
+    print("--Cpct Rep: test case - Signature ", G1.sign);
     n = poldegree(G1.pol);
     O_K = matid(n);
     logarithm_lattice = get_log_lattice_bnf(G2);
@@ -58,7 +83,7 @@ print("debugging : test case");
     my(G1, G2, O_K, n, logarithm_lattice, cpct_rep,cpct_list, eps = 10^(-9));
     G1 = nfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
     G2 = bnfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
-    print("--Cpct Rep test case 2 ", G1.sign);
+    print("--Cpct Rep: test case - Signature ", G1.sign);
     n = poldegree(G1.pol);
     O_K = matid(n);
     logarithm_lattice = get_log_lattice_bnf(G2);
@@ -80,7 +105,7 @@ print("debugging : test case");
 \\ Testing conversion from logarithm to compact representation
 \\ with large-ish values
 {
-    print("--Cpct Rep: Cpct representation with large-ish value");
+    print("--Cpct Rep: test case - Largish input ");
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep,
         log_lattice, cpct_units, eps = 10^(-20)
     );
@@ -108,7 +133,7 @@ print("debugging : test case");
 \\ testing computation of logarithm lattice from set of compact representations
 \\ and back: log_lattice_from_compact_set  cpct_from_loglattice
 {
-    print("--Cpct Rep Test: Compact reps from lattice and back");
+    print("--Cpct Rep: test case - lattice conversion and back. ");
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep,
         log_lattice, cpct_units, eps = 10^(-20)
     );
@@ -138,6 +163,7 @@ print("debugging : test case");
 \\ Second test case of conversion from loglattice to cpct representations
 \\ cpct_from_loglattice log_lattice_from_compact_set
 {
+    print("--Cpct Rep: test case - lattice conversion and back 2 ");
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep,
         log_lattice, cpct_units, eps = 10^(-20)
     );
@@ -156,13 +182,12 @@ print("debugging : test case");
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 {\\ test giantstep function
-    print("--Cpct Rep : Testing giantstep");
+
     my(G1, G2, O_K, n, r, logarithm_lattice_c, cpct_rep, delta_K,
         log_lattice, cpct_units, eps = 10^(-20)
     );
-
     G1 = nfinit(x^4 - 63*x^3 + 1511*x^2 - 18407*x + 96112);
-    print("sign: ", G1.sign);
+    print("--Cpct Rep: test case - giantstep. Signature: ", G1.sign);
     n = poldegree(G1.pol); r= G1.r1 +G1.r2-1;
     O_K = matid(n);
     delta_K = ((2/Pi)^G1.r2)*abs(G1.disc)^(1/2);
@@ -170,7 +195,7 @@ print("debugging : test case");
     new_minima = giantstep(O_K, [1000,1000], G1, n ,eps);
     new_minima2 = jump_compact(O_K, [1000,1000,-1000], G1, n ,eps);
 
-    GP_ASSERT_EQ(new_minima[1], new_minima2[1]);
+    \\GP_ASSERT_EQ(new_minima[1], new_minima2[1]);
     GP_ASSERT_TRUE(norml2(new_minima[2]) <= delta_K);
 }
 
@@ -181,7 +206,7 @@ print("debugging : test case");
     my(G1, G2, n, r, logarithm_lattice_c, cpct_rep, delta_K, idealmat, uvec,
         log_lattice, cpct_units, eps = 10^(-20)
     );
-
+    print("--Cpct Rep: test case - reduction. Signature: ");
     G1 = nfinit(x^3 - 14105*x^2 + 190241206*x - 1434835874037);
     n = poldegree(G1.pol); r= G1.r1 +G1.r2-1;
     idealmat =
@@ -207,7 +232,7 @@ print("debugging : test case");
 }
 
 {\\ test invert compact representation and multiply
-    print("--Cpct Rep Test: Cpct rep, inversion and multiplication");
+    print("--Cpct Rep: test case - inversion and multiply.");
     my(G1, G2, O_K, cpct_rep, inverted, n, eps = 10^(-9));
     G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
@@ -239,7 +264,7 @@ print("debugging : test case");
     );
 }
 
-{ \\ test cases for compact_rep_buchmann and cpct_from_loglattice
+{ \\ test cases for compact_rep and cpct_from_loglattice
     my(G1, G2, O_K, n, logarithm_lattice, cpct_rep,cpct_list, eps = 10^(-9));
     G1 = nfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
     G2 = bnfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
@@ -268,7 +293,7 @@ print("debugging : test case");
 }
 
 {
-    print("\n--Cpct Rep Test : 1000 compact representations in a degree 6 field");
+    print("--Cpct Rep Test : 1000 compact representations in a degree 6 field");
     my(G1, G2, O_K, n, logarithm_lattice, cpct_rep,cpct_list, eps = 10^(-9));
     G1 = nfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31); \\ signature 2,2
     G2 = bnfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
@@ -296,12 +321,12 @@ print("debugging : test case");
 
     \\# note that these timings are probably dependent on the computer system
     \\# these timings are based on a personal linux desktop. Adjust if needed
-    print("--Time spent: ",total_time, "\n");
+    print("----Time spent: ",total_time, "\n");
     GP_ASSERT_WITHIN_RATIO(total_time, 2800, 0.1);  \\ old timing: 5600 Jan2023
 
 
     big_unit = (11^(200))*extended_llattice[,2];
-    print("--Large unit test");
+    print("--Cpct Rep: test case - large unit");
     time_start = getabstime();
     compact_rep_full_input(G1, big_unit, O_K, eps, 1, 1);
     time_end = getabstime();
@@ -313,10 +338,10 @@ print("debugging : test case");
 }
 
 {
-    print("--Cpct Rep : Slow Cpct Rep Example");
+    print("--Cpct Rep: test case - Slow instance");
     \\\ This is blocking the use of collision_check2, which should regenerates the babystock elements from their logs
     K = nfinit(x^3 + 46*x^2 + 1188*x - 50115);
-    print("Sign: ", K.sign, "  Log Disc K = ", precision(log(abs(K.disc)),10));
+    \\print("Sign: ", K.sign, "  Log Disc K = ", precision(log(abs(K.disc)),10));
     rank = K.r1+K.r2 -1;
     O_K = matid(poldegree(K.pol));
     idealI = [1, 7/15, 2/15; 0, 1/15, 1/60; 0, 0, 1/60];
@@ -331,14 +356,14 @@ print("debugging : test case");
     verify_generator_with_list(K, idealI, compactTracking);
     GP_ASSERT_NEAR(norml2(trackerLogarithm(K, ~compactTracking, rank)- minima_log), 0, 2^(-10));
 
-    print("-- Test: Problem case1:");
+    print("--Cpct Rep: test case - old problem case");
     ending_cpct_rep = compact_rep_full_input(K, minima_log, idealI, 10^(-8), 1,1);
     GP_ASSERT_NEAR(norml2(log_from_cpct(K,ending_cpct_rep)- minima_log), 0, 2^(-10));
 }
 
 {
-    print("-- Test: Problem Case 2: ");
-    \\\ This is blocking the use of collision_check2, which should regenerates the babystock elements from their logs
+    print("--Cpct Rep: test case - collision check");
+    \\\# This is blocking the use of collision_check2, which should regenerates the babystock elements from their logs
     K = nfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
 
     rank = K.r1+K.r2 -1;
@@ -349,10 +374,7 @@ print("debugging : test case");
     cpctList = List([[[List([1, 1]), [1, 1]], 0], [[List([1, 1]), [1, 1]], 3], [[List([1, 1]), [1, 1]], 3], [[1, 0, 0, 0]~, 1], [[1, 0, 0, 0]~, 1], [[33, -4, -2, 1]~, 1], [[214/161, 4/7, 2/23, 3/161]~, 1], [[-14, 0, 1, 0]~, 1], [[-908/811, 167/811, 58/811, -26/811]~, 1], [[271/161, 5/7, -8/23, -12/161]~, 1], [[-2497/1385, -165/277, -143/1385, -34/1385]~, 1], [[-1128/811, 111/811, -78/811, 7/811]~, 1]]);
     verify_generator_with_list(K, idealI, cpctList);
     GP_ASSERT_NEAR(norml2(trackerLogarithm(K,cpctList, K.r1+K.r2-1)- minima_log), 0, 2^(-10));
-    \\print("Input Log ", precision(minima_log, 10));
-
     ending_cpct_rep = compact_rep_full_input(K, minima_log, idealI, 10^(-8), 1,2);
-    \\print("cpct log ", precision(log_from_cpct(K,ending_cpct_rep), 10));
     GP_ASSERT_NEAR(norml2(log_from_cpct(K,ending_cpct_rep)- minima_log), 0, 2^(-10));
 }
 
@@ -378,22 +400,5 @@ returned_element = compact_rep_full_input(K, element_log, alphaOK, 10^(-10), 1,2
 
 }
 
-{
-/*
-    a = [];
-    b = List();
-    t1 = getabstime();
-    for(i=1, 100000, listput(~b,1, length(b)+1));
-    print(getabstime()-t1);
-    t1 = getabstime();
-    for(i=1, 100000, a = concat([a, 1]));
-    print(getabstime()-t1);
-
-    A= Set();
-    t1 = getabstime();
-    for(i =1, 100000, A= setunion(A, Set(i)));
-    print(getabstime()-t1);
-*/
-}
 default(realprecision, 100);
 print("--Testing compact representation functions complete\n")

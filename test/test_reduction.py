@@ -9,7 +9,6 @@ read("src/BSGSHelper.py")
 
 }
 
-\\ test cases for compact_rep_buchmann and compact_reconstruct
 {
     print("TEST--Reduction 1: ");
     my(G1, G2, O_K, n, eps = 10^(-9));
@@ -162,7 +161,7 @@ read("src/BSGSHelper.py")
 }
 
 /*
-\\ test cases for compact_rep_buchmann and compact_reconstruct
+\\ test cases for compact_rep and compact_reconstruct
 {
     print("Test--Reduction 2: ");
     my(G1, G2, O_K, n, eps = 10^(-9));

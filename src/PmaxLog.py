@@ -86,59 +86,61 @@ get_scaled_basis(G, v, videal)={
     return([real_ideal_basis,change_of_basis] );                                                \\ return scaled basis
 }
 
-\\ This is used for checking whether an element is part of the log lattice Lambda_K
-\\ given that we only have the log image of a potential element.
-\\ For us, this will be (1/p)eta, where eta is a log image obtained via the pohst algorithm.
-\\ as such, we also know that the missing coordinates of v becaues they must sum to 0
+\\ Checking if an element is in the log lattice Lambda_K
+\\ given the log-vector of a potential element.
+\\ This will be (1/p)eta, where eta is a log image obtained via the pohst algorithm.
+\\ IMPORTANT: we know the (r+1) coordinates of v since all coords must sum to 0
+\\ INPORTANT: complex coordinates do have the extra factor of 2
 \\ INPUT:
 \\ - G an number field,
-\\ - v a log vector
+\\ - v a log vector of a number field element alpha
 \\ OUTPUT:
-\\ - 1 or 0 indicating True or False
+\\ - 1 or 0 indicating True or False if alpha is a unit
 check_in_unitlattice(G, v, eps)={
     \\# force v to be a row
     if(type(v) == "t_COL", v = v~);
-    if(norml2(v)<eps^2, return(1););  \\# v is zero, automatically return 1
+    if(norml2(v)<eps^2, return(1););  \\# v approximates zero, return 1
 
     my(
         m1=G[5][1], n=poldegree(G.pol), r=G.r1+G.r2-1,
-        radius_S, jump_output, log_mu, new_y, log_mu_p, babystock, babystock_log, scaled_basis, quadform, change_of_basis
+        radius_S, jump_output, log_mu, new_y, log_mu_p,
+        babystock, babystock_log, scaled_basis, quadform, change_of_basis
     );
 
-    radius_S = 1/4*sqrt(r)*log(abs(G.disc));                                \\# This is the search radius S
-    \\#jump algorithm determines nearby divisor to v (Alg 8 - Step 2)
-    jump_output = giantstep(matid(n),v,G,n,eps);                            \\# obtain a minima mu that is 'close' to v using JUMP
+    \\# This is the search radius S
+    radius_S = 1/4*sqrt(r)*log(abs(G.disc));
 
+    \\# determines nearby divisor to v
+    \\# obtain a minima mu that is 'close' to v using JUMP
+    jump_output = giantstep(matid(n),v,G,n,eps);
     \\debug_compare(jump_output, giantstep_high_precision(matid(n),v,G,n,eps));
 
     extra_coord = 0;
     for(i=1, length(v),
-        if (i<=G.r1,
-            extra_coord-=v[i];,
-            extra_coord-=2*v[i];
-        );
+        extra_coord-=v[i];
     );
-    if (G.r2 != 0, extra_coord/=2;); \\DEBUGSCALING remove this line
-    v2= concat(v, extra_coord);
 
-    log_mu = jump_output[3];                                                \\# this is a log vector of mu,  Psi(mu) in the Fonteine-Jacobson paper
-    new_y = jump_output[1];                                                 \\# this is the reduced ideal (1/mu)*y
+    v2= concat(v, extra_coord);
+    GP_ASSERT_TRUE(is_trace_zero(v2,eps));
+
+    log_mu = jump_output[3]; \\# this is Psi(mu)
+
+    new_y = jump_output[1];  \\# reduced ideal (1/mu)*y
 
     \\# Alg 8 - Step 3
-    log_mu_p = v - log_mu[1..r];
-    \\log_mu_p = v - log_mu;
+    log_mu_p = v - log_mu[1..r];    \\# both inputs need to have factors of 2
     log_mu_p2 = v2 - log_mu;
 
-    print("log_mu_p  ", precision(log_mu_p,10), "   ", precision(log_mu_p2,10));
     if(DEBUG_MEMBERSHIP,
-    print("\n Original membership check: \n \
-        - Checking if v is in unit lattice, v: ", precision(v_extra,10),
+    print("\n Original membership check: \n" \
         "\n- psi(mu)=log_mu: ", precision(log_mu,10), \
         "\n- Norm(v - psi(mu)) = ", precision(norml2(log_mu_p),10) );
     );
 
-    \\# return 0 if too far away, return 1 if we get 0 since implies exact match
+    \\# return 0 if the minimum is too far away,
     if(norml2(log_mu_p2) > radius_S^2, return(0));
+    \\# the zero vector implies that the found minimum has the exact log vector
+    \\# and therefore is a unit
     if(norml2(log_mu_p2) < eps,
         print("  Element of unit lattice found");
         return(1);
@@ -146,14 +148,16 @@ check_in_unitlattice(G, v, eps)={
 
     \\# step 7, which exponentiates the value, then computes matrix product
     \\# which represents lattice in which we will enumerate
-    exp_log_mu_p2 = real(exp(log_mu_p2)); print("exp_log_mu_p2 ", precision(exp_log_mu_p2, 10));
-    exp_log_mu_p = create_target(G, log_mu_p); \\#print(" l2norm of log_mu' = ", precision(norml2(exp_log_mu_p),10));
-    print("exp_log_mu_p", precision(exp_log_mu_p, 10));
+    exp_log_mu_p2 = real(exp(unsquare_log_embeddings(G, -log_mu_p2)));
+
+    \\exp_log_mu_p = create_target(G, log_mu_p); \\#print(" l2norm of log_mu' = ", precision(norml2(exp_log_mu_p),10));
+    \\print("exp_log_mu_p2 (I think these should be the same)", precision(exp_log_mu_p2, 10));
+    \\print("exp_log_mu_p", precision(exp_log_mu_p, 10));
     [scaled_basis, change_of_basis] = get_scaled_basis(G, exp_log_mu_p2, new_y);
 
     quadform = scaled_basis~*scaled_basis;
-
     babystock = qfminim(quadform, n+eps, , 2)[3];
+
     if(length(babystock) == 0,
         \\return(0)
     ,\\else
@@ -161,17 +165,15 @@ check_in_unitlattice(G, v, eps)={
             candidate = new_y*change_of_basis*babystock[,i];
             if(nfeltnorm(G, candidate) != 1, ,
                 candidate = log(abs(nfeltembed(G, candidate)));
-                print("Compare elements: ", precision(candidate, 10), "   ", precision(log_mu_p,10));
+                \\print("Compare elements: ", precision(candidate, 10), "   ", precision(log_mu_p,10));
             );
         );
     );
     for(i=1, length(babystock),
-        \\DEBUGSCALING
-        babystock_log = log(abs(valuationvec(G,new_y*change_of_basis*babystock[,i], column=1)));
-        babystock_log = unsquare_log_embeddings(G, babystock_log);
-        \\print( "  UNITLATTICE CHECK babystock log", precision(babystock_log, 10),
-        \\            "\n log_mu_p ",precision(log_mu_p,10),"\n difference: ", precision(abs(log_mu_p) - abs(babystock_log[1..r]),10));
-        if(norml2(abs(log_mu_p) - abs(babystock_log[1..r])) < eps && idealdiv(G, matid(n), babystock[,i]) == new_y,
+        \\#DEBUGSCALING - factors of 2 are present here
+        babystock_log = get_normalized_log_vector(G, new_y*change_of_basis*babystock[,i]);
+
+        if(norml2(abs(log_mu_p2[1..r]) - abs(babystock_log[1..r])) < eps && idealdiv(G, matid(n), babystock[,i]) == new_y,
             print("  UNIT_LATTICE_CHECK SUCCEEDS");
             return(1);
         );
@@ -201,70 +203,6 @@ make_embedding_matrix_square(G)=
     return(res);
 }
 
-\\ This is used for checking whether an element is part of the log lattice Lambda_K
-\\ given that we only have the complex log image of a potential element.
-\\ INPUT:
-\\ - G an number field,
-\\ - v a complex log vector
-\\ - eta (See Pohst or Arenz, this is eta_k) as a polynomial
-\\ OUTPUT:
-\\ - 1 or 0 indicating True or False
-complex_check_in_unitlattice(G, v, eps)={
-    if(type(v) == "t_COL", v = v~);
-    if(norml2(v)<eps^2,
-        print("close to zero");
-        return(1),                          \\# v is zero, automatically return 1
-    \\else
-        M_inv = make_embedding_matrix_square(G)^(-1);
-
-        my(
-            m1=G[5][1], n=poldegree(G.pol), r=G.r1+G.r2-1,
-            radius_S, jump_output, log_mu, new_y, log_mu_p, babystock,
-            babystock_log, scaled_basis, quadform, change_of_basis
-        );
-
-        \\ use jump to get a nearby divisor
-        radius_S = 1/4*sqrt(r)*log(abs(G.disc));                                            \\ This is the search radius S
-        jump_output = giantstep_high_precision(matid(n),real(v[1..r]),G,n,eps,1);           \\ obtain a minima mu that is 'close' to v using JUMP
-
-        log_mu = jump_output[3];                                                \\ this is a log vector of mu,  Psi(mu) in the Fonteine-Jacobson paper
-        new_y = jump_output[1];                                                 \\ this is the reduced ideal (1/mu)*y
-        log_mu_p = v - log_mu;                                                  \\ this is log(mu') as in the FJ paper.
-        print("2 v       ", precision(v,10));
-        print("2 log_mu  ", precision(log_mu,10));
-        print("2 log_mu_p  ", precision(log_mu_p,10));
-        if(DEBUG_MEMBERSHIP,
-        print("\n Complex membership check: \n",
-            "- Checking if v is in unit lattice, v: ", precision(v,10),
-            "\n- psi(mu)=log_mu: ", precision(log_mu,10), \
-            "\n- Norm(v - psi(mu)) = ", precision(norml2(log_mu_p),10) );
-        );
-
-        if(abs(norml2(real(log_mu_p)) ) <= eps, print("return element close to 0"); breakpoint(); return(1) );
-        elmp = exponentiated_embedding(G, log_mu_p);
-        print("exp embed ", precision(exponentiated_embedding(G, log_mu_p),10));
-        coeffs = M_inv*elmp~;
-
-        \\print(precision(coeffs,10));
-
-        \\ check if the vector is all integers
-        for(i=1, length(coeffs),
-            if( abs(imag(coeffs[i]) ) >= eps, return(0));
-            if( abs(real(coeffs[i])-round(coeffs[i])) >= eps, return(0););
-        );
-        if(DEBUG_MEMBERSHIP,print("coeffs are all integers"););
-        \\
-        \\ Also need to check that the ideal 1/mu' I = O_K
-        check_ideal = idealdiv(G, new_y, round(coeffs));
-        if(DEBUG_MEMBERSHIP, print("Verifying (1/mu')I = O_K"),check_ideal == matid(n));
-        if (check_ideal == matid(n),
-            print("Ideal is identity"); return(1),
-            return(0));
-
-    );
-}
-
-
 \\ simple function which given a list of cpct reps, computes the lcm of all of the denominators
 \\ INPUT: A list of compact representations
 \\ OUTPUT: LCM of the denominators of those compact representations
@@ -283,11 +221,10 @@ lcm_denominators(cpct_reps)={
 \\ - k the index of the unit eta_k (See Pohst or Arenz). k =0 implies we are adjusting with torsion
 \\ - cpctreps is the cpct reps of the current original set of independent units (no updates)
 \\ - expmat indicates how to get the updated units {eta_i}
-\\ - logmat corresponds to the logarithm embeddings of the elements of cpctreps
 \\ OUTPUT:
 \\ - An ideal Q as illustrated in Pohst/Arenz
 \\ - along with a new compact representation (if needed)
-get_search_ideal_cpct(G,p, k, cpctreps, expmat, logmat, torsion_coeffs=[])={
+get_search_ideal_cpct(G,p, k, cpctreps, expmat, torsion_coeffs=[])={
     my(check_poly,
       field_deg = length(G.zk),               \\ degree of the number field
       prime_q,                                \\ holder for the pohst prime
@@ -316,7 +253,7 @@ get_search_ideal_cpct(G,p, k, cpctreps, expmat, logmat, torsion_coeffs=[])={
 
             \\#ensure prime_q has gcd 1 with the cpctrep denominators
             GP_ASSERT_TRUE(gcd(denom_lcm, prime_q) == 1);
-            
+
             \\ handles the torsion case
             if(k == 0,
                 embedded_eta = nfmodpr(G, nfalgtobasis(G,nfrootsof1(G)[2]),res_field);
@@ -403,7 +340,7 @@ get_new_eta_cpct(G, p, k, j, searchideal, cpctreps, expmat,torsion_coeffs=[])={
 update_eta_set_log(G,p,k, cpct_reps, expmat, loglat, torsion_coeffs = [])={
     my(eta_k, eta_i, cebotarev_ideal, exponent_tracker=[], exponent_i, temporary_cpctreps);
 
-    [cebotarev_ideal,temporary_cpctreps] = get_search_ideal_cpct(G,p, k, cpct_reps, expmat, loglat, torsion_coeffs);
+    [cebotarev_ideal,temporary_cpctreps] = get_search_ideal_cpct(G,p, k, cpct_reps, expmat, torsion_coeffs);
 
     for(i=k+1, length(cpct_reps),
         exponent_i = get_new_eta_cpct(G, p , k, i, cebotarev_ideal, temporary_cpctreps, expmat,torsion_coeffs);
@@ -421,7 +358,11 @@ torsion_update(~torsionCoeffs, ~updateVector, k)=
     return(torsionCoeffs);
 }
 
-
+\\ INPUTS:
+\\ - L is the logarithm lattice (see output of process_complex_loglattice)
+\\ - unitvector_cpct is the corresponding compact representations
+\\ - B is the index bound
+\\ - eps is precision level for comparisons
 log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
     print("LPohst: start. p = ", 2);
 
@@ -432,18 +373,19 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
 
     compact_lcm = lcm_denominators(unitvector_cpct);
     my(time_pthRoot = 0, t_pthRootBefore, t_pthRootAfter,
-        time_found = 0, t_foundBefore, t_foundAfter);
+        time_found = 0, t_foundBefore, t_foundAfter, initialTime);
     initialTime = getabstime();
+
     while(p <= index_bound,
 
-        \\ include torsion in pari check when p is not coprime
+        \\# include torsion in pari check when p is not coprime w/ size of torsion group
         if(torsion %p == 0,
             betavec = concat(betavec, [[ List( [nfalgtobasis(G, torsiongen)] ), [1]  ]] );
         );
 
-        lpohst_ploop_t1 = 0;
-        \\if(1,                                                                 \\ UNCOMMENT LINE AND COMMENT OUT THE LINE BELOW IF YOU WANT TO SKIP THE FAST PRIME CHECK
-        if(pari_prime_check(G, betavec, p, compact_lcm, 1) == 0 ,
+        \\#TO SKIP THE FAST PRIME CHECK, replace the if argument with a 1
+        my(param_N = max(5, 2*(G.r1+G.r2)));
+        if(pari_prime_check_N(G, betavec, p, compact_lcm, param_N, 1) == 0 ,
 
             print("\npari_prime_check detects possible index divisor ", p);
             eta_exp_mat = matid(length(new_units));
@@ -451,7 +393,7 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
             torsion_coeffs = [];
             if(gcd(p,torsion)!=1,
                 \\ update eta set using the torsion unit, store the coeffs in a vector
-                torsion_coeffs = update_eta_set_log(G,p,0,unitvector_cpct, eta_exp_mat, new_units);
+                torsion_coeffs = update_eta_set_log(G,p,,unitvector_cpct, eta_exp_mat, new_units);
             );
 
             k = 1;                                                              \\# each time a new prime is considered, reset k to 1
@@ -459,59 +401,32 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
             solution = 0;                                                       \\# variable to hold either 0 or a found solutions
 
             while(solutionflag == 1,
-
-                t_pthRootBefore = getabstime();
                 \\\# step 1 of Algorithm 8, the pth root test
                 test_eta_k = new_units*eta_exp_mat[,k];
+                print(precision(new_units,10));
                 test_eta_k = test_eta_k/p;
 
-                /*# commented out because method can't be proven
-                eta_k_complex_log = vector(G.r1+G.r2, t, 0);
-                for(i =1, length(unitvector_cpct),
-                    eta_k_complex_log += eta_exp_mat[i,k]*complex_log_from_cpct(G, unitvector_cpct[i]);
-                );
-
-                eta_k_complex_log = eta_k_complex_log/p;
-                GP_ASSERT_VEC_NEAR(real(eta_k_complex_log)[1..G.r1+G.r2-1]~,test_eta_k,eps);
-                print("complex eta_k ",precision(eta_k_complex_log,10));
-                */
-                lattice_check_t1 = getabstime();
-
+                t_pthRootBefore = getabstime();
                 \\\# here, test_eta_k is known on all coordinates because
                 \\\# it is a lin comb. of log vectors of units, so the sum of coordinates is just 0
                 solutionflag = check_in_unitlattice(G, test_eta_k~, eps);
 
-                \\solutionflag1=complex_check_in_unitlattice(G, eta_k_complex_log, eps); # commented out because method can't be proven
-                \\print(solutionflag1, "  ", solutionflag);
                 t_pthRootAfter = getabstime();
                 time_pthRoot+= (t_pthRootAfter - t_pthRootBefore);
-
-                \\# commented out because method can't be proven
-                \\if (solutionflag != complex_check_in_unitlattice(G, eta_k_complex_log/p, eps), print("flags not matching");breakpoint());
-
-                \\print("DEBUGGING: lattice check time: ", getabstime() - lattice_check_t1);
-
 
                 if(solutionflag ==1,
                     print("LPohst: Found Solutions --");
                     t_foundBefore = getabstime();
-                    \\# These two lines use mlll instead of column replacement
-                    \\new_units = new_units*eta_exp_mat;
-                    \\new_units = my_mlll(matconcat([new_units, test_eta_k]),eps);
 
-                    \\ These lines replace the kth unit, which is different than described in Pohst
+                    \\# These two lines use mlll instead of column replacement
+                    \\#new_units = new_units*eta_exp_mat;
+                    \\#new_units = my_mlll(matconcat([new_units, test_eta_k]),eps);
+
+                    \\# These lines replace the kth unit; different than described in Pohst
                     new_units = replace_column(new_units, k, test_eta_k);
                     new_units = new_units*qflll(new_units);
 
-                    cpct_t1 = getabstime();
                     unitvector_cpct = cpct_from_loglattice(G, new_units, eps);
-                    cpct_t2 = getabstime();
-                    print("recomputing compact reps time: ", (cpct_t2 -cpct_t1 ) );
-                    \\for(i=1, length(unitvector_cpct),
-                    \\    v1 = log(nfeltembed(G,compact_reconstruct(G, unitvector_cpct[i][1],unitvector_cpct[i][2]) ));
-                    \\    v2 = complex_log_from_cpct(G, unitvector_cpct[i]) ;
-                    \\    print(precision(norml2(v1-v2),10));
-                    \\);
 
                     \\ if the cpct reps have changed, then need to update betavec and the lcm
                     betavec = unitvector_cpct;
@@ -536,8 +451,7 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
 
                     torsion_coeffs = torsion_update(~torsion_coeffs, ~updatevec, k);
 
-                    \\ Update k and reset solutionflag to 1
-
+                    \\# Update k and reset solutionflag to 1
                     k+=1;
                     solutionflag = 1;
                 );
@@ -551,12 +465,53 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
             compact_lcm = lcm_denominators(unitvector_cpct);                    \\ used as the 'bad' input to pari_prime_check, ignores non-coprime primes during the equation finding step
         );
         \\if((p%5000) == 1,
-        \\    print("PthRoot: ", time_pthRoot, "\nUpdate: ", time_update ); breakpoint());
+        \\    print("PthRoot: ", time_pthRoot); breakpoint());
 
         if (getabstime()-initialTime > (12*60*60*1000), write(OUTFILE1, G.pol, " time exceeds 12 hours");break;);
 
         p = nextprime(p+1);
     );
+    return(new_units);
+
+}
+
+\\ Experiment function to allow testing parameter N
+\\ G is the number field
+\\ L is a basis matrix for the log lattice
+\\ unitvector_cpct is the compact representations of basis elements of L
+\\ B is the max size of prime to check
+\\ N controls how many prime ideals that pari_prime_check_N considers
+pari_prime_experiment(G,L,unitvector_cpct, B, N, eps, OUTFILE1 = "log_pohst_output")={
+    print("Starting test. N = ", N);
+
+    my(new_units = L, index_holder = 1, index_bound = B, solution, solutionflag = 0, p = 2);
+    my(eta_exp_mat, compact_lcm, test_eta_k, updatevec);
+    my( torsion_coeffs, [torsion, torsiongen] = nfrootsof1(G) );
+    betavec = unitvector_cpct;
+
+    compact_lcm = lcm_denominators(unitvector_cpct);
+    my(time_pthRoot = 0, t_pthRootBefore, t_pthRootAfter,
+        time_found = 0, t_foundBefore, t_foundAfter, initialTime);
+    initialTime = getabstime();
+    fail_ctr = 0;
+    p = 2;
+    while(p <= index_bound,
+        \\# include torsion in pari check when p is not coprime w/ size of torsion group
+        if(torsion %p == 0,
+            betavec = concat(betavec, [[ List( [nfalgtobasis(G, torsiongen)] ), [1]  ]] );
+        );
+
+        if(pari_prime_check_N(G, betavec, p, compact_lcm, N, 1) == 0 ,
+            fail_ctr++;
+            print("prime check fails for p=", p);
+            write(OUTFILE1, "pari_prime_check fails on p = ", p);
+        , \\else:
+
+        );
+        betavec = unitvector_cpct;
+        p = nextprime(p+1);
+    );
+    write(OUTFILE1, "Total number of failed primes = ", fail_ctr);
     return(new_units);
 
 }

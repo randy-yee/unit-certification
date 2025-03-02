@@ -443,14 +443,14 @@ generate_polynomial_list_bitsize(file_prefix, disc_start, disc_cap, interval_gap
 \\\ MAIN
 {
 	\\the main experiment polynomials final-polynomials started at 32, increments 16
-	OUTPUT_FILE_PREFIX = "bsgs-r2-polynomials-";
-	STARTING_DISC_RANGE = 40;
-	ENDING_DISC_RANGE = 80;
-	DISC_GAP_SIZE = 16;
+	OUTPUT_FILE_PREFIX = "bsgs-r3-polynomials-";
+	STARTING_DISC_RANGE = 68;
+	ENDING_DISC_RANGE = 81;
+	DISC_GAP_SIZE = 12;
 	DISC_SAMPLE_SIZE = 5;
 	REAL_EMBEDDINGS = 0;
-	COMPLEX_EMBEDDINGS = 2;
-	
+	COMPLEX_EMBEDDINGS = 4;
+
 	generate_polynomial_list_bitsize(OUTPUT_FILE_PREFIX, \
 													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
 													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \

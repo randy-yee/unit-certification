@@ -4,6 +4,7 @@ read("src/PmaxLog.py");
 default(realprecision, 1000);
 }
 
+
 \\ provide polynomial and optional input lattice
 \\ return as list [Number field, input_regulator, bnfregulator ]
 \\ if no input lattice provided, input_regulator = bnfregulator
@@ -32,7 +33,7 @@ testing_setup_pmax_log(pol, input_lattice = [], eps)={
     );
 }
 
-
+/*
 {
     my(K1, K2, O_K, n, r, cpct_units, delta_K,
         output_regulator,pmax_log_output,
@@ -96,5 +97,38 @@ testing_setup_pmax_log(pol, input_lattice = [], eps)={
     output_regulator = get_abs_determinant(pmax_log_output);
     GP_ASSERT_NEAR(bnf_regulator,output_regulator, eps );
 }
+*/
+{
+
+    my(K1, K2, O_K, n, r, cpct_units, delta_K, start_regulator, bnf_regulator,
+        output_regulator,pmax_log_output, sumv,
+        lglat, eps = 10^(-20)
+    );
+    [K1, start_regulator, bnf_regulator, lglat] =
+        testing_setup_pmax_log(x^7 - 5*x^6 + 8*x^5 + 2*x^4 - 42*x^3 + 40*x^2 + 98*x - 87, [], eps);
+
+    \\lglat[,1] *= 2*3*5*7*11*13*17;
+    \\start_regulator *= 2*3*5*7*11*13*17;
+
+    sumv = lglat[,1];
+    for(j=2, length(lglat), sumv+=lglat[,j]);
+    X1 = prec_baby(poldegree(K1.pol), log(abs(K1.disc)), infinity_norm(sumv));
+    X2 = prec_giant(poldegree(K1.pol), log(abs(K1.disc)),abs(start_regulator),infinity_norm(sumv) );
+    \\print(ceil(X1), "   ", ceil(X2), "   ", max(ceil(X1),ceil(X2)));
+    REQ_BSGS = ceil(max(ceil(X1),ceil(X2)));
+    default(realprecision, ceil(REQ_BSGS));
+
+    \\(n^2+2)log(inf(sumv)) + 2n^2+5
+    REQ_COMPARE = ceil((n^2 +2)*log(infinity_norm(sumv))+2*n^2 +5);
+    eps = 2^(-REQ_COMPARE);
+    print("eps: ", eps);
+    indexbound = get_index_bound2(K1, lglat, eps,-1, 1000000);
+    
+    cpct_units = cpct_from_loglattice(K1, lglat, eps);
+    pmax_log_output = log_pohst_pari(K1, lglat,cpct_units, 100, eps);
+    output_regulator = get_abs_determinant(pmax_log_output);
+    GP_ASSERT_NEAR(bnf_regulator,output_regulator, eps );
+}
+
 
 print("Pmax-log tests finished");

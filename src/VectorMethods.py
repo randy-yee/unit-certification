@@ -355,7 +355,7 @@ check_ideal_reduced(~G, ~ideal)=
     \\# first element is in normed body of 1, so not reduced
     if(norml2(real_basis_lll[,1]) < 1, return(0));
 
-    #complex lattice (LLL)
+    \\#complex lattice (LLL)
     complex_lattice_lll = complex_basis*basis_change;
 
     \\# scan radius with a small error factor, capture potential elements

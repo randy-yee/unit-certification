@@ -8,7 +8,6 @@ read("src/bounds.gp")
 Helper functions for the main BSGS routine
 
 compute_vector_norm
-selectBStockSideLengths
 increment_with_place_marker
 update_directions
 is_repeat_babystock
@@ -24,53 +23,6 @@ compute_vector_norm(i, lattice_lambda, unit_rank, B)=
     if (i == unit_rank, vecnorm = vecnorm/B);
     return(vecnorm);
 }
-
-\\# function intended to choose the a_i for defining the babystock region
-selectBStockSideLengths(lattice_lambda, fullregion_to_babystock_ratio, hybridB)=
-{
-    my(
-        avec,
-        dimensions = length(lattice_lambda),
-        norm_vr = sqrt(norml2(lattice_lambda[,dimensions] ));
-    );
-
-    if(dimensions == 1,
-        avec = vector(dimensions, i , ceil(fullregion_to_babystock_ratio));
-    , \\else
-        if (norm_vr/hybridB > 2, dimensions++);
-        sides = max(1,floor(sqrtn(fullregion_to_babystock_ratio, dimensions-1)));             \\ approximate the sides with integers
-
-        my(diffvector = [],
-            vecnorm =1,
-            ai_product=1,
-            areadiff = 0,
-            partialproduct = 1);
-
-        \\# adjust in case the r-1 th root is larger than the vector's norm
-        for(i=1, dimensions-1,
-            vecnorm =  compute_vector_norm(i, lattice_lambda, unit_rank, B);
-            avec = concat(avec, min(vecnorm, sides));
-            diffvector = concat(diffvector, vecnorm - sides );
-            ai_product *= avec[i];
-        );
-        for(i=1, length(diffvector),
-            if(diffvector[i] > 0,
-                partialproduct = (ai_product/avec[i]);
-                areadiff = round((fullregion_to_babystock_ratio - ai_product)/(ai_product/avec[i]));
-                if(areadiff >= 1,
-                    avec[i] += min(areadiff, diffvector[i]);
-                    ai_product += partialproduct*min(areadiff, diffvector[i]) );
-            );
-        );
-
-        if(DEBUG_BSGS, print("product without  a_r ",ai_product); );
-        if (dimensions !=unit_rank+1,
-            avec = concat(avec ,  min(max(1, round(norm_vr/B)  ), round(fullregion_to_babystock_ratio/ai_product ))  );
-        );
-    );
-    return(avec);
-}
-
 
 \\ modifies the input current_vec in place by incrementing it by 1
 \\ INPUT:

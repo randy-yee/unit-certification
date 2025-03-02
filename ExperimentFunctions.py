@@ -19,12 +19,16 @@ setInstanceVariables(readData)={
 compute_precision(~K, ~lglat, ~reg1)={
     my(X1,X2,sumv = lglat[,1]);
     for(j=2, length(lglat), sumv+=lglat[,j]);
-    X1 = prec_baby(poldegree(K.pol), log(abs(K.disc)), infinity_norm(sumv));
-    X2 = prec_giant(poldegree(K.pol), log(abs(K.disc)),abs(reg1),infinity_norm(sumv) );
+    \\X1 = prec_baby(poldegree(K.pol), log(abs(K.disc))/log(2),  infinity_norm(real(sumv)));
+    \\X2 = prec_giant(poldegree(K.pol), log(abs(K.disc))/log(2), abs(reg1), infinity_norm(real(sumv)) );
+
+    X1 = REQ_BABY(K, reg1, sumv);
+    X2 = REQ_GIANT(K, reg1, sumv);
     print("BSGS precision ");print(ceil(X1), "   ", ceil(X2), "   ", max(ceil(X1),ceil(X2)));
 
     REQ_BSGS = ceil(max(ceil(X1),ceil(X2)));
-    REQ_COMPARE = ceil((poldegree(K.pol)^2 +2)*log(infinity_norm(sumv))+2*poldegree(K.pol)^2 +5);
+    REQ_COMPARE = ceil((poldegree(K.pol)^2 +2)*log(infinity_norm(real(sumv)))+2*poldegree(K.pol)^2 +5);
+
     eps = 2^(-REQ_COMPARE);
     return([REQ_BSGS, REQ_COMPARE,eps]);
 }
@@ -154,7 +158,7 @@ hybrid_balance_calculator(urank, deg_n, detLambda)=
 \\# - auxilliary[1] if present will correspond to the scanball size.
 \\# - auxilliary[2] can specify the output file (string)
 \\# - auxilliary[3] can specify the input file  (string)
-run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
+run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary, single_attempt = 0)=
 {
     GP_ASSERT_EQ(length(loop_range),3);
 
@@ -173,18 +177,18 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
         timeout = 12*60*60*1000; \\12 hours
         \\# INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
         [K, lglat, reg1, r] = setInstanceVariables(data[i]);
-        \\# in case bnfinit is needed
+        \\# in case bnfinit is needed -- for debug purposes
         \\K1 = bnfinit(data[i][2],1); unit_index = random(length(K1.fu))+1;
 
         \\# compute expected precision requirements
-        [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat, ~reg1);
+        [REQ_BSGS, REQ_COMPARE, bsgs_eps] = compute_precision(~K, ~lglat, ~reg1);
         default(realprecision, ceil(REQ_BSGS));
 
         lglat_new = lglat;
 
         writeInfo(i, K, lglat_new, reg1, signature_string, REQ_BSGS);
 
-        cpct_units = cpct_from_loglattice(K, lglat_new, eps);
+        cpct_units = cpct_from_loglattice(K, lglat_new, bsgs_eps);
 
         \\# Fraction of fundamental region to search. Standalone BSGS should use 2 (1/2)
         \\# 1 means you scan the whole region, but this is not needed
@@ -212,20 +216,28 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
         ,
         (length(b_ranges)==3) && (type(b_ranges)!="t_MAT"),    \\elif
             print("Auto-selecting babystock region size based on coeffs");
-            sqrt_reg = sqrt(abs(reg1)); \\ this is 'X' in the curve fit fcn
-            log_sqrt_reg = log(sqrt_reg); \\ this is Log[x] in the curve fit fcn
+            sqrt_reg = sqrt(abs(reg1));
+            logdetLambda = log(abs(reg1));
+            log_sqrt_reg = log(sqrt_reg);
             coeff_a = b_ranges[1];
             coeff_b = b_ranges[2];
             coeff_c = b_ranges[3];
 
             \\ a*x*log(x) + b*sqrt(log(x)) + c
-            estimate = max(floor(coeff_a*sqrt_reg*log_sqrt_reg+coeff_b*sqrt(log_sqrt_reg)+coeff_c),10);
+            \\estimate = max(floor(coeff_a*sqrt_reg*log_sqrt_reg+coeff_b*sqrt(log_sqrt_reg)+coeff_c)/r,2);
+            \\# a * sqrt(detLambda)*Log(detLambda) + b * sqrt(logdetLambda) + c
+            estimate = max(floor( coeff_a*sqrt_reg*logdetLambda+coeff_b*sqrt(logdetLambda)+coeff_c), 2);
             init = estimate - 1*floor(estimate/5);
             end = estimate + 1*floor(estimate/5);
             step = max(floor((end-init)/8),1);
+
+            if(single_attempt,
+                init = estimate; end = estimate; step = estimate;
+            );
             write(OUTFILE1,"babystock-range: ", estimate, "  ", init, " ", end, " ", step);
         ,
         (length(b_ranges)==3) && (type(b_ranges)=="t_MAT"),
+            print("Using predefined ranges");
             init = b_ranges[i,1]; end = b_ranges[i,2]; step = b_ranges[i,3];
         ,
             print("Invalid selection of babystock size ranges");breakpoint();
@@ -234,6 +246,7 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
         timeVector =List();         \\ use to track timing changes
         mintime = 0;
         minTimeIndex = 0;
+        print (init, " ", end, " ", step);
         forstep (j = init, end, step,
             if(length(timeVector)>0,
                 trials = length(timeVector);
@@ -242,16 +255,15 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary)=
                     break;
                 );
             );
-
             \\scaling_variable = ((2^r)* log(abs(K.disc))^(1+j/den))/constscale ;
             scaling_variable = j;
             \\write(OUTFILE1, "\nscaling var = log(abs(disc))^(1+",j, "/",den,")*(2*r)/",constscale , "=",precision(scaling_variable,10));
-
+            print("bsgs starting");
             t9 = getabstime();
-            bsgs_output= bsgs(K,cpct_units, scaleB, scaling_variable, bitprecision(scanBallRadius, REQ_BSGS), eps,REQ_BSGS, OUTFILE1, [timeout]);
+            bsgs_output= bsgs(K,cpct_units, scaleB, scaling_variable, bitprecision(scanBallRadius, REQ_BSGS), bsgs_eps,REQ_BSGS, OUTFILE1, [timeout]);
             t10 = getabstime();
-
             bsgs_out_lattice = log_lattice_from_compact_set(K,bsgs_output);
+
             print("result regulator: ", precision(get_abs_determinant(bsgs_out_lattice),10));
             print("actual regulator: ", precision(reg1,10));
             write(OUTFILE1, "Overall   time: ",precision(t10-t9,10), "  In mins: " ,precision((t10-t9)/60000.0,10),"  reg ratio: ", precision(get_abs_determinant(bsgs_out_lattice)/reg1, 10),"\n");
@@ -402,9 +414,11 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
     if(loop_ranges[2] > length(data), print("Invalid fields selected: ");loop_ranges[2] = length(data));
     GP_ASSERT_TRUE(loop_ranges[2] <= length(data));
     print(loop_ranges[2], "  ", loop_ranges[3]);
+    indexbound = 2^10;
+    for(indctr = 1, 7,
     forstep(i=loop_ranges[1], loop_ranges[2], loop_ranges[3],
         print("field ", i);
-        timeout = 24*60*60*1000; \\12 hours
+        timeout = 48*60*60*1000; \\#48 hours
 
         \\# INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
         \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -417,9 +431,9 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
         fDegree = poldegree(K.pol);
         sumv = lglat[,1];
         for(j=2, length(lglat), sumv+=lglat[,j]);
-        X = prec_rigorous(fDegree, log(abs(K.disc)), log(infinity_norm(sumv)) ,abs(reg1));
-        default(realprecision, ceil(X));
-        outputInstanceInfo(i, K, lglat, reg1, signature_string, X);
+        X = REQ_RIGOROUS(K, sumv, 1);
+        default(realprecision, X);
+        writeInfo(i, K, lglat, reg1, signature_string, X);
 
         \\
         \\  This is a good spot to modify the log lattice to test sublattice performance.
@@ -447,7 +461,7 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
             newKLimit = floor(prod1^(1/fDegree));
             \\# -1 indicates to use the usual j-value, the last argument says to limit the size of the lowerbound unit search area
             t_x = getabstime();
-            indexbound = get_index_bound2(K, lglat_new, eps,-1, newKLimit, OUTFILE1);
+            \\indexbound = get_index_bound2(K, lglat_new, eps,-1, newKLimit, OUTFILE1);
             t_y = getabstime(); boundtime = (t_y-t_x)/60000.0;
             print("Indexbound: ", indexbound);
             \\indexbound = k*2000000;
@@ -455,9 +469,9 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
 
             write(OUTFILE1, "Index bound: ", indexbound, ".   bound calc time: ", precision(boundtime,15)  );
 
-            \\print("Algorithm has been commented out to test the index bound");
+            \\#print("Algorithm has been commented out to test the index bound");
 
-            logout = log_pohst_pari(K,lglat_new,unitvector_cpct, indexbound, eps);
+            logout = log_pohst_pari(K,lglat_new, unitvector_cpct, indexbound, eps);
             tafter = getabstime();
             outreg = get_abs_determinant(logout);
             \\write(OUTFILE1,"Output Regulator: ", precision(outreg,10 ), "  quot: ", precision(inputreg/outreg,10), "YN? ",norml2(outreg*quot - inputreg) < eps, ". Ratios: ", (modpair1[2]-inputreg/outreg)< eps);
@@ -468,6 +482,8 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
             write(table_outfile, strprintf("%-20.9F %-20.9F %-20d %-20.9F %d", log(abs(K.disc)), reg1, K.disc, precision((tafter-tbefore)/60000.0 ,10), indexbound ));
 
         );
+    );
+    indexbound*=4;
     );
 }
 
@@ -532,9 +548,10 @@ hybrid_experiment(start, end, inputFile, outputFile)=
 for(i=start, end,
 
     \\
-    \\ INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
+    \\# INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
+    \\#
     [K, lglat, reg1, r] = setInstanceVariables(data[i]); \\ data must be defined in the inputfile
     n = poldegree(K.pol);
     logdisc = log(abs(K.disc));
@@ -595,7 +612,7 @@ for(i=start, end,
 
     lglat_new = skew_lattice(lglat_new, balanceB, 3.0);
     largest_dimension = sqrt(norml2(lglat_new[,r]/balanceB));
-    
+
     print("ensure compute precision is using B as part of the precision computation");
     [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat_new, ~reg1);
     REQ_RIG = prec_rigorous(n, logdisc, log(infinity_norm(sumv)),log(abs(reg1))  );
@@ -638,8 +655,25 @@ for(i=start, end,
     scaling_variable = sqrt(  (abs(reg1)/balanceB)*g_n/b_n  )/2;
 
     detLambda = get_abs_determinant(pohst_out_lattice);
-    fitted_scale_variable = get_baby_stock_fit_size(K.r1+K.r2 -1, poldegree(K.pol), detLambda/balanceB);
 
+    if(length(curve_fit_coeffs)!=3,
+        fitted_scale_variable = get_baby_stock_fit_size(K.r1+K.r2 -1, poldegree(K.pol), detLambda/balanceB);
+        if(sigstring == "0-4", fitted_scale_variable/=10);
+        print("bstock: ", fitted_scale_variable);
+
+    ,
+        sqrt_detLambda = sqrt(abs(detLambda)/balanceB); \\ this is 'X' in the curve fit fcn
+        log_sqrt_detLambda = log(sqrt_detLambda); \\ this is Log[x] in the curve fit fcn
+        coeff_a = curve_fit_coeffs[1];
+        coeff_b = curve_fit_coeffs[2];
+        coeff_c = curve_fit_coeffs[3];
+
+        \\ a*x*log(x) + b*sqrt(log(x)) + c
+        fitted_scale_variable = max(floor(coeff_a*sqrt_detLambda*log_sqrt_detLambda+coeff_b*sqrt(log_sqrt_detLambda)+coeff_c),10);
+        print("b stock: ", get_baby_stock_fit_size(K.r1+K.r2 -1, poldegree(K.pol), detLambda/balanceB), "   ", fitted_scale_variable);
+
+    );
+    \\fitted_scale_variable = get_baby_stock_fit_size(K.r1+K.r2 -1, poldegree(K.pol), detLambda/balanceB);
     print("default Bstock Size: ", precision(scaling_variable,10), ". Fitted Size: ", precision(fitted_scale_variable,10));
     write(OUTFILE1, "babystock size via fit: ", precision(fitted_scale_variable, 10), "  Default value was: ", precision(scaling_variable,10));
     if(fitted_scale_variable > 0,
@@ -660,6 +694,57 @@ for(i=start, end,
 );
 }
 
+
+heuristic_N_experiment(signature_string, loop_ranges, parN, varB, auxilliary) =
+{
+
+    GP_ASSERT_EQ(length(loop_ranges),3);
+    suffix = strexpand("(", loop_ranges[1], ",", loop_ranges[2], ")");
+    [OUTFILE1, infilestring] = generateFileStringsGeneral(signature_string, "pheuristic",suffix, auxilliary );
+
+    table_outfile = concat(OUTFILE1, "-table");
+    if ((length(auxilliary) >1) && type(auxilliary[1]) == "t_STR", infilestring = auxilliary[1]);
+    if ((length(auxilliary) >1) && type(auxilliary[2]) == "t_STR", OUTFILE1 = auxilliary[2]);
+
+    \\\ Note that the input file must define the variable data
+    read(infilestring);
+    if(loop_ranges[2] > length(data), print("Invalid fields selected: ");loop_ranges[2] = length(data));
+    GP_ASSERT_TRUE(loop_ranges[2] <= length(data));
+    print(loop_ranges[2], "  ", loop_ranges[3]);
+
+    forstep(i=loop_ranges[1], loop_ranges[2], loop_ranges[3],
+
+        timeout = 48*60*60*1000; \\#48 hours
+
+        \\# INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
+        \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+        [K, lglat, reg1, r2] = setInstanceVariables(data[i]);
+        [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat, ~reg1);
+        fDegree = poldegree(K.pol);
+
+        X = 0; writeInfo(i, K, lglat, reg1, signature_string, X);
+
+        cpct_units = cpct_from_loglattice(K, lglat, eps);
+
+        lglat_new = lglat;
+        unitvector_cpct = cpct_units;
+
+        memLimit = 1000000000; \\#MEM
+        indexbound = varB;
+
+        urank = K.r1+K.r2;
+        for (k = 8, 15,
+            parN = k;
+            write(OUTFILE1,"\nIndexbound: ", indexbound, ". N = ", parN);
+            tbefore = getabstime();
+            logout = pari_prime_experiment(K, lglat_new, unitvector_cpct, indexbound, parN, eps, OUTFILE1);
+            \\log_pohst_pari(K, lglat_new, unitvector_cpct, indexbound, eps, OUTFILE1);
+            tafter = getabstime();
+            outreg = get_abs_determinant(logout);
+            write(OUTFILE1, "-- Output Regulator: ", precision(outreg,10 ), "\n--lpohst time ",precision((tafter-tbefore),10), " Below is in Minutes: ", precision((tafter-tbefore)/60000.0 ,10));
+        );
+    );
+}\\#end pari_prime_check_N experiment function
 
 specialField11 = [x^3 - 14105*x^2 + 190241206*x - 1434835874037, -22729311273742752391460247, \
 [472127480231.19058564549342808743779377712964461705822041039616921390834216514742089426164608700285224539653227784071320317983861427662412196184167337903859099635926348062696842208555837034430238487927123938442366161078114770082570477123549304314589048301328471704975818132364412646228885384176662444724730776560094482623627653752559248545297505006989109270575275833095985203116970896510434270727118438348758227920519567635721951088609069754806222097445919409332199539366007538296928313392888844385975 + 6.2831853071795864769252867665590057683943387987502116419498891846156328125724179972560696506842341359642961730265646132941876892191011644634507188162569622349005682054038770422111192892458979098607639288576219513318668922569512964675735663305424038182912971338469206972209086532964267872145204982825474491740132126311763497630418419256585081834307287357851807200226610610976409330427682939038830232188661145407315191839061843722347638652235862102370961489247599254991347037715054497824558763660238983*I; -472127480231.19058564549342808743779377712964461705822041039616921390834216514742089426164608700285224539653227784071320317983861427662412196184167337903859099635926348062696842208555837034430238487927123938442366161078114770082570477123549304314589048301328471704975818132364412646228885384176662444724730776560094482623627653752559248545297505006989109270575275833095985203116970896510434270727118438348758227920519567635721951088609069754806222097445919409332199539366007538296928313392888844385975 + 11.526005437528880337782384385123881089305298628901839535194975994927139034023654804794481258060837178537264612315098878730595190738165646846292171903515321479572585447781821209483527129178419194846600993280189034503894833762207375482528939811527790171178887104147603199155128340767552782934004910134236850448872574047836334223126587696428309062265188586148249612363345771382750511289965920273871747740817197899585290137242538418885207949771433323603174743205482689468297695044620521350987572083827597*I]];

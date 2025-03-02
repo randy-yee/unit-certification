@@ -5,7 +5,7 @@ read("ExperimentFunctions.py");
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ Starting precision:
 \p500
-default(parisizemax, 15G);
+default(parisizemax, 25G);
 \\ Global variables
 eps = 10^(-80);      \\ error tolerance
 sqrt2 = sqrt(2);
@@ -15,17 +15,15 @@ DEBUG_CPCT = 0;
 DEBUG_REDDIV = 0;
 
 
-\\INPUT_FILE = "input/extra-polynomials-0-4";
-\\OUTPUT_FILE = "data/pmax-extra-";
-INPUT_FILE = "input/test-poly-0-4.gp";
-OUTPUT_FILE = "data/pmax-large-";
+INPUT_FILE = "input/experiment-polynomials-0-4";
+OUTPUT_FILE = "data/pmax-Bsize-";
 \\ if the input file and output file strings are removed, then default files
 \\ will be used
 {
     sigstring = "0-4";
     OUTPUT_FILE = concat(OUTPUT_FILE, sigstring);
-    start = 22;
-    end   = 22;
+    start = 1;
+    end   = 30;
     step  = 1;
     loop_ranges = [start, end, step];
     \\\ # generate data for specified input and output files

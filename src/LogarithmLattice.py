@@ -235,20 +235,17 @@ embed_real(~G,~M)={
 }; \\ end get_R_basis
 
 
-\\ INPUT:
-\\ - K a number field
-\\ - lglat is the output of bnf[3], which is the complex log lattice
-\\ OUTPUT:
-\\ This function takes in a logarithm lattice (output from bnfinit argument [3])
-\\ takes the real part, and divides the rows for complex embeddings in half
-\\ The point of this function is for when the bnf log lattice is computed ahead of time
+\\# INPUT:
+\\# - K a number field
+\\# - lglat is the output of bnf[3], which is the complex log lattice
+\\# OUTPUT:
+\\# - real part of the log lattice, chopping off the last row so it's square
+\\# Note that the factors of 2 are present in the complex coordinates
 process_complex_loglattice(~K, ~lglat)={
     my(r, complexlogunit, lambda1, LambdaK);
-    r = K.r1 +K.r2 -1;
+    r = K.r1 + K.r2 -1;
     lambda1 = real(lglat);                                                       \\ equivalent to getting the log of the abs vals
     LambdaK = lambda1[1..r,];
-
-    \\LambdaK=LambdaK*qflll(LambdaK);
     return(LambdaK);
 }
 
@@ -262,7 +259,6 @@ get_log_lattice_bnf(~bnf1)={
     r = bnf1.r1 +bnf1.r2 -1;
     complexlogunit=bnf1[3];                                                     \\ in pari, bnf[3] is the complex log embeddings of the independent units
     lambda1 = real(complexlogunit);                                             \\ equivalent to getting the log of the abs vals
-
     LambdaK = lambda1[1..r,];
 
     return(LambdaK);
@@ -291,16 +287,6 @@ get_abs_determinant(~lglat)=
 get_normalized_log_vector(K, beta)=
 {
     return( double_complex_coordinates(K.r1, log(abs((K[5][1]*beta))))~ );
-};
-
-\\ input a number field and element beta. Get the normalized embedding vector (t_VECTOR)
-\\ that is, the embedding vector with complex coords squared
-get_normalized_embedding_vector(K, beta)=
-{
-    my(myvec);
-    myvec = K[5][1]*beta;
-    for(i=K.r1+1, length(myvec), myvec[i] = myvec[i]*myvec[i]);
-    return(myvec);
 };
 
 \\trunc should be an integer, truncates the real up to trunc decimal digits

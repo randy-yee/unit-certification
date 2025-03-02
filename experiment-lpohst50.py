@@ -5,7 +5,7 @@ read("ExperimentFunctions.py");
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ Starting precision:
 \p500
-default(parisizemax, 15G);
+default(parisizemax, 25G);
 \\ Global variables
 eps = 10^(-80);      \\ error tolerance
 sqrt2 = sqrt(2);
@@ -24,8 +24,9 @@ OUTFILE1 = "data/lpohst-5-0.txt";
 
 \\INPUT_FILE = "input/extra-polynomials-5-0";
 \\OUTPUT_FILE = "data/pmax-extra-";
-INPUT_FILE = "input/test-poly-5-0.gp";
-OUTPUT_FILE = "data/pmax-large-";
+\\INPUT_FILE = "input/test-poly-5-0.gp";
+INPUT_FILE = "input/experiment-polynomials-5-0";
+OUTPUT_FILE = "data/pmax-Bsize-";
 \\ if the input file and output file strings are removed, then default files
 \\ will be used
 
@@ -34,8 +35,8 @@ SMALLEXAMPLE = 0;
 
     sigstring = "5-0";
     OUTPUT_FILE = concat(OUTPUT_FILE, sigstring);
-    start = 19;
-    end   = 25;
+    start = 1;
+    end   = 30;
     step  = 1;
     loop_ranges = [start, end, step];
     pmax_log_experiment(sigstring, loop_ranges, [INPUT_FILE, OUTPUT_FILE]);

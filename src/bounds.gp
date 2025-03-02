@@ -4,29 +4,18 @@
 
 1. When n \le 30:
 */
-/*
-n=30;
-logdetlamp=20;
-q=max(4*n^2*logdel+2*n^4, 2^n/n^4) + n^2 +logdetlamp);
-exfun(x)= x^(x-1/2);
-N(n)=exfun(n +30*sqrt(n)-1)/(exfun(n-1)*exfun(30*sqrt(n)))
-T(n)=n^(n/1+2)*(3/2)^((n^2-n)/2)
-expT(n)=n/2*(log(n)+6/n*log(n)+log(3/2)*n-log(3/2))
-T(n)=2^(expT(n))
 
-for(i=1,30,print(i, ", ", T(i)*1.0, ",  ", N(i)*1.0))
-for(i=1,30,print(i, ", ", expT(i)*1.0, ",  ", i^2*1.0))
-*/
 
-Nfunc(n) ={
-  my(output =0);
-  output = ((n +30*sqrt(n)-1)^(n +30*sqrt(n)-1));
-  output = output/( (n-1)^(n-1/2) );
-  output = output/( (30*sqrt(n))^(30*sqrt(n)+1/2 ) );
+Nfunc(n, rho) ={
+  my(output = 0);
+  \\output = ((n +30*sqrt(n)-1)^(n +30*sqrt(n)-1));
+  \\output = output/( (n-1)^(n-1/2) );
+  \\output = output/( (30*sqrt(n))^(30*sqrt(n)+1/2 ) );
+  output = (1+2*sqrt(n)*exp(2*rho))^n;
   return(output);
 }
 Tfunc(n)={
-  my(output =0);
+  my(output = 0);
   output = n^(n/2 + 2);
   output *= (3/2)^((n^2-n)/2);
   return(output);
@@ -48,15 +37,8 @@ indexLambda = 1;
 
 
 prec_reduction(n, logdisc)={
-  return( max(1, ceil(4*n^2*logdisc +2*n^4 +(24*n^2-n^3)*log(n)))    );
+  return( max(10, ceil(4*n^2*logdisc +2*n^4 +(24*n^2-n^3)*log(n)))    );
 };
-
-reduction_complexity(n,q)={
-  return(n^5*q^2+q*2^n);
-}
-
-
-
 prec_jump(n, logdisc, qout, tv)={
   my(precision_bound = 0);
   precision_bound = ceil(max( prec_reduction(n, logdisc)+logdisc+log(n), qout));
@@ -70,12 +52,11 @@ jump_complexity(n,q, loginfv) = {
 
 
 prec_compact(degree, logdisc,loginfv)={
-
   expression = ceil( (4*(degree^2))*logdisc + 2*(degree^4) -(degree^3 -24*(degree^2) -6)*log(degree) + 7 + (degree^2+2)*loginfv);
   return(expression);
 }
 
-prec_reduce(G)=
+REQ_REDUCTION(G)=
 {
   my(n = poldegree(G.pol),
     ldisc = log(abs(G.disc))/log(2),
@@ -85,11 +66,50 @@ prec_reduce(G)=
   prec = (n^2+2*n+1+1/n)*ldisc + ((3*n^3 - 3*n^2 +3*n)/4)+ ((2*n^2+6*n+3)/2)*log(n)/log(2);
   prec += (m/2)*log(n)/log(2) + 3*m + 2*log(m)/log(2) -m*log(m-1)/log(2) + 8;
 
-  oldprec = 2*ldisc + (n+1)^2*(10*log(n)/log(2) + 3*n*(n-1)/4 -(n-1/2)*log(n)/log(2)+ldisc + (n^2+1)*ldisc+ log(abs(G.disc)+2)/log(2) );
-  print(ceil(oldprec), "  ", ceil(prec));
+  \\oldprec = 2*ldisc + (n+1)^2*(10*log(n)/log(2) + 3*n*(n-1)/4 -(n-1/2)*log(n)/log(2)+ldisc + (n^2+1)*ldisc+ log(abs(G.disc)+2)/log(2) );
+  \\print(ceil(oldprec), "  ", ceil(prec));
   return(ceil(prec));
 }
+
+base_2_log(val) =
+{
+  return (log(val)/log(2))
+}
+
+REQ_JUMP(G, v)=
+{
+  my(
+      n = poldegree(G.pol),
+      log_n = ceil(base_2_log(n)),
+      ldisc = base_2_log(abs(G.disc)),
+      m = G.r1 +G.r2,
+      q_jump,small_delta, tv,
+      prec = 0
+  );
+  small_delta = ((2/Pi)^G.r2)*sqrt(abs(G.disc));
+  tv = floor(log(n*normlp(v)/base_2_log(small_delta)) / log(2))+1;
+  prec = REQ_REDUCTION(G) + 2*tv + log_n + 2;
+
+  return(prec)
+}
+
+REQ_BABY(G, reg1, v)=
+{
+  return(ceil(REQ_JUMP(G,v) + base_2_log(reg1)/2 ));
+}
+
+REQ_GIANT(G, reg1, v)=
+{
+  my(m = G.r1+G.r2);
+  return (ceil(REQ_JUMP(G,v) + base_2_log(m-1)-1+ m*base_2_log(3)-m/2+base_2_log(reg1)));
+}
+
+REQ_RIGOROUS(G,v, p)=
+{
+  return( ceil(REQ_JUMP(G, v)+log(p)+log(n)) );
+}
 prec_baby(n,log_disc, infsumt)={
+
   expression = (4*(n^2)*log_disc +2*n^4+(-n^3+24*n^2+6)*log(n) +7 +(n^2+4)*log(infsumt + (sqrt(n)/4)*log_disc) );
 }
 prec_giant(n, logdisc, logdetlamp, infsumu)={
@@ -116,16 +136,60 @@ giant_n(n,logdisc,q,logdetlamp)={
   return((n^2)*(n^2 +logdisc+logdetlamp )*(n^7*(n^2+logdisc+logdetlamp+2^n) )*(logdetlamp+n^2) );
 }
 
+/********************************************/
+/********************************************/
+/*
+New as of March 1, 2025
+*/
+gfunc(n, delta_K, prec_q)={
+  my(output, logdeltaK, log_detLambda);
+  logdeltaK = log(abs(delta_K))/log(2);
+  log_detLambda = log(detLambda)/log(2);
+  output = (n^5)*log_detLambda^2;
+  output += (n^2 + log_detLambda)*((n^5)*(prec_q^2)+ (2^n)*prec_q);
+}
+
+bfunc(n, delta_K, detLambda, prec_q, rho)={
+  my(output, test_exp, logdeltaK, log_detLambda);
+  logdeltaK = log(abs(delta_K))/log(2);
+  log_detLambda = log(detLambda)/log(2);
+
+  test_exp = n^9+logdeltaK^2 +Tfunc(n)*(n^3+n*logdeltaK);
+  output = log_detLambda+n^2;
+  output *= ((n^5)*(prec_q^2)+ (2^n)*prec_q);
+  output += test_exp*Nfunc(n,rho);
+  return(output);
+}
+
+pfunc1(n, delta_K)=
+{
+  my(output, logdeltaK, log_detLambda,q_sat);
+  log_detLambda = log(detLambda)/log(2);
+  logdeltaK = log(abs(delta_K))/log(2);
+  q_sat = n^2*logdeltaK + 2*log_detLambda+n^3;
+  output = (q_sat^2)*n^5 + q_sat*(2^n);
+  output *= (n^3+ n*log_detLambda);
+}
+
+pfunc2(n, delta_K)=
+{
+  my(output, logdeltaK, log_detLambda,q_sat);
+  log_detLambda = log(detLambda)/log(2);
+  output= n^5+(n^3)*log_detLambda;
+}
+/********************************************/
+/********************************************/
+
 baby_n(n,logdisc,q,logdetlamp)={
   return( (n^4*(logdisc + logdetlamp +n^2)^2) * (n^7*(logdisc+logdetlamp+n^2)+(2^n) )+Nfunc(n)*TOtest(n,logdisc) );
 }
 
-bsgs_complexity(detlamp, B, b_n, g_n) = {
-  return(sqrt(detlamp/B)*sqrt(b_n*g_n));
+bsgs_complexity(det_lambda, B, b_n, g_n) = {
+  return(sqrt(det_lambda/B)*sqrt(b_n*g_n));
 }
 
-volumeB(detlamp, B, g_n, b_n) ={
-  return( sqrt((detlamp*g_n)/(B*b_n) ) );
+volumeB(det_lambda, B, g_n, b_n) ={
+  return( sqrt((det_lambda*g_n)/(B*b_n) ) );
 }
 
 prec_pthroot(n, B, logdisc, loginfv, logpsi_eta)={
@@ -146,46 +210,3 @@ pmax_p1(n, logdisc, logdetlamp)={
 pmax_p2(n, q, logdisc, logdetlamp)={
   return( logdetlamp*( (n^6*q^2 +n*q*2^n)*(n^2+logdetlamp) +n^3 + (3*logdisc +n^2 +n)^n ));
 }
-
-
-{
-/*
-forstep(logdisc = 20, 50, 5,
-  print("logdisc = ", logdisc);
-  logdetlamp = sqrt(logdisc);
-  volB = logdetlamp/B;
-  volG = logdetlamp/B;
-
-  for(n =3, 20,
-    print("n =  ", n);
-    print(prec_rigorous(n, 10, logdetlamp));
-    \\q=max(4*n^2*logdisc+2*n^4, 2^n/n^4) + n^2 +logdetlamp;
-    \\baby_complexity = volB*(n^5*q^3 + Nfunc(n)*(n^5*q^2 + Tfunc(n)*q )  );
-
-    \\giant_complexity = volG*n^5*q^2*(logdetlamp+n^2);
-
-    \\pohst_complexity = indexLambda * r*n^5*q^2*(n^2 + logdetlamp) + r*n^2*p*log(p) + (3*logdisc+n^2+n);
-    \\print("- baby stock : ",baby_complexity);
-    \\print("- giant step : ",giant_complexity);
-    \\print("-     pohst : ",pohst_complexity);
-  );
-);
-*/
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-n=50;
-logdel=20;
-q=4*n^2*logdel+2*n^4
-[2^n*n*q, n^5*q^2, 2^n*n*q/(n^5*q^2*1.0)]
