@@ -55,12 +55,15 @@ read("test/test_reduction.py");
 read("test/test_compact_representation.py");
 
 read("test/test_bsgs.py");
+read("test/test_pmax_log.py");
 
 read("test/test_pmax_normal.py");
-
 read("test/test_hybrid.py");
 
-read("test/test_pmax_log.py");
+
+
+
+
 
 
 

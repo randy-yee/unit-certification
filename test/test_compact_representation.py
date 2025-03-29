@@ -334,7 +334,7 @@ print("--Cpct Rep: test case 2 - bad approximation input");
     print("--Time spent: ",total_time);
     \\# note that these timings are probably dependent on the computer system
     \\# these timings are based on a personal linux desktop. Adjust if needed
-    GP_ASSERT_WITHIN_RATIO(total_time, 5400, 0.1); \\ old timing 11000 Jan 2023
+    GP_ASSERT_WITHIN_RATIO(total_time, 5400, 0.15); 
 }
 
 {

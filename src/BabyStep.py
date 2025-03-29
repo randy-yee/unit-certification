@@ -56,6 +56,7 @@ adjust_giant_step_cpct(~G, ~giant_divisor, ~tracker, trackerLog, ~expected_posit
                     pointwise_vector_mul(giant_divisor[2],adjustment_divisor[2] )~ ];
 
                 reduced_product = reddiv_compact(new_divisor[1], new_divisor[2],G, G[5][1] );
+
                 newFactor = nfeltmul(G, adjustment_divisor[4], reduced_product[4]);
 
                 default(realbitprecision, localbitprecision);
@@ -381,7 +382,7 @@ scan_ball_new(~G, ~bmap, ~y, ~u, ~log_distance, ball_distance, delta_K, expected
 
     scan_bound = n*exp(4*ball_distance)*norml2(vecholder);          \\ See schoof alg 10.7
     log_scan_bound = log(scan_bound);
-    \\alt_scan_bound = max(sqrt(n)*exp(4*ball_distance), sqrt(norml2(vecholder)));
+
     scan_elements = qfminim(gram_mat, scan_bound,,2)[3];
     scan_elements = y*lll_basis_change_matrix*scan_elements;
 
@@ -718,7 +719,9 @@ incremental_baby_steps_compact(y, ~lattice_lambda, ~giant_legs,\
             baby_tn = getabstime();
             baby_tmid = baby_tn;
             if((timeout > 0)&&(baby_tn - start_time > timeout),
-                write(OUTFILE_BS, "babystock computation ", (baby_tn - start_time)/60000.0, " mins. Exceeds timeout.");return([lattice_lambda, []]);
+                write(OUTFILE_BS, "babystock computation ",
+                    (baby_tn - start_time)/60000.0, " mins. Exceeds timeout.");
+                return([lattice_lambda, []]);
             );
         );
         time_ideals2 = getabstime();
@@ -807,7 +810,7 @@ b_scan(G, y, ~lattice_lambda, ~giant_legs,\
     increment_coordinates(denoms, web_coords);
 
     total_steps = 1; for(i =1, length(denoms), total_steps*=denoms[i]);
-    logging_interval = floor(total_steps/20);
+    logging_interval = max(floor(total_steps/20),1);
     print("Total number of ball enumerations needed: ", total_steps);
 
     my(
@@ -875,21 +878,7 @@ b_scan(G, y, ~lattice_lambda, ~giant_legs,\
         \\# debug function ensures the divisor actually generates the ideal
         \\#verify_generator_with_list(G, baby_divisor[1], compactTracking); print("verifying element after adjust");
 
-        /*
-        \\#old test statements for comparing jump vs ideal steps
-        print("\nNormal distance: ", precision(sqrt(norml2(logdist - expected_position~)),10));
-        test_giant = jump_compact(identity,expected_position,G,field_deg,eps);
-        test_giant_log = log_from_cpct(G, test_giant[3]);
-        print("test giant value: ", precision(test_giant_log,10), " \nlogdist: ", precision(logdist,10) );
-        print("expected_ position" precision(expected_position,10));
-        print("jump distance? ", precision(sqrt(norml2((expected_position)~-(test_giant_log))),10));
-        if((web_coords[r] %10) == 9, breakpoint());
-        */
-
         ball_minima = scan_ball_new(~G, ~baby_hashmap, ~baby_divisor[1], ~baby_divisor[2], ~logdist, scan_radius, delta_K, expected_position, eps);
-
-        \\ball_minima = scanball_map(G, ~baby_hashmap, ~baby_divisor[1], ~baby_divisor[2], [logdist], scan_radius, eps, ~repeated_minima);
-        \\scanball_map(~G, ~baby_hashmap, ~baby_divisor[1], ~baby_divisor[2], ~logdist, scan_radius, eps, ~repeated_minima);
 
         \\# increase the tracking variable and update directions
         place_marker = increment_with_place_marker(~denoms, ~web_coords);
@@ -904,9 +893,15 @@ b_scan(G, y, ~lattice_lambda, ~giant_legs,\
         );
         ctr++;
         if((ctr % logging_interval) == 0,
-            print("Roughly ", 5*floor(ctr/logging_interval),"% complete (", ctr, "/",total_steps, ")."  );
+            if(logging_interval == 1,
+                percent_interval = round((1.0/total_steps)*100);
+            ,
+                percent_interval = 5;
+            );
             baby_tn = getabstime();
+            print("Roughly ", percent_interval*floor(ctr/logging_interval),"% complete (", ctr, "/",total_steps, "). ms: ",baby_tn-baby_tmid   );
             baby_tmid = baby_tn;
+
             if((timeout > 0)&&(baby_tn - start_time > timeout),
                 write(OUTFILE_BS, "babystock computation ", (baby_tn - start_time)/60000.0, " mins. Exceeds timeout.");return([lattice_lambda, []]);
             );

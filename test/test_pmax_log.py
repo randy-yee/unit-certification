@@ -4,7 +4,7 @@ read("src/PmaxLog.py");
 default(realprecision, 1000);
 }
 
-
+\\ used for streamlining test cases
 \\ provide polynomial and optional input lattice
 \\ return as list [Number field, input_regulator, bnfregulator ]
 \\ if no input lattice provided, input_regulator = bnfregulator
@@ -33,7 +33,6 @@ testing_setup_pmax_log(pol, input_lattice = [], eps)={
     );
 }
 
-/*
 {
     my(K1, K2, O_K, n, r, cpct_units, delta_K,
         output_regulator,pmax_log_output,
@@ -97,7 +96,7 @@ testing_setup_pmax_log(pol, input_lattice = [], eps)={
     output_regulator = get_abs_determinant(pmax_log_output);
     GP_ASSERT_NEAR(bnf_regulator,output_regulator, eps );
 }
-*/
+
 {
 
     my(K1, K2, O_K, n, r, cpct_units, delta_K, start_regulator, bnf_regulator,
@@ -123,7 +122,7 @@ testing_setup_pmax_log(pol, input_lattice = [], eps)={
     eps = 2^(-REQ_COMPARE);
     print("eps: ", eps);
     indexbound = get_index_bound2(K1, lglat, eps,-1, 1000000);
-    
+
     cpct_units = cpct_from_loglattice(K1, lglat, eps);
     pmax_log_output = log_pohst_pari(K1, lglat,cpct_units, 100, eps);
     output_regulator = get_abs_determinant(pmax_log_output);

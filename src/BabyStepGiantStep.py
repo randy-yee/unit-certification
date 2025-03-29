@@ -508,7 +508,7 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
 
 
     total_steps = 1; for(i =1, length(avec), total_steps*=avec[i]);
-    logging_interval = floor(total_steps/20);
+    logging_interval = max(floor(total_steps/20),1);
     print("Total number of giantsteps needed: ", total_steps);
 
     expected_position = vector(G.r1+G.r2, i, 0)~;
@@ -646,7 +646,6 @@ incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec
             print("Roughly ", 5*floor(ctr/logging_interval),"% complete. (", ctr, "/",total_steps, ")."  );
             print("Time breakdown: Compute: ", tDivisorCompute, " Reduce: ", tNext," Adjust: ", tDivisorReduce, " Compare: ", tCompare);
             giant_tn = getabstime();
-            \\write("data/jump-timing.txt", ctr, " jumps took: ", (giant_tn- giant_tmid), "milliseconds");
             giant_tmid = giant_tn;
         );
     );
@@ -881,6 +880,7 @@ incremental_giant_steps_compact(~G, ~lattice_lambda, ~giant_sublattice, ~babysto
 get_nearby_rdivisor(G, idealmat, log_coordinates_Rn, inverse=1)={
     exponentiated_coordinates = exponentiate_logvec(G.r1+G.r2-1, unsquare_log_embeddings(G, log_coordinates_Rn), inverse);
     \\exponentiated_coordinates = create_target(G, log_coordinates_Rn, inverse);
+
     return( reddiv_compact(idealmat,exponentiated_coordinates, G, G[5][1] ); );
 }
 
@@ -888,6 +888,7 @@ multiply_and_reduce_divisors(G, ideal1, real_vec1, log_vec1, ideal2, real_vec2, 
     product_ideal = idealmul(G, ideal1, ideal2);
     product_real = pointwise_vector_mul(real_vec1,real_vec2);
     reduced_product = reddiv_compact(product_ideal, product_real~, G, G[5][1]);
+
     reduced_product_log = log_vec1 + log_vec2 + reduced_product[3];
 
     return([reduced_product[1], reduced_product[2], reduced_product_log]);
@@ -958,7 +959,6 @@ get_next_giant_divisor_cpct(~G, ~giant_divisor, ~tracker)={
     my(new_divisor, oneVector = vector(poldegree(G.pol), i, 0)~);
 
     oneVector[1] = 1;
-
     new_divisor = reddiv_compact(~giant_divisor[1], ~giant_divisor[2], ~G,~G[5][1]);
 
     giant_divisor[1] = new_divisor[1];

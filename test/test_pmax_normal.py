@@ -27,7 +27,7 @@ default(realprecision, 1000);
 Gv = K[5][2]*nfalgtobasis(K, K.zk[length(K.zk)]); Gv = Gv~*Gv;
 pohst_k = 2*Gv;
 lbound = lower_regbound(K,pohst_k,eps, -1, 2500000);
-print("--Annoyingly, the repaired lower bound code breaks this example.");
+
 print("--We instead hard-code the bound used in the original Pohst paper.");
 print("--Computed lower bound: ", precision(lbound,10));
 lbound = 433281.296;

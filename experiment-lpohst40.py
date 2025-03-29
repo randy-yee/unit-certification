@@ -20,7 +20,6 @@ DEBUG_REDDIV = 0;
 
 OUTFILE1 = "data/lpohst-4-0.txt";
 
-read("input/test-poly-4-0.gp");  ;
 
 
 \\INPUT_FILE = "input/extra-polynomials-4-0";
@@ -35,8 +34,8 @@ SMALLEXAMPLE = 0;
 {
     sigstring = "4-0";
     OUTPUT_FILE = concat(OUTPUT_FILE, sigstring);
-    start = 1;
-    end   = 30;
+    start = 11;
+    end   = 11;
     step  = 1;
     loop_ranges = [start, end, step];
     pmax_log_experiment(sigstring, loop_ranges, [INPUT_FILE, OUTPUT_FILE]);

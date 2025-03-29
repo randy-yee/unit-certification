@@ -635,7 +635,7 @@ cpct_rep_final_enum(G, idealB, beta, log_beta, desired_betalog, alphaOK, eps, te
     if (DEBUG_CPCT_ENUM, print("final enum target: ", precision(desired_betalog, 10)));
 
     \\#see thesis Prop 3.4.3. The addition 5 bits of precision is just a precaution
-    new_eps = ceil(log(abs(G.disc))/(2*n*log(2)) + 3/2)+1;
+    new_eps = ceil(log(abs(G.disc))/(2*degree*log(2)) + 3/2)+1;
     new_eps = 2^(-(new_eps +5 ));
 
     my(neighbours_output, boundary_vector, ctr=1,

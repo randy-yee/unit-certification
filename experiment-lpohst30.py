@@ -33,8 +33,8 @@ OUTPUT_FILE = "data/pmax-Bsize-";
 {
     sigstring = "3-0";
     OUTPUT_FILE = concat(OUTPUT_FILE, sigstring);
-    start = 17;
-    end   = 17;
+    start = 1;
+    end   = 30;
     step  = 1;
     loop_ranges = [start, end, step];
     pmax_log_experiment(sigstring, loop_ranges, [INPUT_FILE, OUTPUT_FILE]);
@@ -49,7 +49,7 @@ for(i=1,1,
     lglat = process_complex_loglattice(K ,data[i][3]);
     cpct_units = cpct_from_loglattice(K, lglat, eps);
     reg1 = unscaled_determinant(K, lglat);
-    
+
 
     sumv = lglat[,1];
     for(j=2, length(lglat), sumv+=lglat[,j]);

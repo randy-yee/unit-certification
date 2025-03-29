@@ -92,12 +92,18 @@ vector_approximate(~v,eps)= {
     my( vn1=eps*round(v*1/(eps))*1.00 );
     vn1;
 }
+vector_approximate2(~v,eps)= {
+    my( vn1=eps*round(v*1/(eps))*1.00 );
+    vn1;
+}
+/* maybe this can be done using strings? */
+
 
 /******************************************************************************/
 /*12. sum coordinates, and see if close enough to 0 */
 /******************************************************************************/
 is_trace_zero(v,eps)={
-    if(sumvec(v)<eps^2, return(1), return(0));
+    if(abs(sumvec(v))<eps^2, return(1), return(0));
 }:bool
 
 /******************************************************************************/

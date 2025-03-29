@@ -12,7 +12,7 @@ coB = 93.087621958492552357645589723;   \\#   + b * sqrt(log(detLambda)), where
 coA = 0.0061206581730856629189212034471; \\#  + a* sqrt(detLambda) * log(detLambda)
 */
 \\#new coeffs, after round2 experiments
-coC = -457.12897985999723011433057307
+coC = -457.12897985999723011433057307;
 coB = 150.60847566123539026905403016;
 coA = 0.0057832896592664328860507439985;
 curve_fit_coeffs = [coA, coB, coC];

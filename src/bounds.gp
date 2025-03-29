@@ -106,7 +106,7 @@ REQ_GIANT(G, reg1, v)=
 
 REQ_RIGOROUS(G,v, p)=
 {
-  return( ceil(REQ_JUMP(G, v)+log(p)+log(n)) );
+  return( ceil(REQ_JUMP(G, v)+log(p)+log(poldegree(G.pol))) );
 }
 prec_baby(n,log_disc, infsumt)={
 
@@ -141,18 +141,20 @@ giant_n(n,logdisc,q,logdetlamp)={
 /*
 New as of March 1, 2025
 */
-gfunc(n, delta_K, prec_q)={
+gfunc(n, delta_K, detLambda)={
   my(output, logdeltaK, log_detLambda);
   logdeltaK = log(abs(delta_K))/log(2);
   log_detLambda = log(detLambda)/log(2);
+  prec_q = n^2*logdeltaK + log_detLambda;
   output = (n^5)*log_detLambda^2;
   output += (n^2 + log_detLambda)*((n^5)*(prec_q^2)+ (2^n)*prec_q);
 }
 
-bfunc(n, delta_K, detLambda, prec_q, rho)={
+bfunc(n, delta_K, detLambda, rho)={
   my(output, test_exp, logdeltaK, log_detLambda);
   logdeltaK = log(abs(delta_K))/log(2);
   log_detLambda = log(detLambda)/log(2);
+  prec_q = n^2*logdeltaK + log_detLambda;
 
   test_exp = n^9+logdeltaK^2 +Tfunc(n)*(n^3+n*logdeltaK);
   output = log_detLambda+n^2;
@@ -161,7 +163,7 @@ bfunc(n, delta_K, detLambda, prec_q, rho)={
   return(output);
 }
 
-pfunc1(n, delta_K)=
+pfunc1(n, delta_K, detLambda)=
 {
   my(output, logdeltaK, log_detLambda,q_sat);
   log_detLambda = log(detLambda)/log(2);
@@ -171,7 +173,7 @@ pfunc1(n, delta_K)=
   output *= (n^3+ n*log_detLambda);
 }
 
-pfunc2(n, delta_K)=
+pfunc2(n, delta_K, detLambda)=
 {
   my(output, logdeltaK, log_detLambda,q_sat);
   log_detLambda = log(detLambda)/log(2);

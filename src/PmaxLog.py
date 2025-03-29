@@ -363,19 +363,27 @@ torsion_update(~torsionCoeffs, ~updateVector, k)=
 \\ - unitvector_cpct is the corresponding compact representations
 \\ - B is the index bound
 \\ - eps is precision level for comparisons
-log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
+log_pohst_pari(G,L,unitvector_cpct, B, eps, update_bound = 1, OUTFILE1 = "log_pohst_output")={
     print("LPohst: start. p = ", 2);
+    GP_ASSERT_TRUE(update_bound == 1 || update_bound == 0);
 
     my(new_units = L, index_holder = 1, index_bound = B, solution, solutionflag = 0, p = 2);
     my(eta_exp_mat, compact_lcm, test_eta_k, updatevec);
     my( torsion_coeffs, [torsion, torsiongen] = nfrootsof1(G) );
-    betavec = unitvector_cpct;
 
-    compact_lcm = lcm_denominators(unitvector_cpct);
+    \\# set the N parameter for heuristic index divisor test
+    my(param_N = max(10, 2*(G.r1+G.r2)));
+    print(precision(get_abs_determinant(L),10));
+    \\# declare timing variables
     my(time_pthRoot = 0, t_pthRootBefore, t_pthRootAfter,
         time_found = 0, t_foundBefore, t_foundAfter, initialTime);
-    initialTime = getabstime();
+    \\# set time limit on computation
+    pmax_timout = 24*60*60*1000;
 
+    betavec = unitvector_cpct;
+    compact_lcm = lcm_denominators(unitvector_cpct);
+
+    initialTime = getabstime();
     while(p <= index_bound,
 
         \\# include torsion in pari check when p is not coprime w/ size of torsion group
@@ -384,7 +392,6 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
         );
 
         \\#TO SKIP THE FAST PRIME CHECK, replace the if argument with a 1
-        my(param_N = max(5, 2*(G.r1+G.r2)));
         if(pari_prime_check_N(G, betavec, p, compact_lcm, param_N, 1) == 0 ,
 
             print("\npari_prime_check detects possible index divisor ", p);
@@ -393,22 +400,25 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
             torsion_coeffs = [];
             if(gcd(p,torsion)!=1,
                 \\ update eta set using the torsion unit, store the coeffs in a vector
-                torsion_coeffs = update_eta_set_log(G,p,,unitvector_cpct, eta_exp_mat, new_units);
+                torsion_coeffs = update_eta_set_log(G,p,0,unitvector_cpct, eta_exp_mat, new_units);
             );
 
-            k = 1;                                                              \\# each time a new prime is considered, reset k to 1
-            solutionflag = 1;                                                   \\# flag indicates if a solution has been found
-            solution = 0;                                                       \\# variable to hold either 0 or a found solutions
+            \\# each time a new prime is considered, reset k to 1
+            k = 1;
+
+            \\# hold either 0 or a found solution
+            solution = 0;
+
+            \\# flag indicates if a solution has been found
+            solutionflag = 1;
 
             while(solutionflag == 1,
                 \\\# step 1 of Algorithm 8, the pth root test
                 test_eta_k = new_units*eta_exp_mat[,k];
-                print(precision(new_units,10));
                 test_eta_k = test_eta_k/p;
 
                 t_pthRootBefore = getabstime();
-                \\\# here, test_eta_k is known on all coordinates because
-                \\\# it is a lin comb. of log vectors of units, so the sum of coordinates is just 0
+
                 solutionflag = check_in_unitlattice(G, test_eta_k~, eps);
 
                 t_pthRootAfter = getabstime();
@@ -418,22 +428,24 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
                     print("LPohst: Found Solutions --");
                     t_foundBefore = getabstime();
 
-                    \\# These two lines use mlll instead of column replacement
+                    \\# Uncomment two lines to use mlll instead of column replacement
                     \\#new_units = new_units*eta_exp_mat;
                     \\#new_units = my_mlll(matconcat([new_units, test_eta_k]),eps);
 
-                    \\# These lines replace the kth unit; different than described in Pohst
+                    \\# These replace the kth unit; different than described in Pohst
                     new_units = replace_column(new_units, k, test_eta_k);
                     new_units = new_units*qflll(new_units);
-
+                    print(precision(get_abs_determinant(new_units),10));
                     unitvector_cpct = cpct_from_loglattice(G, new_units, eps);
 
-                    \\ if the cpct reps have changed, then need to update betavec and the lcm
+                    \\# if the cpct reps have changed, then need to update betavec and the lcm
                     betavec = unitvector_cpct;
                     compact_lcm = lcm_denominators(unitvector_cpct);
 
                     eta_exp_mat = matid(length(new_units));
-                    index_bound = ceil(index_bound/p);
+                    if(update_bound == 1,
+                        index_bound = ceil(index_bound/p);
+                    );
                     index_holder = index_holder*p;
                     if(gcd(p,torsion)!=1,
                         \\ update eta set using the torsion unit, store the coeffs in a vector
@@ -443,7 +455,8 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
                     t_foundAfter = getabstime();
                     time_found += (t_foundAfter-t_foundBefore);
                     if (index_bound ==1, print("Index is now 1. Ending LPohst"); return(new_units));
-                , \\else                                                        # this is the case when no sol is found
+                , \\else
+                    \\# no sol is found
                     if(k == length(L),solutionflag = 0; break;);
 
                     updatevec = update_eta_set_log(G,p,k,unitvector_cpct, eta_exp_mat, new_units, torsion_coeffs);
@@ -464,10 +477,8 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, OUTFILE1 = "log_pohst_output")={
             betavec = unitvector_cpct;
             compact_lcm = lcm_denominators(unitvector_cpct);                    \\ used as the 'bad' input to pari_prime_check, ignores non-coprime primes during the equation finding step
         );
-        \\if((p%5000) == 1,
-        \\    print("PthRoot: ", time_pthRoot); breakpoint());
 
-        if (getabstime()-initialTime > (12*60*60*1000), write(OUTFILE1, G.pol, " time exceeds 12 hours");break;);
+        if (getabstime()-initialTime > pmax_timout, write(OUTFILE1, G.pol, " time exceeds 12 hours");break;);
 
         p = nextprime(p+1);
     );

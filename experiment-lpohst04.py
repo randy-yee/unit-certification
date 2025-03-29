@@ -22,10 +22,12 @@ OUTPUT_FILE = "data/pmax-Bsize-";
 {
     sigstring = "0-4";
     OUTPUT_FILE = concat(OUTPUT_FILE, sigstring);
-    start = 1;
-    end   = 30;
+    start = 20;
+    end   = 25;
     step  = 1;
     loop_ranges = [start, end, step];
+
+    \\pmax_bound(sigstring, loop_ranges, [INPUT_FILE, OUTPUT_FILE]);
     \\\ # generate data for specified input and output files
     pmax_log_experiment(sigstring, loop_ranges, [INPUT_FILE, OUTPUT_FILE]);
 

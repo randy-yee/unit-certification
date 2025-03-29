@@ -163,13 +163,6 @@
 
 }
 
-/*
-Untested functions:
 
-checkred
-checkred_old
-ideal_contains1
-is_vec_in_lattice
-*/
 
 print("Testing logarithm lattice functions complete")
