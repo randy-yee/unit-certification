@@ -6,10 +6,20 @@ read("src/bounds.gp")
 }
 
 {
-    K1= nfinit(x^3 - 67*x^2 + 2032*x -2053);
-    K2= bnfinit(x^3 - 67*x^2 + 2032*x -2053);
+ \\K1 = bnfinit(x^{3} + 30* x - 360,1);nfalgtobasis(K1,K1.fu[1])
+\\[7865950839478943661434907500541947030760361114794579294314873617, 1005351500390959543134043279054876965345304035388484825744600045, 1052770579104607884326123629972673238114829493466401750074041298]~
+\\break> K1.zk
+\\[1, x, 1/6*x^2 + 3]
+    \\K1= nfinit(x^3 - 67*x^2 + 2032*x -2053);
+    \\K2= bnfinit(x^3 - 67*x^2 + 2032*x -2053);
+    \\K1 = nfinit(x^3 + 35*x - 92,1);
+    \\K2 = bnfinit(x^3 + 35*x - 92,1);
+    K1 = nfinit(x^3 - 161*x^2 + 7503*x - 99998);
+    K2 = bnfinit(K1.pol,1);
 
     lglat = get_log_lattice_bnf(K2);
+
+
     reg1 = get_abs_determinant(lglat);
     B = 1;
     scanRadius =0.5;
@@ -18,6 +28,10 @@ read("src/bounds.gp")
     short = qfminim(mat1~*mat1,,,2);
 
     cpct_units = cpct_from_loglattice(K1, lglat, eps);
+    print(K1.zk);
+    print(K2.fu[1]);
+    print(cpct_units[1]);
+    breakpoint();
     \\bsgs_output= bsgs(K1,cpct_units, B, 18, scanRadius, eps,20,"alltest.txt");
     \\real matrix example and also check  LLL reduced basis
     rMat = [30.076166,

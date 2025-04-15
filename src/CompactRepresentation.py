@@ -326,10 +326,8 @@ giantstep(y,v,G,n,eps)={
         shrunken_v, shrunken_target
     );
 
-    shrunken_v=2^(-t)*v;                                                        \\ this is y_sigma
-    shrunken_target = create_target(G, shrunken_v, 1);                          \\ adds the (r+s)th coord, so that the sum of the log embeddings is 0
-
-    print("WARNING: Giant step is being deprecated. Please ensure appropriate use");
+    shrunken_v=2^(-t)*v;
+    shrunken_target = create_target(G, shrunken_v, 1);
 
     [idealB,u,log_distance,beta]=reddiv_compact(y,shrunken_target,G,G[5][1]);   \\ (Ideal, minimum, log distance)
     [idealB, u, log_distance] = double_and_reduce_divisor_loop(G, t, idealB, u, log_distance);
@@ -716,7 +714,7 @@ cpct_rep_final_enum2(G, idealB, target, desired_betalog, eps, testFlag = 0)={
 
     temp_precision = max(50, ceil(idealPrecision(G, square_ideal, normlp(desired_betalog))));
     oldbitprecision = change_precision(temp_precision);
-    print(precision(exponentiate_logvec(G.r1+G.r2-1, abs(desired_betalog), 1),10), "  ", precision(u_square, 10));
+    \\print(precision(exponentiate_logvec(G.r1+G.r2-1, abs(desired_betalog), 1),10), "  ", precision(u_square, 10));
 
     \\\ reddiv but look for specific beta
     numerical_ideal = G[5][1]*square_ideal;                                     \\ complex embedding matrix of y
@@ -726,7 +724,7 @@ cpct_rep_final_enum2(G, idealB, target, desired_betalog, eps, testFlag = 0)={
     LLLcoeffmat = square_ideal*LLL_change_of_basis;                             \\ LLL basis, coords wrt the integral basis
     real_mat_uY = embed_real(~G, ~LLL_numerical_uY);
     scan_elements = qfminim(real_mat_uY~*real_mat_uY, field_deg,,2)[3];
-    print("-- elts scanned: ", length(scan_elements));
+    \\print("-- elts scanned: ", length(scan_elements));
 
     for(i=1, length(scan_elements),
         check_beta = LLLcoeffmat*scan_elements[,i];          \\# beta wrt integral basis
@@ -836,6 +834,7 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
       \\GP_ASSERT_TRUE(samevecs(log_beta, log_beta2));
 
       [alpha_i, ideal_denom]=get_alpha_and_d(G, idealB, beta, 0);
+
       d_vec = concat(d_vec,ideal_denom);
       alpha_vec = concat(alpha_vec, alpha_i);
 

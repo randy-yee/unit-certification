@@ -176,6 +176,7 @@ compute_parameter_B(detLambda, pohstFieker)=
         print("sig 31");
         adjust_eps = 0.1;
         bn_gn = (- 113.588 + 0.587508*logdetLambda^2);
+
         pn = (0.00777885*logdetLambda^2 + 1.78222);
         factor2 = 2^(12);
     ,
@@ -189,7 +190,8 @@ compute_parameter_B(detLambda, pohstFieker)=
         print("equation for picking B in this signature has not been established");
         breakpoint();
     );
-
+    if(bn_gn < 0, print("Warning, bsgs fitting value is negative, setting to 1"););
+    bn_gn = max(1, bn_gn);
     result = (factor2)*bn_gn/(2*(1+adjust_eps)*pn);
     print("result: "precision(result,10 ));
     result = floor((result*sqrt(detLambda))^(2/(3+2*adjust_eps)));
@@ -268,9 +270,11 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary, single_a
         default(realprecision, ceil(REQ_BSGS));
 
         lglat_new = lglat;
-
+        \\lglat_new[,1] *= 8;\\8*37;
+        \\lglat_new[,r] *= 9;\\(3^2);
+        newreg = abs(matdet(lglat_new));
         writeInfo(i, K, lglat_new, reg1, signature_string, REQ_BSGS);
-
+        write(OUTFILE1, "input reg: ", precision(newreg,10), " index: ", precision(newreg/reg1,10));
         cpct_units = cpct_from_loglattice(K, lglat_new, bsgs_eps);
 
         \\# Fraction of fundamental region to search. Standalone BSGS should use 2 (1/2)
@@ -299,16 +303,13 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary, single_a
         ,
         (length(b_ranges)==3) && (type(b_ranges)!="t_MAT"),    \\elif
             print("Auto-selecting babystock region size based on coeffs");
-            sqrt_reg = sqrt(abs(reg1));
-            logdetLambda = log(abs(reg1));
+            sqrt_reg = sqrt(abs(newreg));
+            logdetLambda = log(abs(newreg));
             log_sqrt_reg = log(sqrt_reg);
             coeff_a = b_ranges[1];
             coeff_b = b_ranges[2];
             coeff_c = b_ranges[3];
 
-            \\ a*x*log(x) + b*sqrt(log(x)) + c
-            \\estimate = max(floor(coeff_a*sqrt_reg*log_sqrt_reg+coeff_b*sqrt(log_sqrt_reg)+coeff_c)/r,2);
-            \\# a * sqrt(detLambda)*Log(detLambda) + b * sqrt(logdetLambda) + c
             estimate = max(floor( coeff_a*sqrt_reg*logdetLambda+coeff_b*sqrt(logdetLambda)+coeff_c), 1);
             init = estimate - 1*floor(estimate/5);
             end = estimate + 1*floor(estimate/5);
@@ -340,7 +341,7 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary, single_a
             );
             \\scaling_variable = ((2^r)* log(abs(K.disc))^(1+j/den))/constscale ;
             scaling_variable = j;
-            \\write(OUTFILE1, "\nscaling var = log(abs(disc))^(1+",j, "/",den,")*(2*r)/",constscale , "=",precision(scaling_variable,10));
+
             print("bsgs starting");
             t9 = getabstime();
             bsgs_output= bsgs(K,cpct_units, scaleB, scaling_variable, bitprecision(scanBallRadius, REQ_BSGS), bsgs_eps,REQ_BSGS, OUTFILE1, [timeout]);
@@ -546,6 +547,13 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
         \\lglat_new = lglat; lglat_new[,1] = 3*lglat_new[,1]; print(precision(lglat_new,10), "\nMODPAIR", modpair1);
 
         lglat_new = lglat; \\modpair1[2] =1;
+
+        \\lglat_new[,1] *= 8*37;
+        \\lglat_new[,r] *= (3^2);
+
+        newreg = abs(matdet(lglat_new));
+        write(OUTFILE1, "input reg: ", precision(newreg,10), " index: ", precision(newreg/reg1,10));
+
         unitvector_cpct = cpct_from_loglattice(K, lglat_new, eps);                  \\ computation of compact reps
 
         memLimit = 1000000000; \\#MEM
@@ -650,8 +658,8 @@ compute_babystock_size(K, detLambda, curve_fit_coeffs, balanceB, OUT_FILE)=
         print("warning, this isn't a good estimate");
     ,
         sqrt_reg = sqrt(abs(detLambda)/balanceB);
-        logdetLambda = log(abs(detLambda)/balanceB)/log(2);
-        log_sqrt_reg = log(sqrt_reg)/log(2);
+        logdetLambda = max(log(abs(detLambda)/balanceB),1);
+        log_sqrt_reg = max(log(sqrt_reg),1);
         coeff_a = curve_fit_coeffs[1];
         coeff_b = curve_fit_coeffs[2];
         coeff_c = curve_fit_coeffs[3];
@@ -719,29 +727,25 @@ for(i=start, end,
     lglat_new = lglat;
     writeInfo(i, K, lglat_new, reg1, signature_string, REQ_BSGS);
 
-
-    p1 = pmax_p1(n,logdisc, log(abs(reg1)) );
-    p2 = pmax_p2(n, REQ_RIG, logdisc, log(abs(reg1)));
-    g_n = giant_n(n, logdisc, REQ_BSGS,log(abs(reg1)));
-    b_n = baby_n( n,logdisc,REQ_BSGS,log(abs(reg1)));
-    \\pchoice = p1+p2;
-    pchoice = p1;
-
     \\write(OUTFILE1, "adding index divisors ");
-    \\lglat_new[,1] *= 4*13;
-    \\lglat_new[,r] *= (3^3) * 5;
+
+    \\lglat_new[,1] *= 990013;
+    \\lglat_new[,r] *= 1;
+    lglat_new[,1] *= 8*37;
+    lglat_new[,r] *= (3^2);
+    lglat_new = lglat_new*qflll(lglat_new);
+    newreg = abs(matdet(lglat_new));
+    sumv = column_sum(lglat_new);
+    [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat_new, ~newreg);
+    X = REQ_RIGOROUS(K, sumv, 1);
+    default(realprecision, X);
+
+    write(OUTFILE1, "input reg: ", precision(newreg,10), " index: ", precision(newreg/reg1,10));
     \\# LOGIC for checking which lattice column vector is longest
     \\# identify the index of the basis element with largest norm
     maxnorm_index = get_max_norm_index(lglat_new, r);
     print("Vector ", maxnorm_index, " of ", length(lglat_new), "is longest. Length: ",precision( sqrt(norml2(lglat_new[,maxnorm_index])),10) );
 
-
-    \\# old formula for B
-    \\#balanceB = ((abs(reg1))^(1/3)) * (g_n*b_n)^(1/3); balanceB /= (pchoice^(2/3));
-
-    \\oldB = abs(log(reg1))*2^poldegree(K.pol)*reg1^(1/3);
-    \\balanceB = hybrid_balance_calculator(r, n, reg1);
-    \\balanceB = min(reg1, oldB);
 
     memLimit = 1000000000; \\#MEM
     newKLimit = compute_K_limit(K, memLimit);
@@ -753,7 +757,7 @@ for(i=start, end,
 
 
     my(ATTEMPT_SKEW = 0);
-    balanceB = compute_parameter_B(reg1, indexbound);
+    balanceB = compute_parameter_B(newreg, indexbound);
     last_vec_length = sqrt( norml2(lglat_new[,length(lglat_new)]));
     write(OUTFILE1, "B = ", round(balanceB),  " limit due to rho and rth vec length: ",ceil(last_vec_length/scanBallRadius));
 
@@ -773,17 +777,16 @@ for(i=start, end,
 
     print("Degree: ", n, " UnitRank: ",r,  " Fitted B: ", precision(hybrid_balance_calculator(r, n, reg1),10));
     print("New B ", balanceB);
-    \\balanceB = min(balanceB, sqrt( norml2(lglat_new[,length(lglat_new)])  ) ); balanceB*=2;
 
     largest_dimension = sqrt(norml2(lglat_new[,maxnorm_index]/balanceB));
-
     last_vector = lglat_new[,length(lglat_new)];
     large_length = sqrt( norml2(last_vector));
 
     \\\#this logic tries to increase the length of the last vector so that B
     \\\# can be larger
-    target_length = balanceB/3.0;
+    \\target_length = balanceB/3.0;
     \\lglat_new = skew_lattice(lglat_new, balanceB, 3.0);
+
     largest_dimension = sqrt(norml2(lglat_new[,r]/balanceB));
 
     print("ensure compute precision is using B as part of the precision computation");
@@ -810,7 +813,7 @@ for(i=start, end,
     print("Running BSGS Algorithm");
     default(realprecision, ceil(REQ_BSGS));
     detLambda = get_abs_determinant(pohst_out_lattice);
-
+    print(precision(detLambda,10), "  ", precision(pohst_out_lattice,10));
     t9 = getabstime();
 
     \\\ reduced precision to compute scanball radius
@@ -828,8 +831,10 @@ for(i=start, end,
     bstock_size = sqrt(  (abs(reg1)/balanceB)*g_n/b_n  )/2;
 
     detLambda = get_abs_determinant(pohst_out_lattice);
-    bstock_size = compute_babystock_size(K, detLambda, curve_fit_coeffs, balanceB, OUTFILE1);
+    print("after pmax: ", precision(detLambda,10));
+    print("B: ", precision(balanceB,10));\\789 normal \\52699
 
+    bstock_size = compute_babystock_size(K, detLambda, curve_fit_coeffs, balanceB, OUTFILE1);
 
     bsgs_output= bsgs(K,stage1_units, balanceB, bstock_size, bitprecision(scanBallRadius, REQ_BSGS), eps,REQ_BSGS, OUTFILE1, [timeout]);
     t10 = getabstime();

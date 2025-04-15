@@ -31,9 +31,9 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
 
     \\# This is the basic calculation for the babystock region
     \\# It is currently overriden
-    g_n = giant_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
-    b_n =  baby_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
-    smallsquare = sqrt(  (abs(detLambda)/B)*g_n/b_n  );
+    \\g_n = giant_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
+    \\b_n =  baby_n( deg, log(abs(G.disc)), REQ_BSGS, real(log(detLambda)) );
+    \\smallsquare = sqrt(  (abs(detLambda)/B)*g_n/b_n  );
     \\print("Old babystock volume value:  ", precision(smallsquare,10));
 
     \\# Compute ratio of (full search region / babystock region)
@@ -51,8 +51,6 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
     GP_ASSERT_TRUE(dimensions == unit_rank);
     GP_ASSERT_NEAR(detLambda , get_abs_determinant(lattice_lambda), 0.00001);
 
-    \\#scaling complex embeddings by 2 results in greater flexibility for
-    \\# baby stock volume.
     norm_vr = sqrt(norml2(lattice_lambda[,dimensions] ));
 
 
@@ -112,7 +110,9 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
     );
 
     miniLambda = lattice_lambda;
-    for(i=1, length(avec), miniLambda[,i] /= avec[i]);
+    for(i=1, length(avec),
+        miniLambda[,i] /= avec[i]);
+    miniLambda[,unit_rank]/=B;
     print(precision(fullregion_to_babystock_ratio, 10), "  ", precision(finalproduct,10),"\nbabystock det: ", precision(abs(matdet(miniLambda)),10));
     return(avec);
 }
@@ -160,7 +160,7 @@ get_giant_step_params(G, lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS)
     if(1,
         print_area_info(giant_legs, r);
     );
-
+    print("giant leg det: ", precision(abs(matdet(giant_legs[1..r,])),10));
     return([avec,giant_legs]);
 }
 
@@ -170,5 +170,6 @@ print_area_info(~giant_legs, rank)=
     for(i=1, length(giant_legs),
         print("Norms of scaled vectors (a_i, B) ", precision(sqrt(norml2(giant_legs[,i][1..rank])),10));
         area*=sqrt(norml2(giant_legs[,i][1..rank])));
+    \\print("giant leg det: ", precision(abs(matdet(giant_legs[1..rank,])),10));
     print("actual babystock area region (multiplying vector norms): ", precision(area,10),"\n \n");
 }

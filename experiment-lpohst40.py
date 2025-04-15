@@ -34,8 +34,8 @@ SMALLEXAMPLE = 0;
 {
     sigstring = "4-0";
     OUTPUT_FILE = concat(OUTPUT_FILE, sigstring);
-    start = 11;
-    end   = 11;
+    start = 10;
+    end   = 16;
     step  = 1;
     loop_ranges = [start, end, step];
     pmax_log_experiment(sigstring, loop_ranges, [INPUT_FILE, OUTPUT_FILE]);

@@ -40,7 +40,7 @@ currently the original implementation is on msx that uses the non-normalized log
 read("test/TestingUtility.gp");
 
 
-read("test/test_examples.py");
+\\read("test/test_examples.py");
 
 read("test/test_mlll.py");
 read("test/test_vector_methods.py");

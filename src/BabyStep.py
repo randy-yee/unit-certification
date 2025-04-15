@@ -397,7 +397,7 @@ scan_ball_new(~G, ~bmap, ~y, ~u, ~log_distance, ball_distance, delta_K, expected
     );
 
     if(SCAN_STATS,
-        print("enumerated elts: ",  length(scan_elements), "  scan bound: ", precision(alt_scan_bound,10));
+        print("enumerated elts: ",  length(scan_elements), "  scan bound: ", precision(scan_bound,10));
         if(length(scan_elements) == 0,print("LLL shortest: ",precision(sqrt(norml2(vecholder)),10)););
     );
     for(ii=1, length(scan_elements),
@@ -473,11 +473,12 @@ check_units_bstock(~bmap, ~L, ~G, eps)={
     );
     new_counter = 0;
     if (mapisdefined(bmap, ideal_identity, &minlist),
-        for(i=1,length(minlist),                                                               \\ if the ideal (1/mu)*O_k = O_k then check further
-            candidate=minlist[i];                                                              \\ candidate = log(mu)
-            if(norml2(candidate)>eps_sqr&&is_vec_in_lattice(candidate[1..urank]~,L,eps_sqr)==0,          \\ if nonzero and v is not already in L, then
+        for(i=1,length(minlist),
+            candidate=minlist[i];
+            if(norml2(candidate)>eps_sqr&&is_vec_in_lattice(candidate[1..urank]~,L,eps_sqr)==0,
                 new_counter+=1;
                 print("Babystock unit found, " precision(L,10), "  ", precision(candidate,10));
+
                 L = my_mlll(matconcat([L, candidate~]), eps);
             )
         );
@@ -516,19 +517,17 @@ babystockPrecision(G, sublatticeBasis)={
     my(X2,sumv = sublatticeBasis[,1]);
     for(j=2, length(sublatticeBasis), sumv+=sublatticeBasis[,j]);
     X2 = REQ_BABY(G, get_abs_determinant(sublatticeBasis[1..G.r1+G.r2-1,]), column_sum(sublatticeBasis));
-    \\X2 = prec_baby(poldegree(G.pol), log(abs(G.disc)), normlp(sumv));
-    \\print(REQ_BABY(G, get_abs_determinant(sublatticeBasis[1..G.r1+G.r2-1,]), column_sum(sublatticeBasis)), "  ", X2);
+
     return(ceil(X2));
 }
 
-initialize_babystock_edges(~giant_legs, scan_shrink_factor, r)=
+initialize_babystock_edges(~giant_legs, radius_rho, r)=
 {
     my(denoms, babystock_t);
     \\\# Note, these denoms are chosen based on the length r vector, not the r+1 vector
     denoms = vector( r, i, sqrt(norml2(giant_legs[,i][1..r])));
-    \\denoms = vector( r, i, sqrt(norml2(giant_legs[,i])));
-    print("norm of giant vectors: ", precision(denoms,10), "  ", precision(scan_shrink_factor,10));
-    denoms/= (scan_shrink_factor);
+    \\#denoms = vector( r, i, sqrt(norml2(giant_legs[,i])));
+    denoms/= (radius_rho);
 
     for(i=1, length(denoms),
         if (denoms[i]-floor(denoms[i]) < 0.00001,
@@ -576,7 +575,7 @@ incremental_baby_steps_compact(y, ~lattice_lambda, ~giant_legs,\
     );
     GP_ASSERT_EQ(r, length(giant_legs));
     REQ_BS = babystockPrecision(G, giant_legs);
-    print(REQ_BS, "  ", REQ_BABY(G, get_abs_determinant(lattice_lambda), column_sum(giant_legs)));
+
     default(realbitprecision, REQ_BS);  \\\ change precision, switches back in giant step algs
     start_time = getabstime();
 
@@ -778,6 +777,7 @@ incremental_baby_steps_compact(y, ~lattice_lambda, ~giant_legs,\
 b_scan(G, y, ~lattice_lambda, ~giant_legs,\
                         ~baby_hashmap, scan_radius, eps, outFileInfo=[])={
     my(timeout, OUTFILE_BS);
+
     if(length(outFileInfo) == 2,
         timeout = outFileInfo[2];
         OUTFILE_BS = outFileInfo[1];
@@ -801,7 +801,6 @@ b_scan(G, y, ~lattice_lambda, ~giant_legs,\
 
     GP_ASSERT_TRUE(eps > 0); GP_ASSERT_EQ(r, length(giant_legs));
     REQ_BS = babystockPrecision(G, giant_legs);
-    \\print("b_scan prec: ", default(realbitprecision), "  ", REQ_BS);
     default(realbitprecision, REQ_BS);
 
     start_time = getabstime();
@@ -846,13 +845,19 @@ b_scan(G, y, ~lattice_lambda, ~giant_legs,\
 
     SCREEN(0, "Additional timing variables and file writes");
 
-    my(baby_t1, baby_tn, baby_tmid, ctr);
+    my(
+    timer1, timer2,
+    divisor_time = 0,
+    update_time = 0,
+    scan_time = 0,
+    adjust_time = 0,
+    baby_t1, baby_tn, baby_tmid, ctr=0);
     baby_t1 = getabstime();
     baby_tmid = baby_t1;
 
     while(web_coords != zero_vec,
         old_expected_position = expected_position;
-
+        timer1 = getabstime();
         if(directions[place_marker] == 1,
             baby_divisor = [idealmul(G, baby_divisor[1], direction_elements[place_marker][1]),
                 pointwise_vector_mul(baby_divisor[2],direction_elements[place_marker][2] )~];
@@ -866,24 +871,29 @@ b_scan(G, y, ~lattice_lambda, ~giant_legs,\
             compactTracking[place_marker][2] -= 1;
             trackingLog -= log_from_cpct(G, direction_elements[place_marker][3]);
         );
-
         wasUpdated = get_next_giant_divisor_cpct(G, ~baby_divisor, ~compactTracking);
+
+        timer2 = getabstime(); divisor_time += (timer2-timer1);timer1 = getabstime();
         if (wasUpdated,
             trackingLog += embeddings_to_normalized_logvec(G, nfeltembed(G, compactTracking[length(compactTracking)][1]));
         );
-
-        [baby_divisor, tempLog] = adjust_giant_step_cpct(~G, ~baby_divisor,~compactTracking, ~trackingLog, ~expected_position, s_radius, eps);
+        \\#changed Apr 2025
+        \\#[baby_divisor, tempLog] = adjust_giant_step_cpct(~G, ~baby_divisor,~compactTracking, ~trackingLog, ~expected_position, s_radius, eps);
+        [baby_divisor, tempLog] = adjust_giant_step_cpct(~G, ~baby_divisor,~compactTracking, ~trackingLog, ~expected_position, scan_radius, eps);
         logdist = trackingLog;
 
+        timer2 = getabstime(); adjust_time += (timer2-timer1);timer1 = getabstime();
         \\# debug function ensures the divisor actually generates the ideal
         \\#verify_generator_with_list(G, baby_divisor[1], compactTracking); print("verifying element after adjust");
-
+        \\print("norm of divisor: ", precision(norml2(baby_divisor[2]),10));
         ball_minima = scan_ball_new(~G, ~baby_hashmap, ~baby_divisor[1], ~baby_divisor[2], ~logdist, scan_radius, delta_K, expected_position, eps);
+        timer2 = getabstime(); scan_time += (timer2-timer1);timer1 = getabstime();
 
         \\# increase the tracking variable and update directions
         place_marker = increment_with_place_marker(~denoms, ~web_coords);
         updateDirections(~directions, ~place_marker);
 
+        \\print(" divisor: ",divisor_time, "  scan: ", scan_time, " adjust: ", adjust_time );
         \\\ regenerate the logs of the babysteps
         if ((ctr%500 == 0) && ctr > 0,
             base_value = compact_rep_full_input(G, trackingLog, baby_divisor[1], eps, 1, 2);
@@ -967,15 +977,14 @@ b_scan_jump(G, y, ~lattice_lambda, ~giant_legs,\
         compactTracking = List(),
         trackingLog = vector(r+1, i, 0),
         idealCompactGenerator = Map(),
-        base_value = [[1], [1]],
-        s_radius = (sqrt(poldegree(G.pol))/4)*log(abs(G.disc));
+        base_value = [[1], [1]]
     );
 
     \\ #vectors of length r which are used to compute an adjacent element in
     \\ #a particular direction in log space
     \\ #direction_elements[i] and inverse_direction_elements[i] are multiplicative inverses
 
-    my(baby_t1, baby_tn, baby_tmid, ctr);
+    my(baby_t1, baby_tn, baby_tmid, ctr=0);
     baby_t1 = getabstime();
     baby_tmid = baby_t1;
 

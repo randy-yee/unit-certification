@@ -373,7 +373,7 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, update_bound = 1, OUTFILE1 = "log_po
 
     \\# set the N parameter for heuristic index divisor test
     my(param_N = max(10, 2*(G.r1+G.r2)));
-    print(precision(get_abs_determinant(L),10));
+
     \\# declare timing variables
     my(time_pthRoot = 0, t_pthRootBefore, t_pthRootAfter,
         time_found = 0, t_foundBefore, t_foundAfter, initialTime);
@@ -435,7 +435,6 @@ log_pohst_pari(G,L,unitvector_cpct, B, eps, update_bound = 1, OUTFILE1 = "log_po
                     \\# These replace the kth unit; different than described in Pohst
                     new_units = replace_column(new_units, k, test_eta_k);
                     new_units = new_units*qflll(new_units);
-                    print(precision(get_abs_determinant(new_units),10));
                     unitvector_cpct = cpct_from_loglattice(G, new_units, eps);
 
                     \\# if the cpct reps have changed, then need to update betavec and the lcm

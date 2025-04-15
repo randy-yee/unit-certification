@@ -22,8 +22,8 @@ OUTPUT_FILE = "data/pmax-Bsize-";
 {
     sigstring = "0-4";
     OUTPUT_FILE = concat(OUTPUT_FILE, sigstring);
-    start = 20;
-    end   = 25;
+    start = 10;
+    end   = 16;
     step  = 1;
     loop_ranges = [start, end, step];
 

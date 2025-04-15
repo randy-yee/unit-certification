@@ -439,7 +439,6 @@ collision_check2(G, ~lattice_lambda, r, eps,\
         default(realbitprecision, gd_precision);    \\ reduce precision
         \\\ ... do some computation
         default(realbitprecision, mainbitprecision); \\ restore original precision
-        \\ s_radius = bitprecision(s_radius, mainbitprecision);
     */
 
     gd_log = trackerLogarithm(G, ~compactTracking, r);
@@ -1016,11 +1015,9 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
     if(alg != "NEIGHBOURS" && alg != "SCAN", print("Unknown algorithm specified, returning -1", return(-1) ));
     if(DEBUG_BSGS>0 , print("Bound B = ", precision(B,10)); );
 
-    my(lattice_lambda, S_radius, avec, giant_sublattice);
+    my(lattice_lambda, avec, giant_sublattice);
     lattice_lambda = log_lattice_from_compact_set(G, cpct_reps);
-    S_radius = compute_default_scan_radius(G);
     [avec, giant_sublattice] = get_giant_step_params(G,lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS);
-
     tb = getabstime();
 
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -1038,8 +1035,9 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
     minimal_vec_length = get_minimal_length(giant_sublattice);
 
     aprod = 1; for(i=1, length(avec), aprod*=avec[i]);
+
     if(minimal_vec_length < scanballRadius,
-        scanballRadius = max(minimal_vec_length, 0.01);
+        scanballRadius = max(minimal_vec_length, 0.25);
 
         write(FILE1,strprintf("Adjusted scan radius: %-10.9F  Aproduct: %-10.9F", scanballRadius, aprod),"  aVec =", precision(avec, 10));
         ,
@@ -1060,7 +1058,7 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
         );
 
         foundflag = length(num_elts_found);
-        print("babystock size: ", length(babystock));
+        print("  babystock size: ", length(babystock));
         while(foundflag !=0,
             \\# if new elements found, regenerate lattice_lambda to remove precision loss
             print("Readjusting precision due to new element");
@@ -1110,7 +1108,7 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
     \\#normproduct = 1; for(i=1, length(giant_sublattice), normproduct*=sqrt(norml2(giant_sublattice[,i])) ); print("region size: ", normproduct);
     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
     tg = getabstime();
-    print("eps giant step start: ", eps);
+
     if(storage == "LOG",
         lattice_lambda =
             incremental_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, \
@@ -1122,7 +1120,7 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
                                     ~babystock, avec, eps, storage, cpct_bstock, [FILE1, timeout]);
     );
     \\#lattice_lambda = jump_giant_steps(~G, ~lattice_lambda, ~giant_sublattice, ~babystock, avec, eps);
-
+    print("after giants : ", precision(abs(matdet(lattice_lambda)),10) );
     bsgs_end = getabstime(); gianttime = bsgs_end-tg;
 
     write(FILE1,  "Giantstep time:  ", gianttime,  "   ",precision(gianttime/60000.0,15), " . Giant steps computed: ", precision(aProduct,10));
