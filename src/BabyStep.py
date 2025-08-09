@@ -536,12 +536,15 @@ initialize_babystock_edges(~giant_legs, radius_rho, r)=
         );
         if (denoms[i] ==0, denoms[i] = 1);
     );
+
     babystock_t = giant_legs;
     for(i=1, length(babystock_t),
+        \\print("giant leg length: ", precision(sqrt(norml2(babystock_t[,i])),10));
         babystock_t[,i]=babystock_t[,i]/denoms[i];
-    #print("babystock edge length: ", precision(sqrt(norml2(babystock_t[,i])),10))
+        \\print("babystock edge length: ", precision(sqrt(norml2(babystock_t[,i])),10))
     );
-    print("GS region size = ", precision(get_abs_determinant(giant_legs[1..r,]),10));
+
+    print("Bstock initialized. Region size = ", precision(get_abs_determinant(giant_legs[1..r,]),10));
     return([babystock_t, denoms]);
 }
 

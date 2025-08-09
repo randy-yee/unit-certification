@@ -8,6 +8,35 @@ read("src/BSGSHelper.py")
 }
 
 
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\ test cases for compact_rep and compact_reconstruct
+{
+    my(G1, G2, O_K, n, eps = 10^(-9));
+    G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
+    G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
+
+    print("--Cpct Rep: test case - Signature ", G1.sign);
+    n = poldegree(G1.pol);
+    O_K = matid(n);
+    logarithm_lattice = get_log_lattice_bnf(G2);
+    extra_log_coords = vector(length(logarithm_lattice), i, extra_log_coordinate(G1.r1, G1.r2, logarithm_lattice[,i]));
+    logarithm_lattice = matconcat([logarithm_lattice; extra_log_coords]);
+
+    for(i=1, length(G2.fu),
+    \\print(precision(logarithm_lattice[,i]~,10));
+        cpct_rep = compact_rep_full_input(G1, logarithm_lattice[,i]~, O_K , eps);
+        numComponents = length(cpct_rep[1]);
+        alphafinal = 1;
+        for(j=3, numComponents,
+            intermediate = nfeltdiv(G1, cpct_rep[1][j], cpct_rep[2][j]);
+            intermediate = nfeltpow(G1, intermediate, 2^(numComponents-j));
+            alphafinal = nfeltmul(G1,alphafinal, intermediate);
+            \\print("(alpha/d)^",2^(numComponents-j), " ", intermediate, "\nintermediate product: ", alphafinal);
+        );
+        GP_ASSERT_EQ(vec_flip_positive(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2])), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
+    );
+}
+
 {
     print("--Cpct Rep: test case 1 - bad approximation input");
 
@@ -58,25 +87,7 @@ print("--Cpct Rep: test case 2 - bad approximation input");
     GP_ASSERT_VEC_NEAR(log_from_cpct(G1, cpct_rep)[1..urank], alpha[1..urank], 1/10000);
 }
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ test cases for compact_rep and compact_reconstruct
-{
-    my(G1, G2, O_K, n, eps = 10^(-9));
-    G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
-    G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
 
-    print("--Cpct Rep: test case - Signature ", G1.sign);
-    n = poldegree(G1.pol);
-    O_K = matid(n);
-    logarithm_lattice = get_log_lattice_bnf(G2);
-    extra_log_coords = vector(length(logarithm_lattice), i, extra_log_coordinate(G1.r1, G1.r2, logarithm_lattice[,i]));
-    logarithm_lattice = matconcat([logarithm_lattice; extra_log_coords]);
-
-    for(i=1, length(G2.fu),
-        cpct_rep = compact_rep_full_input(G1, logarithm_lattice[,i]~, O_K , eps);
-        GP_ASSERT_EQ(vec_flip_positive(compact_reconstruct(G1, cpct_rep[1], cpct_rep[2])), vec_flip_positive(nfalgtobasis(G1, G2.fu[i])) );
-    );
-}
 
 { \\ test cases for compact_rep_full_input and cpct_from_loglattice
 
@@ -334,7 +345,7 @@ print("--Cpct Rep: test case 2 - bad approximation input");
     print("--Time spent: ",total_time);
     \\# note that these timings are probably dependent on the computer system
     \\# these timings are based on a personal linux desktop. Adjust if needed
-    GP_ASSERT_WITHIN_RATIO(total_time, 5400, 0.15); 
+    GP_ASSERT_WITHIN_RATIO(total_time, 5400, 0.15);
 }
 
 {

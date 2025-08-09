@@ -135,13 +135,28 @@ reddiv_compact_invert_u(~y,~u,~G,~M1, p_avoid=1)={
     u = vector(length(u), i, 1/u[i]);
     numerical_mat_Y = M1*y;                                                     \\ complex embedding matrix of y
     ideal_uY = mulvec(~numerical_mat_Y, ~u);                                    \\ ideal u*y
-    LLL_change_of_basis = get_LLL_basis_change(G, ideal_uY);                    \\ qflll output has columns which are coords wrt the input matrix NOT the integral basis
+    \\# qflll output has columns which are coords wrt the input matrix NOT the integral basis
+
+    LLL_change_of_basis = get_LLL_basis_change(G, ideal_uY);
+
+    \\ Old strategy: LLL on complex matrix, apply the LLL matrix to
+    \\ ideal_uY, and then conver to real.
+
+    \\ The code below turns ideal_uY to a real matrix AR and then computes the LLL
+    \\ matrix (which seems to produce the same matrix).
+    \\ TODO: Ensure that applying LLL to AR doesn't cause precision issues
+    \\ need to run more experiments, but this ordering would be theoretically better
+    \\real_mat_uY = embed_real(~G, ~ideal_uY);
+    \\print(get_LLL_basis_change(G, real_mat_uY););
+    \\ real_mat_uY*get_LLL_basis_change(G, real_mat_uY);
+
 
     LLL_numerical_uY = ideal_uY*LLL_change_of_basis;                            \\ Obtain LLL basis of u*y in numerical form (possibly complex)
     LLLcoeffmat = y*LLL_change_of_basis;                                        \\ LLL basis, coords wrt the integral basis
 
     \\ need to scan to make sure the first basis vector is a shortest one
     real_mat_uY = embed_real(~G, ~LLL_numerical_uY);
+
     true_shortest = qfminim(real_mat_uY~*real_mat_uY,,,2);
 
     beta = LLLcoeffmat*true_shortest[3][,1];
@@ -795,15 +810,16 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
         kprime = new_t+1;
     );
     s_term = 2^(-new_t)*s_term;
+
     exp_s =  exponentiate_logvec(unit_rank, s_term);
 
     \\ # [*] observe here that the initial ideal reduction is always done in matid(poldegree(G.pol))
     [idealB, target, log_beta, beta] = reddiv_compact_invert_u(idealB, exp_s, G, G[5][1],avp);
     \\#print("Initial reddiv difference inf norm: ", ceil(normlp(target)));
 
-  s_term = 2*s_term;                                                                       \\ this is s2
+  \\# this is s2
+  s_term = 2*s_term;
   log_rho = log_beta;                                                                      \\ rho2 = beta2
-  \\print(G.sign, "   s_term2: ", precision(s_term,10), " log_rho= ", precision(log_rho,10));
 
   [alpha_i, ideal_denom]=get_alpha_and_d(G, idealB, beta, 0);
   d_vec = concat(d_vec,ideal_denom);                                                       \\ Get d_i= d(A) and append to tracking vector
@@ -825,6 +841,7 @@ compact_rep_full_input(G, alpha, alphaOK , eps, avp=1, testFlag = 0)={
       [idealB, target, log_rho, beta] = double_and_reduce_invert(G, idealB, target,log_rho,avp);
       \\print(i ,"  iteration reddiv difference inf norm: ", ceil(normlp(target)), "  ", floor(sqrt(abs(G.disc))) );
       \\print("inf-norm target : ", i, "  ", precision(normlp(target),10), "  ", precision((sqrt(abs(G.disc))*(2/Pi)^(G.r2))^(1/poldegree(G.pol)),10) );
+
       if(abs(ceil(normlp(target))) > floor(sqrt(abs(G.disc))),
           print("WARNING: CPCT REP - target norm is too large");
       );

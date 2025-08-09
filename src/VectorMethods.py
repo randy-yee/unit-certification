@@ -103,7 +103,7 @@ vector_approximate2(~v,eps)= {
 /*12. sum coordinates, and see if close enough to 0 */
 /******************************************************************************/
 is_trace_zero(v,eps)={
-    if(abs(sumvec(v))<eps^2, return(1), return(0));
+    if(abs(sumvec(v))<eps, return(1), return(0));
 }:bool
 
 /******************************************************************************/

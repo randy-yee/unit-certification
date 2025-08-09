@@ -42,6 +42,8 @@ read("test/TestingUtility.gp");
 
 \\read("test/test_examples.py");
 
+read("test/test_compact_representation.py");
+
 read("test/test_mlll.py");
 read("test/test_vector_methods.py");
 read("test/test_log_lattice_functions.py");
@@ -52,7 +54,7 @@ read("test/test_neighbours.py");
 
 read("test/test_reduction.py");
 
-read("test/test_compact_representation.py");
+
 
 read("test/test_bsgs.py");
 read("test/test_pmax_log.py");

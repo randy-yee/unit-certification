@@ -974,6 +974,16 @@ get_next_giant_divisor_cpct(~G, ~giant_divisor, ~tracker)={
     );
 }
 
+check_for_overly_large_B(B, lastvec)={
+    my(vec_length);
+    vec_length = ceil(sqrt(norml2(lastvec)));
+    if (B > 2*vec_length,
+        print("B is larger than desired. Adjusting to ", 2*vec_length);
+        return(2*vec_length),
+        return(B);
+    );
+}
+
 compute_default_scan_radius(G)=
 {
     return ((sqrt(poldegree(G.pol))/4)*log(abs(G.disc)));
@@ -1017,6 +1027,10 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
 
     my(lattice_lambda, avec, giant_sublattice);
     lattice_lambda = log_lattice_from_compact_set(G, cpct_reps);
+    \\B = check_for_overly_large_B(B, lattice_lambda[,r]);
+    write(FILE1, "Effective value of B: ", B);
+
+
     [avec, giant_sublattice] = get_giant_step_params(G,lattice_lambda, r, B, babystock_scale_factor, REQ_BSGS);
     tb = getabstime();
 
@@ -1037,7 +1051,7 @@ bsgs(G, cpct_reps, B, babystock_scale_factor, scanballRadius,eps, REQ_BSGS,FILE1
     aprod = 1; for(i=1, length(avec), aprod*=avec[i]);
 
     if(minimal_vec_length < scanballRadius,
-        scanballRadius = max(minimal_vec_length, 0.25);
+        scanballRadius = max(minimal_vec_length, 0.5);
 
         write(FILE1,strprintf("Adjusted scan radius: %-10.9F  Aproduct: %-10.9F", scanballRadius, aprod),"  aVec =", precision(avec, 10));
         ,

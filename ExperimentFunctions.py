@@ -270,9 +270,12 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary, single_a
         default(realprecision, ceil(REQ_BSGS));
 
         lglat_new = lglat;
-        \\lglat_new[,1] *= 8;\\8*37;
-        \\lglat_new[,r] *= 9;\\(3^2);
+        lglat_new[,1] *= 8*37;
+        lglat_new[,r] *= (3^2);
+        lglat_new = lglat_new*qflll(lglat_new);
         newreg = abs(matdet(lglat_new));
+        sumv = column_sum(lglat_new);
+
         writeInfo(i, K, lglat_new, reg1, signature_string, REQ_BSGS);
         write(OUTFILE1, "input reg: ", precision(newreg,10), " index: ", precision(newreg/reg1,10));
         cpct_units = cpct_from_loglattice(K, lglat_new, bsgs_eps);
@@ -548,6 +551,8 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
 
         lglat_new = lglat; \\modpair1[2] =1;
 
+        \\lglat_new[,1] *= 990013;
+        lglat_new[,r] *= 990013;
         \\lglat_new[,1] *= 8*37;
         \\lglat_new[,r] *= (3^2);
 
@@ -706,7 +711,10 @@ hybrid_experiment(start, end, inputFile, outputFile, curve_fit_coeffs)=
     GP_ASSERT_TRUE((start > 0) && (end > 0));
     GP_ASSERT_TRUE(end - start >= 0);
     GP_ASSERT_TRUE(length(curve_fit_coeffs) == 3);
+
     read(inputFile);
+    GP_ASSERT_TRUE(type(data) == "t_VEC");
+
 for(i=start, end,
 
     \\# INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
@@ -716,8 +724,9 @@ for(i=start, end,
     logdisc = log(abs(K.disc));
 
     \\# initial precision calculations
-    sumv = column_sum(lglat);
     [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat, ~reg1);
+
+    sumv = column_sum(lglat);
     X = REQ_RIGOROUS(K, sumv, 1);
     default(realprecision, X);
 
@@ -728,14 +737,14 @@ for(i=start, end,
     writeInfo(i, K, lglat_new, reg1, signature_string, REQ_BSGS);
 
     \\write(OUTFILE1, "adding index divisors ");
-
     \\lglat_new[,1] *= 990013;
-    \\lglat_new[,r] *= 1;
-    lglat_new[,1] *= 8*37;
-    lglat_new[,r] *= (3^2);
+    lglat_new[,r] *= 990013;
+    \\lglat_new[,1] *= 8*37;
+    \\lglat_new[,r] *= (3^2);
     lglat_new = lglat_new*qflll(lglat_new);
     newreg = abs(matdet(lglat_new));
     sumv = column_sum(lglat_new);
+
     [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat_new, ~newreg);
     X = REQ_RIGOROUS(K, sumv, 1);
     default(realprecision, X);
@@ -754,15 +763,13 @@ for(i=start, end,
     write(OUTFILE1, "Pohst-Fieker bound is : ", indexbound ," for K = ",newKLimit);
 
     scanBallRadius = log( 7/sqrt( poldegree(K.pol) ))/2;
-
-
-    my(ATTEMPT_SKEW = 0);
     balanceB = compute_parameter_B(newreg, indexbound);
     last_vec_length = sqrt( norml2(lglat_new[,length(lglat_new)]));
     write(OUTFILE1, "B = ", round(balanceB),  " limit due to rho and rth vec length: ",ceil(last_vec_length/scanBallRadius));
 
+
+    my(ATTEMPT_SKEW = 0);
     if(last_vec_length/balanceB < scanBallRadius,
-        print("warning, computed B is too big");
         if(ATTEMPT_SKEW == 1,
             add_ctr = 0;
             while(balanceB > last_vec_length,
@@ -773,30 +780,20 @@ for(i=start, end,
             print("Skewing required ", add_ctr, "additions" );
         );
     );
-    balanceB = min(balanceB, ceil(last_vec_length/scanBallRadius) );
-
-    print("Degree: ", n, " UnitRank: ",r,  " Fitted B: ", precision(hybrid_balance_calculator(r, n, reg1),10));
-    print("New B ", balanceB);
-
-    largest_dimension = sqrt(norml2(lglat_new[,maxnorm_index]/balanceB));
-    last_vector = lglat_new[,length(lglat_new)];
-    large_length = sqrt( norml2(last_vector));
+    balanceB = min(balanceB, ceil(last_vec_length/scanBallRadius) ); print("New B ", balanceB);
 
     \\\#this logic tries to increase the length of the last vector so that B
     \\\# can be larger
-    \\target_length = balanceB/3.0;
-    \\lglat_new = skew_lattice(lglat_new, balanceB, 3.0);
+    \\#target_length = balanceB/3.0;
+    \\#lglat_new = skew_lattice(lglat_new, balanceB, 3.0);
 
     largest_dimension = sqrt(norml2(lglat_new[,r]/balanceB));
 
-    print("ensure compute precision is using B as part of the precision computation");
+    \\#ensure compute precision is using B as part of the precision computation
     [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat_new, ~reg1);
     REQ_RIG = REQ_RIGOROUS(K, sumv, 1);
 
-
     scanBallRadius = log( 7/sqrt( poldegree(K.pol) ))/2;
-    scanBallRadius = min(largest_dimension, log( 7/sqrt( poldegree(K.pol) ))/2);
-
 
     print("\nRunning Pohst Algorithm");
     unitvector_cpct = cpct_from_loglattice(K, lglat_new, eps);
@@ -813,24 +810,24 @@ for(i=start, end,
     print("Running BSGS Algorithm");
     default(realprecision, ceil(REQ_BSGS));
     detLambda = get_abs_determinant(pohst_out_lattice);
-    print(precision(detLambda,10), "  ", precision(pohst_out_lattice,10));
+    print("After Pohst: ",precision(detLambda,10), "  ", precision(pohst_out_lattice,10));
     t9 = getabstime();
 
     \\\ reduced precision to compute scanball radius
     original_precision = default(realbitprecision);
     timeout = 36*60*60*1000;
+
+    \\# This is the basic calculation for the babystock region
+    \\#g_n = giant_n( n, logdisc, REQ_BSGS, real(log(detLambda)) );
+    \\#b_n =  baby_n( n, logdisc, REQ_BSGS, real(log(detLambda)) );
+    \\#bstock_size = sqrt(  (abs(reg1)/balanceB)*g_n/b_n  )/2;
+
+    detLambda = get_abs_determinant(pohst_out_lattice);
     default(realbitprecision, 30);
     scanBallRadius = log( 7/sqrt( poldegree(K.pol) ))/2;
     scanBallRadius = min(largest_dimension, log( 7/sqrt( poldegree(K.pol) ))/2);
     default(realbitprecision, original_precision);
 
-    g_n = giant_n( n, logdisc, REQ_BSGS, real(log(detLambda)) );
-    b_n =  baby_n( n, logdisc, REQ_BSGS, real(log(detLambda)) );
-
-    \\ This is the basic calculation for the babystock region
-    bstock_size = sqrt(  (abs(reg1)/balanceB)*g_n/b_n  )/2;
-
-    detLambda = get_abs_determinant(pohst_out_lattice);
     print("after pmax: ", precision(detLambda,10));
     print("B: ", precision(balanceB,10));\\789 normal \\52699
 
@@ -839,9 +836,9 @@ for(i=start, end,
     bsgs_output= bsgs(K,stage1_units, balanceB, bstock_size, bitprecision(scanBallRadius, REQ_BSGS), eps,REQ_BSGS, OUTFILE1, [timeout]);
     t10 = getabstime();
     bsgstime = t10-t9;
+
     bsgs_out_lattice = log_lattice_from_compact_set(K, bsgs_output);
     outreg = get_abs_determinant(bsgs_out_lattice);
-
     write(OUTFILE1, "bsgs time ",precision(bsgstime,10), " In minutes: ", precision(bsgstime/60000.0,15) );
     write(OUTFILE1,"Overall time: ", precision(bsgstime+lptime , 10) , " In minutes: ", precision((bsgstime+lptime)/60000.0,15) );
     write(OUTFILE1, "returned regulator value: ", precision(outreg,10));

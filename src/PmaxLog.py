@@ -121,6 +121,7 @@ check_in_unitlattice(G, v, eps)={
     );
 
     v2= concat(v, extra_coord);
+    
     GP_ASSERT_TRUE(is_trace_zero(v2,eps));
 
     log_mu = jump_output[3]; \\# this is Psi(mu)

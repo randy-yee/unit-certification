@@ -78,7 +78,7 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
             vecnorm =  sqrt(norml2(lattice_lambda[,i] ));
 
             if (i == unit_rank, vecnorm/=B);
-            print(i, " ", precision(vecnorm,10), "  ", precision(sides,10));
+            if(DEBUG_BSGS,print(i, " ", precision(vecnorm,10), "  ", precision(sides,10)););
             avec = concat(avec, min(vecnorm, sides));
             diffvector = concat(diffvector, vecnorm - sides );
             ai_product *= avec[i];
@@ -96,10 +96,9 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
         \\# this will only be the case if (norm_vr/B <= 1), which meant we
         \\# excluded a_r from the calculation and set it to be 1
         if (dimensions !=unit_rank+1,
-            print("Final a_i: ", precision(norm_vr/B,10), "   ",precision(fullregion_to_babystock_ratio/ai_product,10));
+            \\print("Final a_i: ", precision(norm_vr/B,10), "   ",precision(fullregion_to_babystock_ratio/ai_product,10));
             avec = concat(avec ,  1  );
             print("fullregion_to_babystock_ratio/(a_i product) : ", precision(fullregion_to_babystock_ratio/ai_product,10));
-            \\concat(avec ,  min(norm_vr/B , fullregion_to_babystock_ratio/ai_product )  );
         );
     );
 
@@ -109,11 +108,13 @@ non_integral_subdivisions(G, lattice_lambda, dimensions, detLambda, B, babystock
         if(avec[i] < 1, print("warning, the a_i is less than one for i = ",i));
     );
 
-    miniLambda = lattice_lambda;
-    for(i=1, length(avec),
-        miniLambda[,i] /= avec[i]);
-    miniLambda[,unit_rank]/=B;
-    print(precision(fullregion_to_babystock_ratio, 10), "  ", precision(finalproduct,10),"\nbabystock det: ", precision(abs(matdet(miniLambda)),10));
+    if(DEBUG_BSGS,
+        miniLambda = lattice_lambda;
+        for(i=1, length(avec), miniLambda[,i] /= avec[i]);
+        miniLambda[,unit_rank]/=B;
+
+        \\print("\nbabystock det: ", precision(abs(matdet(miniLambda)),10));
+    );
     return(avec);
 }
 
