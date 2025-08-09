@@ -2,7 +2,8 @@
 \\ Functions for generation polynomials with a particular discriminant size
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
-print("Loaded polygenerator");
+print("Loaded -- polygenerator.gp");
+
 /************************************************************/
 \\ OUTPUT: a random approximation of a real number,
 \\ interval is a range in which you want the number, dec is a decimal number whose precision will dictate the output
@@ -390,7 +391,95 @@ get_log_base_two(val)=
 	return( log(abs(val))/log(2)  );
 }
 
-generate_polynomial_list_bitsize(file_prefix, disc_start, disc_cap, interval_gap, sample_size, r1, r2)={
+/**
+Function to generate fields of specific regulator sizes
+*/
+generate_polynomial_list_bitsize(file_prefix, reg_start, reg_cap, interval_gap, sample_size, r1, r2)={
+	print("beginning ", reg_start);
+	\\ ensure that log_2(K.reg) is close to the target value
+	TOLERANCE = 0.5;
+
+	\\ indicates how many fields to generate per
+	fields_per_magnitude = sample_size;
+
+	\\ gap between specified regulator sizes
+	magnitude_jump = interval_gap;
+
+	for(r =r1, r1,
+		for(s = r2, r2,
+
+		  \\ uses the file prefix and signature to create a filename to write data to
+			writefile = concat([file_prefix, Str(r),"-",Str(s)]);
+
+			\\ change if logic if multiple signatures are desired
+			\\if(r+2*s < 7 || r+2*s > 14 || r+s-1 > 6, ,
+			if(0, ,
+					write(writefile, "\\\\ Signatures ", r, " ",s);
+					write(writefile, data," = [\\" );
+
+					\\ adjustment for complex embeddings -- expect complex embeddings to reduce regulator size
+					\\ as compared to disc size. See analytic class number formula
+					reg_target = reg_start;
+					discsize = 2*reg_target+2*r2;
+
+					while(reg_target < reg_cap,
+							print("while loop top: ", reg_target);
+							tally = 0;
+							while(tally < fields_per_magnitude,
+
+								failure_tally = 0;
+
+								pol1 = random_poly_disc_bits(r,s, discsize);
+								K = nfinit(pol1);
+								while (abs(get_log_base_two(K.disc) - discsize) > 3,
+									pol1 = random_poly_disc_bits(r,s, discsize);
+									K = nfinit(pol1);
+								);
+								K1 = bnfinit(pol1,1);
+
+								\\ Attempt to find a field of appropriate size. If it fails too many times,
+								\\ raise the disc size.
+								while( abs( get_log_base_two(K1.reg) -reg_target ) > TOLERANCE,
+									  pol1 = random_poly_disc_bits(r,s, discsize);
+
+										while (abs(get_log_base_two(K.disc) - discsize) > 3,
+											pol1 = random_poly_disc_bits(r,s, discsize);
+											K = nfinit(pol1);
+										);
+
+									  K1 = bnfinit(pol1);
+										failure_tally +=1;
+										if (failure_tally > 50,
+										  print (reg_target, " ", tally, "  ", precision(get_log_base_two(K1.reg),10), " disc: ", precision(get_log_base_two(abs(K1.disc)),10));
+											discsize +=1;
+											failure_tally = 0;
+										);
+								);
+
+								MY_ASSERT(abs( get_log_base_two(K1.reg)-reg_target )<TOLERANCE);
+
+								if((K1.clgp.no == 1),
+									  tally+=1;
+									  if(K1.clgp.no != 1, print("error, non-trivial class group");breakpoint());
+									  if(tally == fields_per_magnitude && ((discsize+magnitude_jump) >= reg_cap),
+										    write(writefile, "[" , pol1, ", " , K1.disc, ", \\\n",  K1[3]  , "] \\" );
+									  ,
+										    write(writefile, "[" , pol1, ", " , K1.disc, ", \\\n",  K1[3]  , "], \\" );
+									  );
+							  );
+							);
+
+							reg_target += magnitude_jump;
+							discsize = 2*reg_target+2*r2;
+					);
+					write(writefile, "];");
+			);
+		);
+	);
+}
+
+
+generate_polynomial_list_disc_bitsize(file_prefix, disc_start, disc_cap, interval_gap, sample_size, r1, r2)={
 
 	print("Gathering polynomials");
 	TOLERANCE = 0.5;
@@ -450,32 +539,10 @@ generate_polynomial_list_bitsize(file_prefix, disc_start, disc_cap, interval_gap
 	DISC_SAMPLE_SIZE = 5;
 	REAL_EMBEDDINGS = 0;
 	COMPLEX_EMBEDDINGS = 4;
-
+/*
 	generate_polynomial_list_bitsize(OUTPUT_FILE_PREFIX, \
 													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
 													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
 													REAL_EMBEDDINGS, COMPLEX_EMBEDDINGS);
-	/*
-
-	generate_polynomial_list(OUTPUT_FILE_PREFIX, \
-													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
-													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
-													5, 0);
-	generate_polynomial_list(OUTPUT_FILE_PREFIX, \
-													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
-													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
-													0, 2);
-	generate_polynomial_list(OUTPUT_FILE_PREFIX, \
-													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
-													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
-													2, 1);
-	generate_polynomial_list(OUTPUT_FILE_PREFIX, \
-													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
-													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
-													1, 2);
-	generate_polynomial_list(OUTPUT_FILE_PREFIX, \
-													STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
-													DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
-													0, 3);
-	*/
+*/
 }
