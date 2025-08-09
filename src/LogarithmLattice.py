@@ -1,57 +1,60 @@
 /*
 
 testequalOK
-minkowski_absval
+archimedean_valuations
 valuationvec
 absoluteval_nvec
 unsquare_log_embeddings
+embeddings_to_normalized_logvec
 units_to_matrix
 log_determinant
 
+nfeltpow_modp
 
-embed_real
-undo_real
 get_real_vec
+embed_real
+
+
+
+process_complex_loglattice
+get_log_lattice_bnf
+get_unscaled_determinant
+get_abs_determinant
+get_normalized_log_vector
+truncatereal
+
 checkred
 get_ideal_denom
 ideal_contains1
 limitminvector
 
+compute_sublattice
 is_vec_in_lattice
-get_real_vec
-process_complex_loglattice
-
-get_log_lattice_bnf
-get_unscaled_determinant
-
 is_in_axis_box
+
+get_minimal_length
+column_sum
 verify_lattice_containment
 */
 
 
 /******************************************************************************/
-/* Tests if a frac. ideal y is equal to OK by computing the HNF and comparing the identity matrix. */
+/* Tests if a frac. ideal y is equal to OK */
 /* @params y is a matrix representing a frac ideal
 \\           G is the number field output of nfinit
 */
 /******************************************************************************/
-testequalOK(y,K)={
-    my(n=length(y));
-    my(yhnf);
+testequalOK(~y, ~K)={
+    my(n=length(y), yhnf);
 
-    yhnf=idealhnf(K,y);
-    if(yhnf==matid(n),
-        1,
-    0);
+    yhnf=idealhnf(K,y);          \\#treat y as an ideal of K and compute the HNF
+    if(yhnf==matid(n),return(1),return(0)); \\#compare to identity mat
 }
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ INPUT: A vector v, r1 the number of real embeddings
 \\ OUTPUT: Takes the abs on all entries 1...r1, norm on entries r1+1 ... r1+r2
-\\ The point of the is function is that if you use nfeltembed on a number field
-\\ element the complex embeddings are not squared, which means using log(abs())
-\\ will not use the regulator. Useful for debugging
-minkowski_absval(v, r1)={
+archimedean_valuations(~v, r1)={
     for(i=1, length(v),
         if(i <=r1, v[i] = abs(v[i]),
         v[i] = norm(v[i]));
@@ -59,9 +62,10 @@ minkowski_absval(v, r1)={
     return(v);
 }
 
-
 /******************************************************************************/
-\\ INPUT: G is a number field, elt is a number field elt that is either a polynomial or a column
+\\ INPUT:
+\\ - G:   a number field,
+\\ - elt: a number field elt that is either a polynomial or a column
 \\ Should set the variable column = 1 if the input is in column form, but
 \\ Pari's nfalgtobasis function knows to not do anything if you forget to do this
 \\ OUTPUT: the dimension r1+r2 vector (|x_1|, ... |x_r1|, |x_{r1+1}|^2, ... |x_r2|^2)
@@ -72,8 +76,8 @@ valuationvec(~G,~elt, column = 0)={
 	my(embedvec, column_elt);
     \\ process input so that it is a column vector
     if((column == 0) || (column ==1 && type(elt)== "t_INT"), column_elt = nfalgtobasis(G,elt);, column_elt = elt );
-    embedvec = (G[5][1]*column_elt)~;  \\ convert to vector
-    embedvec = minkowski_absval(embedvec, G.r1);
+    embedvec = (G[5][1]*column_elt)~;  \\# convert to embeddings vector
+    embedvec = archimedean_valuations(embedvec, G.r1);
 	return(embedvec);
 }
 
@@ -108,13 +112,21 @@ absoluteval_nvec(~G, ~v, side = 2)={
 \\ - G a number field
 \\ - logvec, the log embedding of an element, of the form described above.
 \\ OUTPUT:
-\\ - a log vector of the form  (log|x_1|, ... log|x_r1|, log|x_{r1+1}|, ... log|x_(r2-1)|). Note the removal of the squares on the complex entries.
-unsquare_log_embeddings(G, logvec)={
-    my(newlog);
-    newlog = vector(length(logvec), i, if(i <= G.r1, logvec[i], logvec[i]/2));
+\\ - a log vector of the form  (log|x_1|, ... log|x_r1|, log|x_{r1+1}|, ... log|x_(r2-1)|).
+\\   Note the removal of the squares on the complex entries.
+unsquare_log_embeddings(~G, ~logvec)={
+    my(newlog, len = length(logvec));
+    newlog = vector(len, i, if(i <= G.r1, logvec[i], logvec[i]/2));
     return(newlog);
 }
 
+
+embeddings_to_normalized_logvec(~G, ~vec)=
+{
+    my(outvec);
+    outvec = double_complex_coordinates(G.r1, log(abs(vec)));
+    return(outvec);
+}
 
 \\ Reads in the fundamental units of a number field (bnf.fu)
 \\ returns those units as a coefficient vector in terms of the integral basis.
@@ -136,7 +148,7 @@ units_to_matrix(nf, f_units)={
 \\ OUTPUT:
 \\ - Gives the (equivalent of the) regulator of the matrix.
 
-log_determinant(G, unitmat)={
+log_determinant(~G, ~unitmat)={
     my(unit_embedding, square_matrix);
     unit_embedding = G[5][1]*unitmat;
     square_matrix = matrix( length(unit_embedding), length(unit_embedding), i,j, unit_embedding[i,j] ) ;
@@ -146,8 +158,6 @@ log_determinant(G, unitmat)={
     return(abs(matdet(square_matrix)));
 }
 
-
-
 \\ Used to power an element in a numberfield where the coefficients are reduced mod a prime p (i.e. in the ring Zk / pZk )
 \\ INPUT:
 \\ - A Number field G
@@ -155,9 +165,9 @@ log_determinant(G, unitmat)={
 \\ - an element elt
 \\ - an exponent expo
 \\ OUTPUT:
-\\ - Gives the (equivalent of the) regulator of the matrix.
+\\ - elt raised to the expo in Zk / pZk
 
-nfeltpow_modp(G, p, elt, expo )={
+nfeltpow_modp(~G, p, elt, expo )={
     my(bin, base, result);
     bin = binary(expo);
     base = elt%p;
@@ -174,6 +184,7 @@ nfeltpow_modp(G, p, elt, expo )={
 }
 
 \\ converts the embedding vector of v (which could be complex), into a real vector
+\\ Note that output is normalized by a factor sqrt(2) on complex coords
 \\ INPUT:
 \\ - G a number field
 \\ - v a dimension G.r1+G.r2 vector
@@ -224,40 +235,32 @@ embed_real(~G,~M)={
 }; \\ end get_R_basis
 
 
-\\ INPUT:
-\\ - K a number field
-\\ - lglat is the output of bnf[3], which is the complex log lattice
-\\ OUTPUT:
-\\ This function takes in a logarithm lattice (output from bnfinit argument [3])
-\\ takes the real part, and divides the rows for complex embeddings in half
-\\ The point of this function is for when the bnf log lattice is computed ahead of time
-process_complex_loglattice(K, lglat)={
+\\# INPUT:
+\\# - K a number field
+\\# - lglat is the output of bnf[3], which is the complex log lattice
+\\# OUTPUT:
+\\# - real part of the log lattice, chopping off the last row so it's square
+\\# Note that the factors of 2 are present in the complex coordinates
+process_complex_loglattice(~K, ~lglat)={
     my(r, complexlogunit, lambda1, LambdaK);
-    r = K.r1 +K.r2 -1;
+    r = K.r1 + K.r2 -1;
     lambda1 = real(lglat);                                                       \\ equivalent to getting the log of the abs vals
     LambdaK = lambda1[1..r,];
-    for(i =1, length(LambdaK),
-        if(i > K.r1, LambdaK[i,] = LambdaK[i,]/2)
-    );
-    \\LambdaK=LambdaK*qflll(LambdaK);
     return(LambdaK);
 }
+
 \\ INPUT:
 \\ - a pari bnf type (output of bnfinit)
 \\ OUTPUT:
-\\ - the corresponding real log lattice. Dimensions (G.r1 + G.r1) x r. Note that there is NOT a factor of 2 on the complex components, as one would obtain from real(bnf[3])
-\\ (pari must take the norm of the complex values, followed by the complex log rather than the abs value)
-get_log_lattice_bnf(bnf1)={
+\\ - the corresponding real log lattice. Dimensions (G.r1 + G.r1) x r.
+\\   Note that there is a factor of 2 on the complex components
+get_log_lattice_bnf(~bnf1)={
     my(r, complexlogunit, lambda1, LambdaK);
     r = bnf1.r1 +bnf1.r2 -1;
     complexlogunit=bnf1[3];                                                     \\ in pari, bnf[3] is the complex log embeddings of the independent units
     lambda1 = real(complexlogunit);                                             \\ equivalent to getting the log of the abs vals
-
     LambdaK = lambda1[1..r,];
-    for(i =1, length(LambdaK),
-        if(i > bnf1.r1, LambdaK[i,] = LambdaK[i,]/2)
-    );
-    \\LambdaK=LambdaK*qflll(LambdaK);
+
     return(LambdaK);
 }
 
@@ -270,7 +273,21 @@ unscaled_determinant(num_field, log_lat)={
     return( abs(matdet(log_lat))*(2^mult) );
 }
 
+get_abs_determinant(~lglat)=
+{
+    return(abs(matdet(lglat)));
+}
 
+\\ INPUT
+\\ - K a number field
+\\ - an element beta as coeff vector t_COL
+\\ RETURN
+\\ - the normalized log vector (t_VECTOR)
+\\   that is, the log vector with complex coords multiplied by 2
+get_normalized_log_vector(K, beta)=
+{
+    return( double_complex_coordinates(K.r1, log(abs((K[5][1]*beta))))~ );
+};
 
 \\trunc should be an integer, truncates the real up to trunc decimal digits
 truncatereal(real1, trunc)={
@@ -384,11 +401,11 @@ is_vec_in_lattice(~v,~L,eps)={
     my(v_solution, round_solution);
     GP_ASSERT_EQ(matsize(L)[1],matsize(L)[2]);
     v_solution=L^(-1)*v;                            \\ solves L*x = v for x.
-    round_solution=round(v_solution);               \\ rounds the entries, this strategy is checking if x is an integer vector.
+    round_solution=round(v_solution);
     \\
-    if(norml2(v_solution-round_solution)<eps,   \\ If v is in L, then cov should be equal to covin up to some error
+    if(norml2(v_solution-round_solution)<eps,   \\ If v is in L, then this difference vector should be near 0
         1,
-    return(0));                           \\ else
+    return(0));
 }
 
 \\ element_logvec is the r+s-1 length log vector
@@ -411,6 +428,7 @@ sum_inf_norm(L)=
     return(normlp(sumvec));
 }
 
+\\#find the length of the shortest vector in the given lattice basis
 get_minimal_length(~lattice)=
 {
     GP_ASSERT_TRUE(length(lattice) > 0);
@@ -423,6 +441,7 @@ get_minimal_length(~lattice)=
     return(minimal_vec_length);
 }
 
+\\ sum all the column vectors in a lattice basis
 column_sum(latticeL)=
 {
     my(col_sum = latticeL[,1]);

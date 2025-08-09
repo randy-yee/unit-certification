@@ -8,7 +8,6 @@ dividevector
 pointwise_vector_div
 concat_negative_sum
 sumvec
-expvec
 logvector
 vector_approximate
 is_trace_zero
@@ -52,13 +51,16 @@ invert_coordinates(~y)=vector({length(y)},{i},{1/y[i]})~;
 /* Outputs a matrix with the same dimensions as mat. The rows of the new matrix are v[i]*row[i] */
 mulvec(~mat,~vec) = matrix({matsize(mat)[1],matsize(mat)[2]},{i},{j},{mat[i,j]*vec[i]});
 
-/*2b. multiply 2 vectors in the ring R^n (pointwise) */
-\\ Note that again, columns make more sense than row vectors, but both work
+/*2b. multiply 2 vectors/columns in the ring R^n (pointwise)
+\\ OUTPUT:
+\\ - coordinate-wise product of the two inputs, as a column
+*/
+\\ Note that it's a bit confusing if vectors are input but a column returned.
 pointwise_vector_mul(~u1, ~u2) = vector(length(u1),{i},{u1[i]*u2[i]})~;
 
 /*3. multiply a matrix y with the inverse of a vector v.
   Note that invert_coordinates(u) inverts entries coordinate wise, then apply mulvec */
-dividevector(y,u) = mulvec(y,invert_coordinates(u));
+dividevector(~y,~u) = mulvec(y,invert_coordinates(u));
 
 /* Coordinate-wise multiply vector u1 with the inverse of vector u2 in R^n*/
 pointwise_vector_div(~u1,~u2) = pointwise_vector_mul(u1,invert_coordinates(u2));
@@ -81,21 +83,7 @@ sumvec(~v)= {
     );
     return(entry_sum);
 }
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ INPUT: A vector v
-\\ OUTPUT: A vector [exp(-v[1]),exp(-v[2]), ... exp(sum)]
-\\ Note that the output has length one more than v
-expvec(~v) = {
-    my(xn);
-    xn = concat(v,-sumvec(v));                \\ compute the negative sum of x, concatenate to xn
-    vector(length(xn), i, exp(-xn[i]) );    \\ create a vector [exp(-x[1]),exp(-x[2]), ... exp(sum)]
-}
-inverse_expvec(v) = {
-    my(xn);
-    xn = concat(v,-sumvec(v));                  \\ compute the negative sum of x, concatenate to xn
-    xn = vector(length(xn), i, exp(xn[i]) );    \\ create a vector [exp(x[1]),exp(x[2]), ... exp(sum)]
-    return(xn);
-}
+
 
 /******************************************************************************/
 /* Returns an approximation of the vector v */
@@ -104,19 +92,24 @@ vector_approximate(~v,eps)= {
     my( vn1=eps*round(v*1/(eps))*1.00 );
     vn1;
 }
+vector_approximate2(~v,eps)= {
+    my( vn1=eps*round(v*1/(eps))*1.00 );
+    vn1;
+}
+/* maybe this can be done using strings? */
+
 
 /******************************************************************************/
-/*12. test that v has sum of the coordinate = 0 --> precision for comparision to 0 - similar to the comparision to 1 in the function check0 */
+/*12. sum coordinates, and see if close enough to 0 */
 /******************************************************************************/
 is_trace_zero(v,eps)={
-    if(sumvec(v)<eps^2,
-        1,
-    0);       \\ else
+    if(abs(sumvec(v))<eps, return(1), return(0));
 }:bool
 
 /******************************************************************************/
-/*9. check that the coordinates of vector v in R^n are all abs. val. less than 1 or not (PRECISION for comparisons all coordinates of v with 1)*/
-check0(v,eps) = {
+/*9. check that the coordinates of vector v in R^n are all abs. val. less than
+1 or not (PRECISION for comparisons all coordinates of v with 1)*/
+check0(~v,eps) = {
     for (ctr = 1, length(v),
         if ( 1-abs(v[ctr]) < eps,
             return(0)
@@ -130,9 +123,8 @@ check0(v,eps) = {
 \\ - v1 and v2 are both vectors, eps is the acceptable error
 \\ OUTPUT:
 \\ - 0 if the entries of v1 and v2 are not each within eps of each other, 1 otherwise.
-samevecs(~v1,~v2, eps)={
+samevecs(~v1,~v2, ~eps)={
   if(length(v1) != length(v2), return(0));
-
   for (i = 1, length(v1),
     if( abs(v1[i] - v2[i]) > eps, return(0));
   );
@@ -176,42 +168,55 @@ vec_less_than(~v1,~v2, axis = 0)={
 	return(1);
 }
 
-\\ Computes the infinity norm of a vector v
+\\ BRIEF:
+\\ - Assuming the input is a log vector for some number field element
+\\ - doubles the entries corresponding to the complex embeddings.
+\\ INPUT:
+\\ - r1 is the number of real coordinates
+\\ - v is the vector
+\\ OUTPUT:
+\\ - double the coordinates of v that do not correspond to complex embeddings
+double_complex_coordinates(~r1, ~v)=
+{
+    for(i=r1+1, length(v),
+        v[i] *=2
+    );
+    return(v);
+}
+
+\\ wrapper function for normlp(v), because I forgot that function existed..
 \\ INPUT:
 \\ - A real vector v
 \\ OUTPUT:
 \\ - Real number corresponding to the infinity norm of v
-infinity_norm(v)={
-  my(len=length(v), abv, val = 0);
-  for (i=1, len,
-    abv = abs(v[i]);
-    if (abv > val, val = abv);
-  );
-  return(val);
+infinity_norm(~v)={
+  \\my(len=length(v), abv, val = 0);for (i=1, len,abv = abs(v[i]);if (abv > val, val = abv););
+  return(normlp(v));
 }
 
 \\ BRIEF:
 \\ - Simulates addition by 1, where current_vec is a vector of digits
-\\   and a_vec is the roll-over value.
-\\   ex) a_vec = [4,5,6], Then increment_coordinates(a_vec, [2,3,5]) = [2,4,0]
-\\   ex) increment_coordinates(a_vec, [3,4,5]) = [0,0,0]
+\\   and a_vec are the maximums at each position.
+\\   ex1) Let a_vec = [4,5,6]. Then increment_coordinates([2,3,4]) = [2,3,5]
+\\   ex2) increment_coordinates(a_vec, [2,3,5]) = [2,4,0]
+\\   ex3) increment_coordinates(a_vec, [3,4,5]) = [0,0,0]
 \\ INPUT:
-\\ - A vector of integers A
-\\ - A vector of integers V such that  for all i, V[i] < A[i]
+\\ - a_vec: A vector of integers denoted by A
+\\ - current_vec: A vector of integers V such that  for all i, V[i] < A[i]
 \\ OUTPUT:
 \\ - MODIFY IN PLACE: V -> V' incremented in the way described above
+\\ - Note that when called, the argument current_vec MUST be provided with a '~' character in front
 increment_coordinates(a_vec, ~current_vec)={
-    \\# Note that it is assumed that a_vec[i] > current_vec[i] for all i
-    \\# but this is not checked!
+    \\# It is assumed that a_vec[i] > current_vec[i] for all i, but not checked!
     my(place = length(current_vec), carryflag = 0;);
     current_vec[place]+=1;
     if(current_vec[place] >= a_vec[place], carryflag =1);
     while(carryflag == 1,
         current_vec[place] = 0; carryflag = 0; \\# implies rollover; set value to 0
-        if(place == 1, return);                \\# if this was the leftmost place value, return
-        place -= 1;                            \\# move one place-value left
-        current_vec[place]+=1;                 \\# apply the carryover +1
-        if(current_vec[place] >= a_vec[place], carryflag =1); \\#determine if this value rolls over and repeat
+        if(place == 1, return);                \\# if at leftmost place value, return
+        place -= 1;                            \\# move place-value left
+        current_vec[place]+=1;                 \\# apply carryover +1
+        if(current_vec[place] >= a_vec[place], carryflag =1); \\#determine if this value rolls over
     );
     return;
 }
@@ -248,7 +253,7 @@ change_precision(newbitprec)=
 }
 
 \\ BRIEF:
-\\ - perform gram schmidt on the input matrix over the reals
+\\ - perform gram schmidt on the input matrix over the reals (DEBUGSCALING- norml2)
 \\ INPUT:
 \\ - real_lattice is a matrix
 \\ OUTPUT:
@@ -267,13 +272,13 @@ gram_schmidt(~real_lattice)=
 
 \\ BRIEF:
 \\ - determine a vector indicating the maximum possible coefficients of a
-\\ - a shortest vector; used to determine which vectors need to be checked
+\\ - a shortest vector; used to determine which vectors need to be checked (DEBUGSCALING- norml2)
 \\ INPUT:
 \\ - degree of underlying number field,
 \\ - an matrix representation of a lattice (LLL-reduced)
 \\ OUTPUT:
 \\ - a vector whose size matches the number of columns of the input matrix
-get_enumeration_bounds(degree, lll_lattice)=
+get_enumeration_bounds(degree, ~lll_lattice)=
 {
     my(rank = length(lll_lattice),
         ortho_basis, norm_vector, k_vector
@@ -313,6 +318,26 @@ compute_subgroup(G, unimat, modpair, extype=0)={
         return(unimat);
     );
 }
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\# IDEAL METHODS
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+\\ - K is a number field
+\\ - ideal_I is a coefficient matrix for an ideal of K
+\\ - scale_vector is a length r+s+1 vector.
+\\ OUTPUT - the ideal lattice corresponding to ideal_I; with ith row scaled
+\\          by the ith entry of scale_vector, converted to a real matrix
+get_scaled_ideal_lattice(K, ~ideal_I, scale_vector=0)=
+{
+    my(result);
+    result = K[5][1]*ideal_I;
+    if(scale_vector == 0, return(embed_real(K, result)););
+    result = mulvec(result, scale_vector);
+    return(embed_real(K, result));
+}
+
+
 \\ BRIEF:
 \\ -
 \\ INPUT:
@@ -320,29 +345,35 @@ compute_subgroup(G, unimat, modpair, extype=0)={
 \\ - ideal is a coefficient matrix of an ideal wrt integral basis of G
 \\ OUTPUT:
 \\ - boolean indicating whether the ideal is reduced or not
-check_ideal_reduced(G, ideal)=
+check_ideal_reduced(~G, ~ideal)=
 {
     \\# if the norm is too small, then its not reduced
     if(abs(1/idealnorm(G, ideal))>sqrt(abs(G.disc)), return(0));
     my(rank = length(ideal),
         k_vector, zero_vec, iteration_vector);
-    ideal_lattice = G[5][1]*ideal;
-    ideal_lattice = embed_real(G, ideal_lattice);
 
-    lll_basis_change_matrix = qflll(ideal_lattice);
-    lll_lat = ideal_lattice*lll_basis_change_matrix;    \\#real lattice
-    lll_ideal = ideal*lll_basis_change_matrix;          \\#ideal representation
-    if(norml2(lll_lat[,1]) < 1, return(0));
-    ortho_basis = gram_schmidt(lll_lat);                \\#orthogonalized
-    k_vector = get_enumeration_bounds(rank, lll_lat);  \\# compute the k vector
+    complex_basis = G[5][1]*ideal;
+    real_basis = embed_real(G, complex_basis);
 
-    check_elements = qfminim(lll_lat~*lll_lat,poldegree(G.pol)+0.1,,2);
+    basis_change = qflll(real_basis);
+    real_basis_lll = real_basis*basis_change;    \\#real lattice (LLL)
+
+    \\# first element is in normed body of 1, so not reduced
+    if(norml2(real_basis_lll[,1]) < 1, return(0));
+
+    \\#complex lattice (LLL)
+    complex_lattice_lll = complex_basis*basis_change;
+
+    \\# scan radius with a small error factor, capture potential elements
+    \\# in the the normed body of 1
+    check_elements = qfminim(real_basis_lll~*real_basis_lll,poldegree(G.pol)+0.065,,2);
     \\#if no elements, then the normed body only contains the 0 vector
     if(check_elements[1] == 0, return(1));
-    one_vec = vector(G.r1+G.r2, i , 1);
+    one_vec = vector(G.r1+G.r2, i, 1);
     for(i=1, length(check_elements[3]),
-        \\#if there were elements in the scan region, check if they are in the normed body of 1
-        test_vector_real = abs(G[5][1]*lll_ideal*check_elements[3][,i]);
+        \\#check if any elements are in the normed body of 1
+        \\(DEBUGSCALING - verify abs vs norm)
+        test_vector_real = abs(complex_lattice_lll*check_elements[3][,i]);
         if(vec_less_than(test_vector_real, one_vec),
             return(0)
         );
@@ -350,40 +381,3 @@ check_ideal_reduced(G, ideal)=
     return(1);
 
 }
-
-/*
-\\ BRIEF:
-\\ - DEPRECATED
-\\ INPUT:
-\\ - G a number field
-\\ - ideal is a coefficient matrix of an ideal wrt integral basis of G
-\\ OUTPUT:
-\\ - boolean indicating whether the ideal is reduced or not
-check_ideal_reduced_old(G, ideal)=
-{
-    \\ if num elts is 0, reduced, else check each of them if they are in the normed body of 1
-    k_vector = vector(rank, i, k_vector[i]+1);
-    print(k_vector);
-    zero_vec = vector(rank, i , 0);
-    iteration_vector = zero_vec;
-    increment_coordinates(k_vector, ~iteration_vector);
-    one_vec = vector(G.r1+G.r2, i , 1);
-    temp_bit_precision = max(10, ceil(log(denominator(ideal))+4+(rank^2*log(4*denominator(ideal)^2))+2));
-    mainbitprecision = default(realbitprecision);
-    default(realbitprecision, temp_bit_precision);  \\#save and change precision
-
-    complex_ideal_lattice = G[5][1]*lll_ideal;
-    while(iteration_vector != zero_vec,
-        \\test_vector = column_lin_comb(~lll_ideal, ~iteration_vector);
-        test_vector_real = abs(complex_ideal_lattice*iteration_vector~);
-        \\print(precision(abs(nfeltembed(G, test_vector)),10), "  \n", precision(test_vector_real,10), "\n");
-        if(vec_less_than(test_vector_real, one_vec),
-            default(realbitprecision, mainbitprecision);    \\#restore precision
-            return(0)
-        );
-        increment_coordinates(k_vector, ~iteration_vector);
-    );
-    default(realbitprecision, mainbitprecision);    \\#restore precision
-    return(1);  \\# no minima found inside of the normed body of 1
-}
-*/

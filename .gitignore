@@ -5,3 +5,6 @@ gnuplot_script.txt
 input/INPUT_README
 experiment*
 input/final*
+OUTFILE1
+alltest.txt
+pari-heuristic

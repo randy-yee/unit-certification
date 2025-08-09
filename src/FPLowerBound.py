@@ -208,18 +208,20 @@ lower_regbound(G, K, eps, input_j = -1, k_limit = 0)={
 
     \\# BEGIN COMPUTATION OF THE LOWER REGULATOR BOUND
     new_j = j_val;
-
+    Mvec = [];
     for(i =1, SK_urank,                                                     \\ this is the value k, the size of the maximal ind. set in S_K
 
         minlog = lunits[,i]; minlog = concat(minlog, minlog[G.r1+1 .. G.r1+G.r2]);
         minlog = minlog~ * minlog;
         Mi_tilde = min(K_star, minlog );
-
+        \\Mvec = concat(Mvec, Mi_tilde);
         finalbound *= Mi_tilde;
     );
     if(SK_urank < unit_rank,
       finalbound *= m_star(G, K, new_j)^(unit_rank - SK_urank);
+      \\Mvec = concat(Mvec, m_star(G, K, new_j)^(unit_rank - SK_urank));
     );
+    \\print("Mvec  ", precision(Mvec,10));
     \\print(unit_rank); print("2^r2/n gamma_r  ",(2^G.r2)/ (length(G.zk)*my_hermiteconstant(unit_rank) ), "  ",(2^G.r2)/ (length(G.zk)*my_hermiteconstant(unit_rank)^(unit_rank) ));
     finalbound *= (2^G.r2)/ (length(G.zk));
     finalbound /= my_hermiteconstant(unit_rank)^(unit_rank);
@@ -248,6 +250,5 @@ get_index_bound2(nf,lattice_lambda, eps, jval = -1, search_limit = 0, outstring 
         );
     );
     lrb = lower_regbound(nf, constK, eps, jval, search_limit);
-    \\write("bound2.txt", "LOGLAT: ", type(lattice_lambda),precision(lattice_lambda,10),"\nDET: ", precision(abs(matdet(lattice_lambda)),10), "  \nLowerbound: ", lrb );
-    ceil(unscaled_determinant(nf, lattice_lambda)/lrb );
+    ceil(get_abs_determinant(lattice_lambda)/lrb );
 }

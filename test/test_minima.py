@@ -16,8 +16,9 @@ read("src/bounds.gp")
     \\ D = 3638703101
     K1= nfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
     K2= bnfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
+
     lglat = get_log_lattice_bnf(K2);
-    reg1 = unscaled_determinant(K1, lglat);
+    reg1 = get_abs_determinant(lglat);
 
     cpct_units = cpct_from_loglattice(K1, lglat, eps);
 

@@ -23,7 +23,7 @@
     \\G2 = nfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
 
 }
-{ \\ test cases for minkowski_absval
+{ \\ test cases for archimedean_valuations
     my(v1, v2, v3,G1, eps = 10^(-9));
     G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
@@ -32,13 +32,13 @@
     v2 = nfeltembed(G1, G2.fu[2]);
     v3 = nfeltembed(G1, G2.fu[3]);
 
-    GP_ASSERT_VEC_NEAR(log(minkowski_absval(v1,G1.r1)), [13.10366530105, 2.932931306,-14.936957398, -1.099639208 ] ,eps);
-    GP_ASSERT_VEC_NEAR(log(minkowski_absval(v2,G1.r1)), [3.83927141135,-20.380049263,  1.184114143, 15.356663708] ,eps);
-    GP_ASSERT_VEC_NEAR(log(minkowski_absval(v3,G1.r1)), [20.68882227729, 0.206698451, 20.858979979,-41.754500708] ,eps);
+    GP_ASSERT_VEC_NEAR(log(archimedean_valuations(v1,G1.r1)), [13.10366530105, 2.932931306,-14.936957398, -1.099639208 ] ,eps);
+    GP_ASSERT_VEC_NEAR(log(archimedean_valuations(v2,G1.r1)), [3.83927141135,-20.380049263,  1.184114143, 15.356663708] ,eps);
+    GP_ASSERT_VEC_NEAR(log(archimedean_valuations(v3,G1.r1)), [20.68882227729, 0.206698451, 20.858979979,-41.754500708] ,eps);
 
 }
 
-{ \\ test cases for minkowski_absval
+{ \\ test cases for archimedean_valuations
     my(v1, v2, v3,G1, eps = 10^(-9));
     G1 = nfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
     G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
@@ -109,14 +109,14 @@
     G2 = bnfinit(x^5 - 15*x^4 + 56*x^3 - 65*x^2 + 48*x - 15);
 
     logarithm_lattice = get_log_lattice_bnf(G2);
-    GP_ASSERT_NEAR(unscaled_determinant(G1, logarithm_lattice), G2.reg,eps);
+    GP_ASSERT_NEAR(get_abs_determinant(logarithm_lattice), G2.reg,eps);
 
     G1 = nfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
     G2 = bnfinit(x^6 - 9*x^5 + 40*x^4 - 95*x^3 + 132*x^2 - 101*x + 31);
     logarithm_lattice = get_log_lattice_bnf(G2);
-    GP_ASSERT_NEAR(unscaled_determinant(G1, logarithm_lattice), G2.reg,eps);
+    GP_ASSERT_NEAR(get_abs_determinant(logarithm_lattice), G2.reg,eps);
 
-    GP_ASSERT_NEAR(unscaled_determinant(G1,process_complex_loglattice(G1, G2[3])), G2.reg, eps);
+    GP_ASSERT_NEAR(get_abs_determinant(process_complex_loglattice(G1, G2[3])), G2.reg, eps);
 }
 
 
@@ -163,13 +163,6 @@
 
 }
 
-/*
-Untested functions:
 
-checkred
-checkred_old
-ideal_contains1
-is_vec_in_lattice
-*/
 
 print("Testing logarithm lattice functions complete")

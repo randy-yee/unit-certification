@@ -1,0 +1,1746 @@
+
+--------------------------
+1 Field pol: x^5 - 6*x^4 - 4*x^3 + 53*x^2 - x - 90.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+32.240708868         9138.683216088       5074817757
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 79
+pari_prime_check fails on p = 541
+pari_prime_check fails on p = 1499
+pari_prime_check fails on p = 37783
+Total number of failed primes = 6
+-- Output Regulator: 9138.683216087845436
+--lpohst time 69476 Below is in Minutes: 1.1579333333333333333
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 79
+pari_prime_check fails on p = 541
+pari_prime_check fails on p = 1499
+pari_prime_check fails on p = 37783
+Total number of failed primes = 6
+-- Output Regulator: 9138.683216087845436
+--lpohst time 69459 Below is in Minutes: 1.1576500000000000000
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 79
+pari_prime_check fails on p = 541
+pari_prime_check fails on p = 1499
+pari_prime_check fails on p = 37783
+Total number of failed primes = 6
+-- Output Regulator: 9138.683216087845436
+--lpohst time 69477 Below is in Minutes: 1.1579500000000000000
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 9138.683216087845436
+--lpohst time 69442 Below is in Minutes: 1.1573666666666666666
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 9138.683216087845436
+--lpohst time 69497 Below is in Minutes: 1.1582833333333333333
+
+Indexbound: 500000. N = 6
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 9138.683216087845436
+--lpohst time 69525 Below is in Minutes: 1.1587500000000000001
+
+Indexbound: 500000. N = 7
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 9138.683216087845436
+--lpohst time 69516 Below is in Minutes: 1.1586000000000000000
+
+Indexbound: 500000. N = 8
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 9138.683216087845436
+--lpohst time 69515 Below is in Minutes: 1.1585833333333333333
+
+--------------------------
+2 Field pol: x^5 - x^4 - 16*x^3 - x^2 + 32*x + 9.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+32.479518743         7747.125230584       5988380485
+ avec
+
+Indexbound: 500000. N = 1
+Total number of failed primes = 0
+-- Output Regulator: 7747.125230584225384
+--lpohst time 69393 Below is in Minutes: 1.1565500000000000000
+
+Indexbound: 500000. N = 2
+Total number of failed primes = 0
+-- Output Regulator: 7747.125230584225384
+--lpohst time 69372 Below is in Minutes: 1.1562000000000000000
+
+Indexbound: 500000. N = 3
+Total number of failed primes = 0
+-- Output Regulator: 7747.125230584225384
+--lpohst time 69336 Below is in Minutes: 1.1556000000000000000
+
+Indexbound: 500000. N = 4
+Total number of failed primes = 0
+-- Output Regulator: 7747.125230584225384
+--lpohst time 69333 Below is in Minutes: 1.1555500000000000000
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 7747.125230584225384
+--lpohst time 69319 Below is in Minutes: 1.1553166666666666667
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 7747.125230584225384
+--lpohst time 69405 Below is in Minutes: 1.1567500000000000000
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 7747.125230584225384
+--lpohst time 69357 Below is in Minutes: 1.1559500000000000000
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 7747.125230584225384
+--lpohst time 69407 Below is in Minutes: 1.1567833333333333334
+
+--------------------------
+3 Field pol: x^5 - x^4 - 18*x^3 - 3*x^2 + 20*x + 5.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+32.404957522         3691.531191151       5686751125
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 53
+pari_prime_check fails on p = 67
+pari_prime_check fails on p = 26321
+Total number of failed primes = 4
+-- Output Regulator: 3691.531191151275905
+--lpohst time 68452 Below is in Minutes: 1.1408666666666666666
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 53
+pari_prime_check fails on p = 67
+pari_prime_check fails on p = 26321
+Total number of failed primes = 4
+-- Output Regulator: 3691.531191151275905
+--lpohst time 68458 Below is in Minutes: 1.1409666666666666667
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 53
+pari_prime_check fails on p = 67
+pari_prime_check fails on p = 26321
+Total number of failed primes = 3
+-- Output Regulator: 3691.531191151275905
+--lpohst time 68459 Below is in Minutes: 1.1409833333333333333
+
+Indexbound: 500000. N = 4
+Total number of failed primes = 0
+-- Output Regulator: 3691.531191151275905
+--lpohst time 68487 Below is in Minutes: 1.1414500000000000000
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 3691.531191151275905
+--lpohst time 68420 Below is in Minutes: 1.1403333333333333334
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 3691.531191151275905
+--lpohst time 68427 Below is in Minutes: 1.1404500000000000000
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 3691.531191151275905
+--lpohst time 68432 Below is in Minutes: 1.1405333333333333333
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 3691.531191151275905
+--lpohst time 68420 Below is in Minutes: 1.1403333333333333334
+
+--------------------------
+4 Field pol: x^5 - 2*x^4 - 15*x^3 + 19*x^2 + 47*x - 36.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+32.460905916         10982.988442724      5911618057
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 101
+pari_prime_check fails on p = 2437
+pari_prime_check fails on p = 4409
+Total number of failed primes = 4
+-- Output Regulator: 10982.988442723720365
+--lpohst time 68936 Below is in Minutes: 1.1489333333333333334
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 101
+pari_prime_check fails on p = 2437
+pari_prime_check fails on p = 4409
+Total number of failed primes = 4
+-- Output Regulator: 10982.988442723720365
+--lpohst time 68897 Below is in Minutes: 1.1482833333333333333
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 101
+pari_prime_check fails on p = 2437
+pari_prime_check fails on p = 4409
+Total number of failed primes = 4
+-- Output Regulator: 10982.988442723720365
+--lpohst time 68965 Below is in Minutes: 1.1494166666666666667
+
+Indexbound: 500000. N = 4
+Total number of failed primes = 0
+-- Output Regulator: 10982.988442723720365
+--lpohst time 68970 Below is in Minutes: 1.1495000000000000000
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 10982.988442723720365
+--lpohst time 68953 Below is in Minutes: 1.1492166666666666666
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 10982.988442723720365
+--lpohst time 68873 Below is in Minutes: 1.1478833333333333333
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 10982.988442723720365
+--lpohst time 68935 Below is in Minutes: 1.1489166666666666667
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 10982.988442723720365
+--lpohst time 68927 Below is in Minutes: 1.1487833333333333333
+
+--------------------------
+5 Field pol: x^5 - x^4 - 19*x^3 - 17*x^2 + 21*x + 17.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+31.696306477         3216.224927012       3479677552
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 19
+pari_prime_check fails on p = 107
+pari_prime_check fails on p = 113
+Total number of failed primes = 5
+-- Output Regulator: 3216.224927012264486
+--lpohst time 68537 Below is in Minutes: 1.1422833333333333334
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 19
+pari_prime_check fails on p = 107
+pari_prime_check fails on p = 113
+Total number of failed primes = 5
+-- Output Regulator: 3216.224927012264486
+--lpohst time 68543 Below is in Minutes: 1.1423833333333333333
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 19
+pari_prime_check fails on p = 107
+pari_prime_check fails on p = 113
+Total number of failed primes = 5
+-- Output Regulator: 3216.224927012264486
+--lpohst time 68573 Below is in Minutes: 1.1428833333333333333
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+Total number of failed primes = 2
+-- Output Regulator: 3216.224927012264486
+--lpohst time 68585 Below is in Minutes: 1.1430833333333333333
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+Total number of failed primes = 2
+-- Output Regulator: 3216.224927012264486
+--lpohst time 68594 Below is in Minutes: 1.1432333333333333334
+
+Indexbound: 500000. N = 6
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 3216.224927012264486
+--lpohst time 68542 Below is in Minutes: 1.1423666666666666666
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 3216.224927012264486
+--lpohst time 68594 Below is in Minutes: 1.1432333333333333334
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 3216.224927012264486
+--lpohst time 68599 Below is in Minutes: 1.1433166666666666666
+
+--------------------------
+6 Field pol: x^5 - 22*x^4 + 139*x^3 - 150*x^2 - 482*x + 575.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+47.539612893         363209.549572887     204573541183681
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 13
+pari_prime_check fails on p = 41
+pari_prime_check fails on p = 199
+Total number of failed primes = 5
+-- Output Regulator: 363209.5495728874761
+--lpohst time 69822 Below is in Minutes: 1.1637000000000000000
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 13
+pari_prime_check fails on p = 41
+pari_prime_check fails on p = 199
+Total number of failed primes = 5
+-- Output Regulator: 363209.5495728874761
+--lpohst time 69885 Below is in Minutes: 1.1647500000000000000
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 13
+pari_prime_check fails on p = 41
+pari_prime_check fails on p = 199
+Total number of failed primes = 5
+-- Output Regulator: 363209.5495728874761
+--lpohst time 69854 Below is in Minutes: 1.1642333333333333334
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 363209.5495728874761
+--lpohst time 69856 Below is in Minutes: 1.1642666666666666666
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 363209.5495728874761
+--lpohst time 69878 Below is in Minutes: 1.1646333333333333333
+
+Indexbound: 500000. N = 6
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 363209.5495728874761
+--lpohst time 69882 Below is in Minutes: 1.1647000000000000000
+
+Indexbound: 500000. N = 7
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 363209.5495728874761
+--lpohst time 69888 Below is in Minutes: 1.1648000000000000000
+
+Indexbound: 500000. N = 8
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 363209.5495728874761
+--lpohst time 69890 Below is in Minutes: 1.1648333333333333333
+
+--------------------------
+7 Field pol: x^5 - 22*x^4 + 133*x^3 - 121*x^2 - 243*x + 64.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+48.372851537         2286527.023261371    364484688152177
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+Total number of failed primes = 2
+-- Output Regulator: 2286527.023261371079
+--lpohst time 71076 Below is in Minutes: 1.1846000000000000000
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+Total number of failed primes = 2
+-- Output Regulator: 2286527.023261371079
+--lpohst time 71087 Below is in Minutes: 1.1847833333333333333
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+Total number of failed primes = 2
+-- Output Regulator: 2286527.023261371079
+--lpohst time 71017 Below is in Minutes: 1.1836166666666666666
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 2286527.023261371079
+--lpohst time 71079 Below is in Minutes: 1.1846500000000000000
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 2286527.023261371079
+--lpohst time 71086 Below is in Minutes: 1.1847666666666666666
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 2286527.023261371079
+--lpohst time 71052 Below is in Minutes: 1.1842000000000000000
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 2286527.023261371079
+--lpohst time 71023 Below is in Minutes: 1.1837166666666666667
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 2286527.023261371079
+--lpohst time 71019 Below is in Minutes: 1.1836500000000000000
+
+--------------------------
+8 Field pol: x^5 - 13*x^4 + 11*x^3 + 262*x^2 - 204*x - 1291.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+48.191260294         827111.661235884     321377062961032
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 13
+pari_prime_check fails on p = 16487
+pari_prime_check fails on p = 38903
+Total number of failed primes = 6
+-- Output Regulator: 827111.6612358843684
+--lpohst time 70484 Below is in Minutes: 1.1747333333333333334
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 13
+pari_prime_check fails on p = 16487
+pari_prime_check fails on p = 38903
+Total number of failed primes = 6
+-- Output Regulator: 827111.6612358843684
+--lpohst time 70489 Below is in Minutes: 1.1748166666666666666
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 13
+pari_prime_check fails on p = 16487
+pari_prime_check fails on p = 38903
+Total number of failed primes = 6
+-- Output Regulator: 827111.6612358843684
+--lpohst time 70457 Below is in Minutes: 1.1742833333333333333
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 13
+Total number of failed primes = 1
+-- Output Regulator: 827111.6612358843684
+--lpohst time 70505 Below is in Minutes: 1.1750833333333333333
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 827111.6612358843684
+--lpohst time 70471 Below is in Minutes: 1.1745166666666666666
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 827111.6612358843684
+--lpohst time 70432 Below is in Minutes: 1.1738666666666666667
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 827111.6612358843684
+--lpohst time 70511 Below is in Minutes: 1.1751833333333333334
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 827111.6612358843684
+--lpohst time 70440 Below is in Minutes: 1.1740000000000000000
+
+--------------------------
+9 Field pol: x^5 - 20*x^4 + 92*x^3 + 143*x^2 - 885*x - 1262.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+47.637825270         390158.189531467     218984983304509
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 79
+Total number of failed primes = 2
+-- Output Regulator: 390158.1895314670722
+--lpohst time 70405 Below is in Minutes: 1.1734166666666666667
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 79
+Total number of failed primes = 2
+-- Output Regulator: 390158.1895314670722
+--lpohst time 70366 Below is in Minutes: 1.1727666666666666667
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 79
+Total number of failed primes = 2
+-- Output Regulator: 390158.1895314670722
+--lpohst time 70388 Below is in Minutes: 1.1731333333333333333
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 390158.1895314670722
+--lpohst time 70394 Below is in Minutes: 1.1732333333333333334
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 390158.1895314670722
+--lpohst time 70347 Below is in Minutes: 1.1724500000000000000
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 390158.1895314670722
+--lpohst time 70433 Below is in Minutes: 1.1738833333333333333
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 390158.1895314670722
+--lpohst time 69986 Below is in Minutes: 1.1664333333333333333
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 390158.1895314670722
+--lpohst time 69736 Below is in Minutes: 1.1622666666666666667
+
+--------------------------
+10 Field pol: x^5 - 14*x^4 + 6*x^3 + 326*x^2 - 215*x - 2023.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+47.549306557         556014.444231589     205952726963429
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 37
+pari_prime_check fails on p = 617
+Total number of failed primes = 5
+-- Output Regulator: 556014.4442315886136
+--lpohst time 70869 Below is in Minutes: 1.1811500000000000000
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 37
+pari_prime_check fails on p = 617
+Total number of failed primes = 5
+-- Output Regulator: 556014.4442315886136
+--lpohst time 70795 Below is in Minutes: 1.1799166666666666667
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 37
+pari_prime_check fails on p = 617
+Total number of failed primes = 5
+-- Output Regulator: 556014.4442315886136
+--lpohst time 70685 Below is in Minutes: 1.1780833333333333333
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 556014.4442315886136
+--lpohst time 70789 Below is in Minutes: 1.1798166666666666666
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 556014.4442315886136
+--lpohst time 70559 Below is in Minutes: 1.1759833333333333333
+
+Indexbound: 500000. N = 6
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 556014.4442315886136
+--lpohst time 70831 Below is in Minutes: 1.1805166666666666666
+
+Indexbound: 500000. N = 7
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 556014.4442315886136
+--lpohst time 70689 Below is in Minutes: 1.1781500000000000000
+
+Indexbound: 500000. N = 8
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 556014.4442315886136
+--lpohst time 70929 Below is in Minutes: 1.1821500000000000000
+
+--------------------------
+11 Field pol: x^5 - 59*x^4 + 1225*x^3 - 10704*x^2 + 33725*x - 6394.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+64.315701023         400901573.910691128  22959117992363970257
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 19
+pari_prime_check fails on p = 11941
+Total number of failed primes = 3
+-- Output Regulator: 400901573.9106911276
+--lpohst time 71950 Below is in Minutes: 1.1991666666666666667
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 19
+pari_prime_check fails on p = 11941
+Total number of failed primes = 3
+-- Output Regulator: 400901573.9106911276
+--lpohst time 71941 Below is in Minutes: 1.1990166666666666667
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 19
+pari_prime_check fails on p = 11941
+Total number of failed primes = 3
+-- Output Regulator: 400901573.9106911276
+--lpohst time 71890 Below is in Minutes: 1.1981666666666666666
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 3
+Total number of failed primes = 1
+-- Output Regulator: 400901573.9106911276
+--lpohst time 72051 Below is in Minutes: 1.2008500000000000000
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 400901573.9106911276
+--lpohst time 72077 Below is in Minutes: 1.2012833333333333333
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 400901573.9106911276
+--lpohst time 72325 Below is in Minutes: 1.2054166666666666667
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 400901573.9106911276
+--lpohst time 72165 Below is in Minutes: 1.2027500000000000000
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 400901573.9106911276
+--lpohst time 72229 Below is in Minutes: 1.2038166666666666667
+
+--------------------------
+12 Field pol: x^5 - 75*x^4 + 2043*x^3 - 24650*x^2 + 129527*x - 224216.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+63.569067501         589589450.130104674  13683465902504279657
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 153949
+Total number of failed primes = 3
+-- Output Regulator: 589589450.1301046738
+--lpohst time 72511 Below is in Minutes: 1.2085166666666666667
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 153949
+Total number of failed primes = 3
+-- Output Regulator: 589589450.1301046738
+--lpohst time 72486 Below is in Minutes: 1.2081000000000000000
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 153949
+Total number of failed primes = 3
+-- Output Regulator: 589589450.1301046738
+--lpohst time 72619 Below is in Minutes: 1.2103166666666666666
+
+Indexbound: 500000. N = 4
+Total number of failed primes = 0
+-- Output Regulator: 589589450.1301046738
+--lpohst time 72329 Below is in Minutes: 1.2054833333333333334
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 589589450.1301046738
+--lpohst time 72914 Below is in Minutes: 1.2152333333333333334
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 589589450.1301046738
+--lpohst time 72587 Below is in Minutes: 1.2097833333333333334
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 589589450.1301046738
+--lpohst time 72443 Below is in Minutes: 1.2073833333333333334
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 589589450.1301046738
+--lpohst time 72512 Below is in Minutes: 1.2085333333333333334
+
+--------------------------
+13 Field pol: x^5 - 90*x^4 + 3048*x^3 - 47957*x^2 + 347190*x - 925687.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+64.246543086         153041843.447865816  21884497886594459585
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 31
+pari_prime_check fails on p = 131
+pari_prime_check fails on p = 29123
+pari_prime_check fails on p = 49463
+Total number of failed primes = 6
+-- Output Regulator: 153041843.44786581589
+--lpohst time 71837 Below is in Minutes: 1.1972833333333333333
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 31
+pari_prime_check fails on p = 131
+pari_prime_check fails on p = 29123
+pari_prime_check fails on p = 49463
+Total number of failed primes = 6
+-- Output Regulator: 153041843.44786581589
+--lpohst time 71780 Below is in Minutes: 1.1963333333333333333
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 31
+pari_prime_check fails on p = 131
+pari_prime_check fails on p = 29123
+pari_prime_check fails on p = 49463
+Total number of failed primes = 6
+-- Output Regulator: 153041843.44786581589
+--lpohst time 71704 Below is in Minutes: 1.1950666666666666666
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 5
+Total number of failed primes = 1
+-- Output Regulator: 153041843.44786581589
+--lpohst time 71769 Below is in Minutes: 1.1961500000000000000
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 5
+Total number of failed primes = 1
+-- Output Regulator: 153041843.44786581589
+--lpohst time 71775 Below is in Minutes: 1.1962500000000000000
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 153041843.44786581589
+--lpohst time 71520 Below is in Minutes: 1.1920000000000000000
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 153041843.44786581589
+--lpohst time 70654 Below is in Minutes: 1.1775666666666666667
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 153041843.44786581589
+--lpohst time 71311 Below is in Minutes: 1.1885166666666666667
+
+--------------------------
+14 Field pol: x^5 - 78*x^4 + 2225*x^3 - 27941*x^2 + 142744*x - 167373.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+63.774929203         826524264.294801807  15782167978182962884
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 82723
+Total number of failed primes = 3
+-- Output Regulator: 826524264.2948018072
+--lpohst time 72515 Below is in Minutes: 1.2085833333333333334
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 82723
+Total number of failed primes = 3
+-- Output Regulator: 826524264.2948018072
+--lpohst time 72544 Below is in Minutes: 1.2090666666666666667
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 82723
+Total number of failed primes = 2
+-- Output Regulator: 826524264.2948018072
+--lpohst time 72384 Below is in Minutes: 1.2064000000000000000
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 826524264.2948018072
+--lpohst time 72159 Below is in Minutes: 1.2026499999999999999
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 826524264.2948018072
+--lpohst time 72298 Below is in Minutes: 1.2049666666666666667
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 826524264.2948018072
+--lpohst time 72298 Below is in Minutes: 1.2049666666666666667
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 826524264.2948018072
+--lpohst time 72420 Below is in Minutes: 1.2070000000000000000
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 826524264.2948018072
+--lpohst time 72456 Below is in Minutes: 1.2076000000000000000
+
+--------------------------
+15 Field pol: x^5 - 40*x^4 + 488*x^3 - 1431*x^2 - 5764*x + 24313.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+63.619408697         64657232.759246875   14169362923841699929
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+Total number of failed primes = 2
+-- Output Regulator: 64657232.75924687470
+--lpohst time 71292 Below is in Minutes: 1.1882000000000000000
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+Total number of failed primes = 2
+-- Output Regulator: 64657232.75924687470
+--lpohst time 69148 Below is in Minutes: 1.1524666666666666667
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+Total number of failed primes = 2
+-- Output Regulator: 64657232.75924687470
+--lpohst time 68248 Below is in Minutes: 1.1374666666666666667
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+Total number of failed primes = 2
+-- Output Regulator: 64657232.75924687470
+--lpohst time 69362 Below is in Minutes: 1.1560333333333333333
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 3
+Total number of failed primes = 1
+-- Output Regulator: 64657232.75924687470
+--lpohst time 68532 Below is in Minutes: 1.1422000000000000000
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 64657232.75924687470
+--lpohst time 68161 Below is in Minutes: 1.1360166666666666667
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 64657232.75924687470
+--lpohst time 68319 Below is in Minutes: 1.1386500000000000000
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 64657232.75924687470
+--lpohst time 68341 Below is in Minutes: 1.1390166666666666666
+
+--------------------------
+16 Field pol: x^5 - 75*x^4 + 1732*x^3 - 8771*x^2 - 93391*x + 366739.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+79.625738218         40104446063.202388522 932686370465497628733393
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 17
+pari_prime_check fails on p = 131
+pari_prime_check fails on p = 7559
+Total number of failed primes = 4
+-- Output Regulator: 40104446063.20238852
+--lpohst time 69961 Below is in Minutes: 1.1660166666666666667
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 17
+pari_prime_check fails on p = 131
+pari_prime_check fails on p = 7559
+Total number of failed primes = 4
+-- Output Regulator: 40104446063.20238852
+--lpohst time 70078 Below is in Minutes: 1.1679666666666666667
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 17
+pari_prime_check fails on p = 131
+pari_prime_check fails on p = 7559
+Total number of failed primes = 4
+-- Output Regulator: 40104446063.20238852
+--lpohst time 70986 Below is in Minutes: 1.1831000000000000000
+
+Indexbound: 500000. N = 4
+Total number of failed primes = 0
+-- Output Regulator: 40104446063.20238852
+--lpohst time 70829 Below is in Minutes: 1.1804833333333333333
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 40104446063.20238852
+--lpohst time 70671 Below is in Minutes: 1.1778500000000000000
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 40104446063.20238852
+--lpohst time 71335 Below is in Minutes: 1.1889166666666666667
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 40104446063.20238852
+--lpohst time 71263 Below is in Minutes: 1.1877166666666666667
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 40104446063.20238852
+--lpohst time 70957 Below is in Minutes: 1.1826166666666666666
+
+--------------------------
+17 Field pol: x^5 - 123*x^4 + 5566*x^3 - 113819*x^2 + 1037717*x - 3407056.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+79.693444844         50050216035.524575446 977501327243493368046988
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 293
+pari_prime_check fails on p = 1783
+Total number of failed primes = 3
+-- Output Regulator: 50050216035.52457545
+--lpohst time 70865 Below is in Minutes: 1.1810833333333333333
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 293
+pari_prime_check fails on p = 1783
+Total number of failed primes = 3
+-- Output Regulator: 50050216035.52457545
+--lpohst time 72019 Below is in Minutes: 1.2003166666666666666
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 293
+pari_prime_check fails on p = 1783
+Total number of failed primes = 3
+-- Output Regulator: 50050216035.52457545
+--lpohst time 71606 Below is in Minutes: 1.1934333333333333333
+
+Indexbound: 500000. N = 4
+Total number of failed primes = 0
+-- Output Regulator: 50050216035.52457545
+--lpohst time 71388 Below is in Minutes: 1.1898000000000000000
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 50050216035.52457545
+--lpohst time 71805 Below is in Minutes: 1.1967500000000000000
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 50050216035.52457545
+--lpohst time 71432 Below is in Minutes: 1.1905333333333333333
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 50050216035.52457545
+--lpohst time 72269 Below is in Minutes: 1.2044833333333333334
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 50050216035.52457545
+--lpohst time 71354 Below is in Minutes: 1.1892333333333333334
+
+--------------------------
+18 Field pol: x^5 - 74*x^4 + 1632*x^3 - 6319*x^2 - 114360*x + 691374.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+80.398912779         156965108189.572379126 1593985495133914681669464
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+Total number of failed primes = 2
+-- Output Regulator: 156965108189.57237913
+--lpohst time 71699 Below is in Minutes: 1.1949833333333333334
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+Total number of failed primes = 2
+-- Output Regulator: 156965108189.57237913
+--lpohst time 72002 Below is in Minutes: 1.2000333333333333333
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 156965108189.57237913
+--lpohst time 70630 Below is in Minutes: 1.1771666666666666666
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 156965108189.57237913
+--lpohst time 70449 Below is in Minutes: 1.1741500000000000000
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 156965108189.57237913
+--lpohst time 70512 Below is in Minutes: 1.1752000000000000000
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 156965108189.57237913
+--lpohst time 70408 Below is in Minutes: 1.1734666666666666667
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 156965108189.57237913
+--lpohst time 70845 Below is in Minutes: 1.1807500000000000000
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 156965108189.57237913
+--lpohst time 71141 Below is in Minutes: 1.1856833333333333334
+
+--------------------------
+19 Field pol: x^5 - 145*x^4 + 7719*x^3 - 180690*x^2 + 1671204*x - 2611127.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+80.059213209         59843094403.616686996 1259576662091275612795768
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 23
+pari_prime_check fails on p = 17971
+Total number of failed primes = 4
+-- Output Regulator: 59843094403.61668700
+--lpohst time 71349 Below is in Minutes: 1.1891500000000000000
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 23
+pari_prime_check fails on p = 17971
+Total number of failed primes = 4
+-- Output Regulator: 59843094403.61668700
+--lpohst time 71723 Below is in Minutes: 1.1953833333333333333
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 23
+pari_prime_check fails on p = 17971
+Total number of failed primes = 4
+-- Output Regulator: 59843094403.61668700
+--lpohst time 72142 Below is in Minutes: 1.2023666666666666667
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 59843094403.61668700
+--lpohst time 71863 Below is in Minutes: 1.1977166666666666666
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 59843094403.61668700
+--lpohst time 72105 Below is in Minutes: 1.2017500000000000000
+
+Indexbound: 500000. N = 6
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 59843094403.61668700
+--lpohst time 72348 Below is in Minutes: 1.2058000000000000000
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 59843094403.61668700
+--lpohst time 71543 Below is in Minutes: 1.1923833333333333334
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 59843094403.61668700
+--lpohst time 71483 Below is in Minutes: 1.1913833333333333334
+
+--------------------------
+20 Field pol: x^5 - 154*x^4 + 8830*x^3 - 233260*x^2 + 2801234*x - 12309431.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+80.066612014         237724509730.971682053 1266052943514368514283685
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 13
+pari_prime_check fails on p = 3187
+Total number of failed primes = 3
+-- Output Regulator: 237724509730.97168206
+--lpohst time 71386 Below is in Minutes: 1.1897666666666666666
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 13
+pari_prime_check fails on p = 3187
+Total number of failed primes = 3
+-- Output Regulator: 237724509730.97168206
+--lpohst time 71565 Below is in Minutes: 1.1927500000000000000
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 13
+pari_prime_check fails on p = 3187
+Total number of failed primes = 3
+-- Output Regulator: 237724509730.97168206
+--lpohst time 72119 Below is in Minutes: 1.2019833333333333333
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 237724509730.97168206
+--lpohst time 71959 Below is in Minutes: 1.1993166666666666666
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 237724509730.97168206
+--lpohst time 72078 Below is in Minutes: 1.2013000000000000000
+
+Indexbound: 500000. N = 6
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 237724509730.97168206
+--lpohst time 71866 Below is in Minutes: 1.1977666666666666667
+
+Indexbound: 500000. N = 7
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 237724509730.97168206
+--lpohst time 71479 Below is in Minutes: 1.1913166666666666667
+
+Indexbound: 500000. N = 8
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 237724509730.97168206
+--lpohst time 71499 Below is in Minutes: 1.1916500000000000000
+
+--------------------------
+21 Field pol: x^5 - 187*x^4 + 12312*x^3 - 340188*x^2 + 3599419*x - 12091051.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+96.309036928         18002847169869.354035627 98154218339225204712040303696
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 541
+pari_prime_check fails on p = 9049
+Total number of failed primes = 4
+-- Output Regulator: 18002847169869.354036
+--lpohst time 73232 Below is in Minutes: 1.2205333333333333334
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 541
+pari_prime_check fails on p = 9049
+Total number of failed primes = 4
+-- Output Regulator: 18002847169869.354036
+--lpohst time 74264 Below is in Minutes: 1.2377333333333333333
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 541
+pari_prime_check fails on p = 9049
+Total number of failed primes = 4
+-- Output Regulator: 18002847169869.354036
+--lpohst time 73486 Below is in Minutes: 1.2247666666666666667
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 3
+Total number of failed primes = 1
+-- Output Regulator: 18002847169869.354036
+--lpohst time 73061 Below is in Minutes: 1.2176833333333333333
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 18002847169869.354036
+--lpohst time 73000 Below is in Minutes: 1.2166666666666666667
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 18002847169869.354036
+--lpohst time 72760 Below is in Minutes: 1.2126666666666666667
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 18002847169869.354036
+--lpohst time 73528 Below is in Minutes: 1.2254666666666666667
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 18002847169869.354036
+--lpohst time 73116 Below is in Minutes: 1.2186000000000000000
+
+--------------------------
+22 Field pol: x^5 - 214*x^4 + 16650*x^3 - 573452*x^2 + 8421576*x - 37117353.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+96.155104401         14165812353772.733525276 88220732817081682356767215797
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 313
+Total number of failed primes = 3
+-- Output Regulator: 14165812353772.733525
+--lpohst time 73031 Below is in Minutes: 1.2171833333333333334
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 313
+Total number of failed primes = 3
+-- Output Regulator: 14165812353772.733525
+--lpohst time 72619 Below is in Minutes: 1.2103166666666666666
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 313
+Total number of failed primes = 3
+-- Output Regulator: 14165812353772.733525
+--lpohst time 72616 Below is in Minutes: 1.2102666666666666667
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 14165812353772.733525
+--lpohst time 72617 Below is in Minutes: 1.2102833333333333333
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 14165812353772.733525
+--lpohst time 72749 Below is in Minutes: 1.2124833333333333333
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 14165812353772.733525
+--lpohst time 72456 Below is in Minutes: 1.2076000000000000000
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 14165812353772.733525
+--lpohst time 72280 Below is in Minutes: 1.2046666666666666667
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 14165812353772.733525
+--lpohst time 72592 Below is in Minutes: 1.2098666666666666666
+
+--------------------------
+23 Field pol: x^5 - 151*x^4 + 7243*x^3 - 108531*x^2 + 67389*x + 387478.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+96.280281331         11326843195896.716076978 96217190481275534281668207269
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 7
+Total number of failed primes = 2
+-- Output Regulator: 11326843195896.716077
+--lpohst time 72800 Below is in Minutes: 1.2133333333333333334
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 7
+Total number of failed primes = 2
+-- Output Regulator: 11326843195896.716077
+--lpohst time 72785 Below is in Minutes: 1.2130833333333333334
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 3
+pari_prime_check fails on p = 7
+Total number of failed primes = 2
+-- Output Regulator: 11326843195896.716077
+--lpohst time 72709 Below is in Minutes: 1.2118166666666666667
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 3
+Total number of failed primes = 1
+-- Output Regulator: 11326843195896.716077
+--lpohst time 72386 Below is in Minutes: 1.2064333333333333334
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 3
+Total number of failed primes = 1
+-- Output Regulator: 11326843195896.716077
+--lpohst time 72358 Below is in Minutes: 1.2059666666666666667
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 11326843195896.716077
+--lpohst time 72386 Below is in Minutes: 1.2064333333333333334
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 11326843195896.716077
+--lpohst time 72323 Below is in Minutes: 1.2053833333333333333
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 11326843195896.716077
+--lpohst time 72301 Below is in Minutes: 1.2050166666666666667
+
+--------------------------
+24 Field pol: x^5 - 228*x^4 + 19412*x^3 - 755189*x^2 + 13019788*x - 76686773.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+96.073694340         10278824434242.266733411 83380364743320670596205300129
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 1543
+pari_prime_check fails on p = 2153
+Total number of failed primes = 4
+-- Output Regulator: 10278824434242.266733
+--lpohst time 71881 Below is in Minutes: 1.1980166666666666667
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 1543
+pari_prime_check fails on p = 2153
+Total number of failed primes = 4
+-- Output Regulator: 10278824434242.266733
+--lpohst time 71893 Below is in Minutes: 1.1982166666666666667
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 1543
+pari_prime_check fails on p = 2153
+Total number of failed primes = 4
+-- Output Regulator: 10278824434242.266733
+--lpohst time 71721 Below is in Minutes: 1.1953500000000000000
+
+Indexbound: 500000. N = 4
+Total number of failed primes = 0
+-- Output Regulator: 10278824434242.266733
+--lpohst time 71760 Below is in Minutes: 1.1960000000000000000
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 10278824434242.266733
+--lpohst time 71888 Below is in Minutes: 1.1981333333333333333
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 10278824434242.266733
+--lpohst time 71758 Below is in Minutes: 1.1959666666666666667
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 10278824434242.266733
+--lpohst time 71758 Below is in Minutes: 1.1959666666666666667
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 10278824434242.266733
+--lpohst time 71741 Below is in Minutes: 1.1956833333333333334
+
+--------------------------
+25 Field pol: x^5 - 285*x^4 + 30184*x^3 - 1448471*x^2 + 30138157*x - 190047803.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+95.923025030         5882027513011.772736408 75111737601990967514574715025
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 19
+Total number of failed primes = 4
+-- Output Regulator: 5882027513011.772737
+--lpohst time 71921 Below is in Minutes: 1.1986833333333333333
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 19
+Total number of failed primes = 4
+-- Output Regulator: 5882027513011.772737
+--lpohst time 71812 Below is in Minutes: 1.1968666666666666667
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 11
+pari_prime_check fails on p = 19
+Total number of failed primes = 4
+-- Output Regulator: 5882027513011.772737
+--lpohst time 71781 Below is in Minutes: 1.1963500000000000000
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 7
+Total number of failed primes = 2
+-- Output Regulator: 5882027513011.772737
+--lpohst time 71781 Below is in Minutes: 1.1963500000000000000
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 5882027513011.772737
+--lpohst time 71784 Below is in Minutes: 1.1964000000000000000
+
+Indexbound: 500000. N = 6
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 5882027513011.772737
+--lpohst time 71819 Below is in Minutes: 1.1969833333333333333
+
+Indexbound: 500000. N = 7
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 5882027513011.772737
+--lpohst time 71795 Below is in Minutes: 1.1965833333333333333
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 5882027513011.772737
+--lpohst time 71791 Below is in Minutes: 1.1965166666666666666
+
+--------------------------
+26 Field pol: x^5 - 390*x^4 + 55544*x^3 - 3492546*x^2 + 92105268*x - 723536099.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+112.028740335        2488260913030597.812307963 5296771244733583312170416344986533
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 2488260913030597.812
+--lpohst time 74128 Below is in Minutes: 1.2354666666666666667
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 2488260913030597.812
+--lpohst time 73918 Below is in Minutes: 1.2319666666666666667
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 2488260913030597.812
+--lpohst time 73948 Below is in Minutes: 1.2324666666666666666
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 2488260913030597.812
+--lpohst time 73944 Below is in Minutes: 1.2324000000000000000
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 2488260913030597.812
+--lpohst time 73935 Below is in Minutes: 1.2322500000000000000
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 2488260913030597.812
+--lpohst time 73945 Below is in Minutes: 1.2324166666666666667
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 2488260913030597.812
+--lpohst time 73929 Below is in Minutes: 1.2321500000000000000
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 2488260913030597.812
+--lpohst time 73964 Below is in Minutes: 1.2327333333333333333
+
+--------------------------
+27 Field pol: x^5 - 423*x^4 + 67233*x^3 - 4921916*x^2 + 160350478*x - 1706987618.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+112.048107079        7204749907502449.572503047 5368354517641046950341534078441284
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 17
+pari_prime_check fails on p = 19
+pari_prime_check fails on p = 73
+Total number of failed primes = 6
+-- Output Regulator: 7204749907502449.573
+--lpohst time 74769 Below is in Minutes: 1.2461500000000000000
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 7
+pari_prime_check fails on p = 17
+pari_prime_check fails on p = 19
+pari_prime_check fails on p = 73
+Total number of failed primes = 6
+-- Output Regulator: 7204749907502449.573
+--lpohst time 74725 Below is in Minutes: 1.2454166666666666666
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 17
+pari_prime_check fails on p = 19
+pari_prime_check fails on p = 73
+Total number of failed primes = 5
+-- Output Regulator: 7204749907502449.573
+--lpohst time 74698 Below is in Minutes: 1.2449666666666666667
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+Total number of failed primes = 2
+-- Output Regulator: 7204749907502449.573
+--lpohst time 74703 Below is in Minutes: 1.2450500000000000000
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 7204749907502449.573
+--lpohst time 74695 Below is in Minutes: 1.2449166666666666666
+
+Indexbound: 500000. N = 6
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 7204749907502449.573
+--lpohst time 74714 Below is in Minutes: 1.2452333333333333333
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 7204749907502449.573
+--lpohst time 74707 Below is in Minutes: 1.2451166666666666666
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 7204749907502449.573
+--lpohst time 74705 Below is in Minutes: 1.2450833333333333334
+
+--------------------------
+28 Field pol: x^5 - 414*x^4 + 64001*x^3 - 4590209*x^2 + 150434327*x - 1753279483.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+112.246732881        1403797913435091.933920702 6160748961493752735935781130011433
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+Total number of failed primes = 2
+-- Output Regulator: 1403797913435091.9340
+--lpohst time 73666 Below is in Minutes: 1.2277666666666666666
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 3
+Total number of failed primes = 2
+-- Output Regulator: 1403797913435091.9340
+--lpohst time 73572 Below is in Minutes: 1.2262000000000000000
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 3
+Total number of failed primes = 1
+-- Output Regulator: 1403797913435091.9340
+--lpohst time 73540 Below is in Minutes: 1.2256666666666666667
+
+Indexbound: 500000. N = 4
+Total number of failed primes = 0
+-- Output Regulator: 1403797913435091.9340
+--lpohst time 73550 Below is in Minutes: 1.2258333333333333333
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 1403797913435091.9340
+--lpohst time 73536 Below is in Minutes: 1.2256000000000000000
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 1403797913435091.9340
+--lpohst time 73555 Below is in Minutes: 1.2259166666666666667
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 1403797913435091.9340
+--lpohst time 73539 Below is in Minutes: 1.2256500000000000000
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 1403797913435091.9340
+--lpohst time 73544 Below is in Minutes: 1.2257333333333333334
+
+--------------------------
+29 Field pol: x^5 - 373*x^4 + 49523*x^3 - 2825278*x^2 + 64759387*x - 476775279.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+112.491984878        3404653439846763.342791570 7302334450833721889353482502920657
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 13
+pari_prime_check fails on p = 3061
+pari_prime_check fails on p = 10889
+Total number of failed primes = 5
+-- Output Regulator: 3404653439846763.343
+--lpohst time 74118 Below is in Minutes: 1.2353000000000000000
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 13
+pari_prime_check fails on p = 3061
+pari_prime_check fails on p = 10889
+Total number of failed primes = 5
+-- Output Regulator: 3404653439846763.343
+--lpohst time 74172 Below is in Minutes: 1.2362000000000000000
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 2
+pari_prime_check fails on p = 5
+pari_prime_check fails on p = 3061
+pari_prime_check fails on p = 10889
+Total number of failed primes = 4
+-- Output Regulator: 3404653439846763.343
+--lpohst time 74563 Below is in Minutes: 1.2427166666666666667
+
+Indexbound: 500000. N = 4
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 3404653439846763.343
+--lpohst time 74553 Below is in Minutes: 1.2425500000000000000
+
+Indexbound: 500000. N = 5
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 3404653439846763.343
+--lpohst time 74587 Below is in Minutes: 1.2431166666666666667
+
+Indexbound: 500000. N = 6
+pari_prime_check fails on p = 2
+Total number of failed primes = 1
+-- Output Regulator: 3404653439846763.343
+--lpohst time 74585 Below is in Minutes: 1.2430833333333333333
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 3404653439846763.343
+--lpohst time 74566 Below is in Minutes: 1.2427666666666666666
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 3404653439846763.343
+--lpohst time 74563 Below is in Minutes: 1.2427166666666666667
+
+--------------------------
+30 Field pol: x^5 - 332*x^4 + 38060*x^3 - 1764170*x^2 + 31474251*x - 175630777.  Sig: (5,0) -- Precision: 0
+Log(Disc)            Regulator:           Disc:
+111.540384313        3099378656521688.235759059 3775734134144125544373978625126429
+ avec
+
+Indexbound: 500000. N = 1
+pari_prime_check fails on p = 3
+Total number of failed primes = 1
+-- Output Regulator: 3099378656521688.236
+--lpohst time 74568 Below is in Minutes: 1.2428000000000000000
+
+Indexbound: 500000. N = 2
+pari_prime_check fails on p = 3
+Total number of failed primes = 1
+-- Output Regulator: 3099378656521688.236
+--lpohst time 74707 Below is in Minutes: 1.2451166666666666666
+
+Indexbound: 500000. N = 3
+pari_prime_check fails on p = 3
+Total number of failed primes = 1
+-- Output Regulator: 3099378656521688.236
+--lpohst time 74532 Below is in Minutes: 1.2422000000000000000
+
+Indexbound: 500000. N = 4
+Total number of failed primes = 0
+-- Output Regulator: 3099378656521688.236
+--lpohst time 74544 Below is in Minutes: 1.2424000000000000000
+
+Indexbound: 500000. N = 5
+Total number of failed primes = 0
+-- Output Regulator: 3099378656521688.236
+--lpohst time 74546 Below is in Minutes: 1.2424333333333333334
+
+Indexbound: 500000. N = 6
+Total number of failed primes = 0
+-- Output Regulator: 3099378656521688.236
+--lpohst time 74529 Below is in Minutes: 1.2421500000000000000
+
+Indexbound: 500000. N = 7
+Total number of failed primes = 0
+-- Output Regulator: 3099378656521688.236
+--lpohst time 74545 Below is in Minutes: 1.2424166666666666667
+
+Indexbound: 500000. N = 8
+Total number of failed primes = 0
+-- Output Regulator: 3099378656521688.236
+--lpohst time 74530 Below is in Minutes: 1.2421666666666666667

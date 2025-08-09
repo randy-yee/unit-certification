@@ -80,6 +80,7 @@ log_determinant(G, unitmat)={
     square_matrix = square_matrix*unitmat;
     square_matrix = log(abs(square_matrix));
     for(i = 1, length(square_matrix), if(i > G.r1, square_matrix[i,]*=2; ));
+
     return(abs(matdet(square_matrix)));
 };
 
@@ -341,6 +342,10 @@ update_eta_set_torsion(G, t_gen, p, new_units)={
 \\        a flag indicating whether a solution has been found,
 \\        A solution or 0
 
+
+\\DEBUGSCALING - as far as I can tell, using Practical Lagrange paper as reference
+\\ real_IB should not have the scaling factors of square root 2 on complex embeddings
+\\ ask Ha and Mike
 has_pth_root_normal(G, real_IB, p, unit_coeffs,eps)={
     my(
       basis_numerical,
@@ -370,7 +375,6 @@ has_pth_root_normal(G, real_IB, p, unit_coeffs,eps)={
         for(i=1, length(minima_list[3]),
 
             candidate1 = change_of_basis*minima_list[3][,i] ;
-            \\print("candidate: ", precision(candidate1,10));
             if(abs(nfeltnorm(G, candidate1))!=1, ,
                 candidate = nfeltpow(G,candidate1, p);
                 checkflag = 1;
@@ -405,6 +409,7 @@ has_pth_root_normal(G, real_IB, p, unit_coeffs,eps)={
 \\ - el1 el2 are elts of G as coefficient vectors
 \\ OUTPUT:
 \\ returns 1 if factor * logembedding(el1) == logembedding(el2), 0 otherwise
+\\ DEBUGSCALING - log functions
 compare_logs(G, fac, el1, el2,eps)={
     my(zeroflag = 0, el1_num = abs(G[5][1]*el1), el2_num = abs(G[5][1]*el2));
 

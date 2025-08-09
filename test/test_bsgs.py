@@ -32,10 +32,89 @@ func(~map)={
         counter+=1;
     );
     GP_ASSERT_EQ(counter, 1000);
+
+}
+
+
+{
+    my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
+        lglat, eps = 10^(-20)
+    );
+    B = 1;
+    scanRadius =0.5;
+    \\ D = 3638703101
+    K1= nfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
+    K2= bnfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
+
+    lglat = get_log_lattice_bnf(K2);
+    reg1 = get_abs_determinant(lglat);
+
+    cpct_units = cpct_from_loglattice(K1, lglat, eps);
+    totaltime = 0;
+    start_time = getabstime();
+
+    bsgs_output= bsgs(K1,cpct_units, B, 18, scanRadius, eps,20,"alltest.txt");
+    end_time = getabstime();
+    totaltime +=(end_time- start_time);
+    print("BSGS time: " ,totaltime, " Expected ", 3600);
+    GP_ASSERT_WITHIN_RATIO(totaltime, 3600, 0.15);
+    \\\# babystock 18 with scan radius 0.5 runs in about 3600 seconds.
+    y = [1, 0, 0; 0, 1, 0; 0, 0, 1];
+    glegs = [4.619061865536216760, -16.675036477848972758, 14.169130776523246111;
+    3.705556112720428534, 14.697056881773186001, -26.315297544331964588;
+    -5.731205932306944782, -9.809986206492638008, -9.633237149198505804];
+    print("Testing baby step giant step functions complete");
 }
 
 {
-    print("Test 2 - BSGS on complex cubic ");
+    read("test/babystock_data.txt");
+    my(K1, K2, O_K, n, r, cpct_units, delta_K, B, disc,
+        lglat, eps = 10^(-20)
+    );
+    B = 1;
+    K1= nfinit(x^3 - 85*x^2 + 2750*x - 21391);
+    K2= bnfinit(x^3 - 85*x^2 + 2750*x - 21391);
+    logdisc = log(abs(K1.disc));
+    print("Test 2 - BSGS: Sublattice on complex cubic ", precision(K2.reg,10));
+    lglat = get_log_lattice_bnf(K2);
+    reg1 = get_abs_determinant(lglat);
+    GP_ASSERT_NEAR(reg1, K2.reg, eps);
+
+    prime_scale = 2;
+    while(prime_scale < 5,
+
+        scaled_lglat =lglat*prime_scale;
+        sumv = scaled_lglat[,1];
+
+        for(j=2, length(lglat), sumv+=lglat[,j]);
+        X1 = prec_baby(poldegree(K1.pol), logdisc, infinity_norm(sumv));
+        X2 = prec_giant(poldegree(K1.pol), logdisc,abs(reg1),infinity_norm(sumv) );
+        req_baby1 = REQ_BABY(K1, get_abs_determinant(scaled_lglat), column_sum(scaled_lglat));
+        req_giant1 = REQ_GIANT(K1, get_abs_determinant(scaled_lglat), column_sum(scaled_lglat));
+        req_baby2 = REQ_BABY(K1, get_abs_determinant(lglat), column_sum(lglat));
+        req_giant2 = REQ_GIANT(K1, get_abs_determinant(lglat), column_sum(lglat));
+
+        print("OLD ", ceil(X1), "  ", ceil(X2));
+        print("New scaled: ", req_baby1, "  ", req_giant1);
+        print("New non-scaled: ", req_baby2, "  ", req_giant2);
+        REQ_BSGS = ceil(max(ceil(req_baby1),ceil(req_giant1)));
+        default(realprecision, ceil(REQ_BSGS));
+        REQ_COMPARE = ceil((poldegree(K1.pol)^2 +2)*log(infinity_norm(sumv))+2*poldegree(K1.pol)^2 +5);
+        eps1 = 2^(-REQ_COMPARE);
+        scanRadius = 1;
+
+        cpct_units = cpct_from_loglattice(K1, scaled_lglat, eps);
+        bsgs_out= bsgs(K1,cpct_units, B, sqrt(abs(matdet(scaled_lglat))), scanRadius, eps,REQ_BSGS);
+        bsgs_out_lattice1 = log_lattice_from_compact_set(K1,bsgs_out);
+        GP_ASSERT_NEAR(reg1, get_abs_determinant(bsgs_out_lattice1), eps );
+        print("returned log lattice: ", precision(bsgs_out_lattice1,10));
+        prime_scale = nextprime(prime_scale+1);
+
+    );
+    print("Test 2 Succeeds");
+}
+
+{
 
     my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
         lglat, eps = 10^(-20)
@@ -43,99 +122,141 @@ func(~map)={
     B = 1;
     K1= nfinit(x^3 - x^2 - 3872*x - 91215);
     K2= bnfinit(x^3 - x^2 - 3872*x - 91215);
-
+    print("Test 3 - BSGS: Sublattice on real cubic ", precision(K2.reg,10));
     lglat = get_log_lattice_bnf(K2);
-    reg1 = unscaled_determinant(K1, lglat);
+
+    prime_scale = 10;
+    \\# while loop shortened for testing. Change back to 14
+    while(prime_scale < 6,
+        reg1 = get_abs_determinant(lglat);
+        GP_ASSERT_NEAR(reg1, K2.reg, eps);
+        scaled_lglat =lglat;
+        scaled_lglat[,1] *=prime_scale;
+        sumv = scaled_lglat[,1];
+        for(j=2, length(lglat), sumv+=lglat[,j]);
+        X1 = prec_baby(poldegree(K1.pol), log(abs(K1.disc)), infinity_norm(sumv));
+        X2 = prec_giant(poldegree(K1.pol), log(abs(K1.disc)),abs(reg1),infinity_norm(sumv) );
+        req_baby1 = REQ_BABY(K1, get_abs_determinant(scaled_lglat), column_sum(scaled_lglat));
+        req_giant1 = REQ_GIANT(K1, get_abs_determinant(scaled_lglat), column_sum(scaled_lglat));
+        REQ_BSGS = ceil(max(ceil(req_baby1),ceil(req_giant1)));
+        default(realprecision, ceil(REQ_BSGS*2));
+        REQ_COMPARE = ceil((poldegree(K1.pol)^2 +2)*log(infinity_norm(sumv))+2*poldegree(K1.pol)^2 +5);
+        eps = 2^(-REQ_COMPARE);
+        scanRadius = 1;
+
+        cpct_units = cpct_from_loglattice(K1, scaled_lglat, eps);
+        bsgs_out= bsgs(K1,cpct_units, B, sqrt(abs(matdet(scaled_lglat))), scanRadius, eps,REQ_BSGS);
+        bsgs_out_lattice = log_lattice_from_compact_set(K1,bsgs_out);
+        GP_ASSERT_NEAR(reg1, get_abs_determinant(bsgs_out_lattice), eps );
+
+        prime_scale = nextprime(prime_scale+1);
+    );
+
+    reg1 = get_abs_determinant(lglat);
     GP_ASSERT_NEAR(reg1, K2.reg, eps);
-    scaled_lglat =lglat*2;
+    scaled_lglat =lglat;
+    scaled_lglat[,1] *=7*2;
     sumv = scaled_lglat[,1];
     for(j=2, length(lglat), sumv+=lglat[,j]);
     X1 = prec_baby(poldegree(K1.pol), log(abs(K1.disc)), infinity_norm(sumv));
     X2 = prec_giant(poldegree(K1.pol), log(abs(K1.disc)),abs(reg1),infinity_norm(sumv) );
-    \\print(ceil(X1), "   ", ceil(X2), "   ", max(ceil(X1),ceil(X2)));
-    REQ_BSGS = ceil(max(ceil(X1),ceil(X2)));
+    req_baby1 = REQ_BABY(K1, get_abs_determinant(scaled_lglat), column_sum(scaled_lglat));
+    req_giant1 = REQ_GIANT(K1, get_abs_determinant(scaled_lglat), column_sum(scaled_lglat));
+    REQ_BSGS = ceil(max(ceil(req_baby1),ceil(req_giant1)));
+
     default(realprecision, ceil(REQ_BSGS));
-    REQ_COMPARE = ceil((poldegree(K1.pol)^2 +2)*log(infinity_norm(sumv))+2*poldegree(K1.pol)^2 +5);
+
+    REQ_COMPARE = ceil((poldegree(K1.pol)^2 +2)*log(infinity_norm(lglat[,1]))+2*poldegree(K1.pol)^2 +5);
     eps = 2^(-REQ_COMPARE);
     scanRadius = 1;
 
     cpct_units = cpct_from_loglattice(K1, scaled_lglat, eps);
     bsgs_out= bsgs(K1,cpct_units, B, sqrt(abs(matdet(scaled_lglat))), scanRadius, eps,REQ_BSGS);
     bsgs_out_lattice = log_lattice_from_compact_set(K1,bsgs_out);
-    GP_ASSERT_NEAR(reg1, unscaled_determinant(K1, bsgs_out_lattice), eps );
-    print(precision(lglat,10));
+    GP_ASSERT_NEAR(reg1, get_abs_determinant(bsgs_out_lattice), eps );
+
+    prime_scale = nextprime(prime_scale+1);
+    print("end test 3");
 }
 
 {
-    print("\nTest 3 - BSGS on complex cubic ");
-    my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
+
+    my(K1, K2, O_K, n, r, cpct_units, delta_K,B,disc,
         lglat, eps = 10^(-20)
     );
     B = 1;
-    scan_ball_radius = 0.75;
-    K1= nfinit(x^3 - 67*x^2 + 2032*x - 2053);
-    K2= bnfinit(x^3 - 67*x^2 + 2032*x - 2053);
-    n = poldegree(K1.pol);
-    breakpoint();
+    K1= nfinit(x^3 - 85*x^2 + 2750*x - 21391);
+    K2= bnfinit(x^3 - 85*x^2 + 2750*x - 21391);
+    logdisc = log(abs(K1.disc));
+    print("Test 4 - BSGS: Sublattice on complex cubic ", precision(K2.reg,10));
     lglat = get_log_lattice_bnf(K2);
-    reg1 = unscaled_determinant(K1, lglat);
+    reg1 = get_abs_determinant(lglat);
+    GP_ASSERT_NEAR(reg1, K2.reg, eps);
 
-    y = [1, 0, 0; 0, 1, 0; 0, 0, 1];
-    L = Mat(-6970.84528270648362176158817493947745897457384631054091381075996);
-    glegs = Mat(34.8542264135324181088079408746973872948728692315527045690537);
-    glegs = matconcat([glegs; extra_log_coordinate(K1.r1, K1.r2, glegs[,1])]);
-    hashmap1 = Map();
-    hashmap2 = Map();
-    my(temp1, temp);
+    prime_scale = 2;
+    while(prime_scale < 20,
 
-    cpct_hashmap = Map();
+        scaled_lglat =lglat*prime_scale;
+        sumv = scaled_lglat[,1];
 
-    incremental_baby_steps_compact(y, L, glegs, ~hashmap1, K1, scan_ball_radius, eps, "COMPACT", cpct_hashmap, []);
-    \\[L, temp] = babystock_scan_jump(y, L, glegs, ~hashmap1, K1, scan_ball_radius, eps);
-    [L1, temp1] = incremental_baby_steps(y, L, glegs, ~hashmap2, K1, scan_ball_radius, eps);
-    print("Compare babystock set sizes: ", matsize(Mat(hashmap1)), "  ",matsize(Mat(hashmap2))  );
+        for(j=2, length(lglat), sumv+=lglat[,j]);
+        X1 = prec_baby(poldegree(K1.pol), logdisc, infinity_norm(sumv));
+        X2 = prec_giant(poldegree(K1.pol), logdisc,abs(reg1),infinity_norm(sumv) );
+        REQ_BSGS = ceil(max(ceil(X1),ceil(X2)));
+        default(realprecision, ceil(REQ_BSGS));
+        REQ_COMPARE = ceil((poldegree(K1.pol)^2 +2)*log(infinity_norm(sumv))+2*poldegree(K1.pol)^2 +5);
+        eps = 2^(-REQ_COMPARE);
+        scanRadius = 1;
 
-    \\babystock_scan_jump
+        cpct_units = cpct_from_loglattice(K1, scaled_lglat, eps);
+        bsgs_out= bsgs(K1,cpct_units, B, sqrt(abs(matdet(scaled_lglat))), scanRadius, eps,REQ_BSGS);
+        bsgs_out_lattice = log_lattice_from_compact_set(K1,bsgs_out);
+        GP_ASSERT_NEAR(reg1, get_abs_determinant(bsgs_out_lattice), eps );
+        print("returned log lattice: ", precision(bsgs_out_lattice,10));
+        prime_scale = nextprime(prime_scale+1);
 
-    inc = get_giant_step_increment_vectors_compact(K1, glegs, n, eps);
-
-
-    incremental_giant_steps(K1, L1, glegs, hashmap2, [10], eps);
-    print("TEST 3 Succeeds");
+    );
+    print("Test 4 Succeeds");
 }
-
 
 {
-    my(K1, K2, O_K, n, r, cpct_units, delta_K,B,
+
+    my(K1, K2, O_K, n, r, cpct_units, delta_K,B,disc,
         lglat, eps = 10^(-20)
     );
     B = 1;
-    scanRadius =1;
-    \\ D = 3638703101
-    K1= nfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
-    K2= bnfinit(x^4 - 41*x^3 + 587*x^2 - 3427*x + 6773);
-
+    K1= nfinit(x^6 - 20*x^5 + 185*x^4 - 971*x^3 + 3007*x^2 - 5126*x + 3702);
+    K2= bnfinit(x^6 - 20*x^5 + 185*x^4 - 971*x^3 + 3007*x^2 - 5126*x + 3702);
+    logdisc = log(abs(K1.disc));
+    print("Test 5 - BSGS: Sublattice on (0,3) field", precision(K2.reg,10));
     lglat = get_log_lattice_bnf(K2);
-    reg1 = unscaled_determinant(K1, lglat);
+    reg1 = get_abs_determinant(lglat);
+    GP_ASSERT_NEAR(reg1, K2.reg, eps);
+    REQ_COMPARE = ceil((poldegree(K1.pol)^2 +2)*log(infinity_norm(real(lglat[,1])))+2*poldegree(K1.pol)^2 +5);
+    bsgs_eps = 2^(-REQ_COMPARE/2);
+    prime_scale = 2;
+    while(prime_scale < 6,
 
-    cpct_units = cpct_from_loglattice(K1, lglat, eps);
-    totaltime = 0;
-    start_time = getabstime();
+        scaled_lglat =lglat*prime_scale;
+        sumv = scaled_lglat[,1];
 
-    bsgs_output= bsgs(K1,cpct_units, B, 25, scanRadius, eps,20,"alltest.txt");
-    end_time = getabstime();
-    totaltime +=(end_time- start_time);
-    print("BSGS time: " ,totaltime, " Expected ", 4900);
-    print("Note that if COMPACT mode is on, expect worse timing");
-    GP_ASSERT_WITHIN_RATIO(totaltime, 3700, 0.1);
-    \\\log version with exact check is about 4900
-    \\\ inexact check was also about 4900
-    \\\ exact check was about 3700
-    y = [1, 0, 0; 0, 1, 0; 0, 0, 1];
-    glegs = [4.619061865536216760, -16.675036477848972758, 14.169130776523246111;
-    3.705556112720428534, 14.697056881773186001, -26.315297544331964588;
-    -5.731205932306944782, -9.809986206492638008, -9.633237149198505804];
+        for(j=2, length(lglat), sumv+=lglat[,j]);
+        X1 = REQ_BABY(K1, reg1, sumv);
+        X2 = REQ_GIANT(K1, reg1, sumv);
+        REQ_BSGS = ceil(max(ceil(X1),ceil(X2)));
+        default(realprecision, ceil(REQ_BSGS));
+        \\2679   2691   2691  283
+        print("BSGS precision ");print(ceil(X1), "   ", ceil(X2), "   ", REQ_BSGS, "  ", REQ_COMPARE);
+        scanRadius = 1;
 
-}
+        cpct_units = cpct_from_loglattice(K1, scaled_lglat, eps);
 
-print("Testing baby step giant step functions complete");
+        bsgs_out= bsgs(K1,cpct_units, 2, floor(9*sqrt(prime_scale)), scanRadius, bsgs_eps,REQ_BSGS);
+        bsgs_out_lattice = log_lattice_from_compact_set(K1,bsgs_out);
+        GP_ASSERT_NEAR(reg1, get_abs_determinant(bsgs_out_lattice), eps );
+        print("returned log lattice: ", precision(bsgs_out_lattice,10));
+        prime_scale = nextprime(prime_scale+1);
+
+    );
+    print("Test 5 Succeeds");
+};

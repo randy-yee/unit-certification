@@ -217,7 +217,6 @@ is_minimum(idealmat, v, G, eps)={
         );
         return(1));
 };
-\\ tried using this condition, but I think should not
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 \\ This function will take in a column vector which represent coefficients wrt the integral basis and check if it is a minimum in the given ideal
@@ -232,9 +231,9 @@ is_minimum(idealmat, v, G, eps)={
 
 is_minimum_alternate(idealmat, v, G, eps)={
     my(normedbody, I_v);
-    normI_deltaK = ceil(((2/Pi)^(G.r2))*abs(G.disc)^(1/2)*idealnorm(G,y));
-    v_norm = abs(nfeltnorm(G,vecholder ));
-    if(v_norm < 1 || v_norm > normI_deltaK , return(0));
+    normI_deltaK = ceil(((2/Pi)^(G.r2))*abs(G.disc)^(1/2)*idealnorm(G,v));
+    v_norm = abs(nfeltnorm(G,v ));
+    if(v_norm > normI_deltaK , return(0));
 
     I_v=idealdiv(G,idealmat,v);
     real_Iv = embed_real(G, G[5][1]*I_v);
