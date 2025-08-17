@@ -38,6 +38,27 @@ verify_field_bitsize(filen, r1, r2)={
 	);
 }
 {
+
+
+verify_field_bitsize("new-experiment-polynomials-0-2", 0,2);
+/*
+verify_field_bitsize("experiment-polynomials-0-2", 0,2);
+verify_field_bitsize("experiment-polynomials-0-3", 0,3);
+verify_field_bitsize("experiment-polynomials-0-4", 0,4);
+
+verify_field_bitsize("experiment-polynomials-1-1", 1,1);
+verify_field_bitsize("experiment-polynomials-1-2", 1,2);
+verify_field_bitsize("experiment-polynomials-1-3", 1,3);
+
+verify_field_bitsize("experiment-polynomials-2-1", 2,1);
+verify_field_bitsize("experiment-polynomials-2-2", 2,2);
+
+verify_field_bitsize("experiment-polynomials-3-0", 3,0);
+verify_field_bitsize("experiment-polynomials-3-1", 3,1);
+
+verify_field_bitsize("experiment-polynomials-4-0", 4,0);
+verify_field_bitsize("experiment-polynomials-5-0", 5,0);
+*/
 /*
 \\verify_field_bitsize("bsgs-r3-polynomials-0-4", 0,4);
 \\verify_field_bitsize("experiment-polynomials-4-0", 4,0);
@@ -60,26 +81,5 @@ verify_field_bitsize("bsgs-r2-polynomials-3-1", 3,1);
 
 verify_field_bitsize("bsgs-r2-polynomials-4-0", 4,0);
 */
-
-verify_field_bitsize("new-experiment-polynomials-0-2", 0,2);
-/*
-verify_field_bitsize("experiment-polynomials-0-2", 0,2);
-verify_field_bitsize("experiment-polynomials-0-3", 0,3);
-verify_field_bitsize("experiment-polynomials-0-4", 0,4);
-
-verify_field_bitsize("experiment-polynomials-1-1", 1,1);
-verify_field_bitsize("experiment-polynomials-1-2", 1,2);
-verify_field_bitsize("experiment-polynomials-1-3", 1,3);
-
-verify_field_bitsize("experiment-polynomials-2-1", 2,1);
-verify_field_bitsize("experiment-polynomials-2-2", 2,2);
-
-verify_field_bitsize("experiment-polynomials-3-0", 3,0);
-verify_field_bitsize("experiment-polynomials-3-1", 3,1);
-
-verify_field_bitsize("experiment-polynomials-4-0", 4,0);
-verify_field_bitsize("experiment-polynomials-5-0", 5,0);
-*/
-
 
 }
