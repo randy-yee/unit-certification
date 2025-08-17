@@ -461,6 +461,7 @@ generate_polynomial_list_bitsize(file_prefix, reg_start, reg_cap, interval_gap, 
 								if((K1.clgp.no == 1),
 									  tally+=1;
 									  if(K1.clgp.no != 1, print("error, non-trivial class group");breakpoint());
+									  \\note that K1[3] is the complex log embeddings of the computed fundamental units
 									  if(tally == fields_per_magnitude && ((discsize+magnitude_jump) >= reg_cap),
 										    write(writefile, "[" , pol1, ", " , K1.disc, ", \\\n",  K1[3]  , "] \\" );
 									  ,
