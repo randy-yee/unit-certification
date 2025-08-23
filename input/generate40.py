@@ -9,17 +9,17 @@ default(parisizemax, 12G);
 
 print("hello");
 
-OUTPUT_FILE_PREFIX = "experiment-polynomials-";
-STARTING_DISC_RANGE = 32;
-ENDING_DISC_RANGE = 129;
-DISC_GAP_SIZE = 16;
-DISC_SAMPLE_SIZE = 5;
+OUTPUT_FILE_PREFIX = "new-experiment-polynomials-";
+STARTING_REG_RANGE = 16; \\ ~32 disc
+ENDING_REG_RANGE = 65;   \\ ~128-ish
+REG_GAP_SIZE = 8;        \\ ~disc gap 16
+SAMPLE_SIZE = 5;
 REAL_EMBEDDINGS = 4;
 COMPLEX_EMBEDDINGS = 0;
 
 generate_polynomial_list_bitsize(OUTPUT_FILE_PREFIX, \
-                                STARTING_DISC_RANGE, ENDING_DISC_RANGE, \
-                                DISC_GAP_SIZE, DISC_SAMPLE_SIZE, \
+                                STARTING_REG_RANGE, ENDING_REG_RANGE, \
+                                REG_GAP_SIZE, SAMPLE_SIZE, \
                                 REAL_EMBEDDINGS, COMPLEX_EMBEDDINGS);
 
 
