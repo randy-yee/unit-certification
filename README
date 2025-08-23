@@ -1,9 +1,9 @@
-In order to use the function pari_prime_check, which executes the fast index divisor check, 
+In order to use the function pari_prime_check, which performs a relatively fast heuristic index divisor check, 
 an extra function needs to be added to the pari library.
 
-I'm sure there are better ways to do this, but possibility is as follows :
+There are surely better ways to do this, but one approach is as follows:
 
-1) Paste the function from the file buch3-insert.c in this directory into pari's buch3.c 
+1) Paste the function from the file buch3-insert.c into pari's buch3.c 
 located in src/basemath
  
 2) In src/headers/paridecl.h paste the following line: 
@@ -16,9 +16,10 @@ into the appropriate alphabetical spot
 
 Once complete, build pari (probably you want to do so locally) and everything should work.
 
-Please excuse the .py extensions, I do not have a text editor that highlights .gp files properly, so this is a poor man's workaround.
+Some of the gp files are given file extension .py as the python syntax highlighting is relatively close
+.
 The AllTest.gp and experiment- files are samples for how to make use of the functions within.
-experiment files read in precomputed log lattice data from the input folder in order to avoid having to execute bnfinit for large discriminant input.
+Experiment files read in precomputed log lattice data from the input folder in order to avoid having to execute bnfinit for large discriminant input.
+
 Please contact me if there are any bugs and I will do my best to address them, thank you!
 
-Test cases are currently in progress
