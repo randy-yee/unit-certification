@@ -25,8 +25,8 @@ OUTPUT_FILE = "data/pmax-Bsize-";
 {
     sigstring = "1-2";
     OUTPUT_FILE = concat(OUTPUT_FILE, sigstring);
-    start = 10;
-    end   = 16;
+    start = 1;
+    end   = 20;
     step  = 1;
     loop_ranges = [start, end, step];
     pmax_log_experiment(sigstring, loop_ranges, [INPUT_FILE, OUTPUT_FILE]);
