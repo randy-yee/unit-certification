@@ -33,13 +33,13 @@ verify_field_bitsize(filen, r1, r2)={
 		if(K.r1 !=r1 || K.r2 != r2,
 				print (i, " BAD FIELD!! Expected Signature ", r1, " ", r2, "\n");
 				print("Got:  ", K.r1, " ", K.r2, "  ", K.pol, " ", real(log(K.disc)/log(2))););
-		print(K.disc, "   ", round(log(abs(K.disc))/log(2)), "  reg: ", round(log(abs(reg1))/log(2)));
+		print(K.disc, "   Disc: ", round(log(abs(K.disc))/log(2)), "  reg: ", round(log(abs(reg1))/log(2)));
 
 	);
 }
 {
 
-
+/*
 \\verify_field_bitsize("new-experiment-polynomials-0-2", 0,2);
 verify_field_bitsize("new-experiment-polynomials-0-3", 0,3);
 verify_field_bitsize("new-experiment-polynomials-2-1", 2,1);
@@ -50,11 +50,11 @@ verify_field_bitsize("new-experiment-polynomials-3-1", 3,1);
 
 verify_field_bitsize("new-experiment-polynomials-4-0", 4,0);
 verify_field_bitsize("new-experiment-polynomials-5-0", 5,0);
-/*
+
 verify_field_bitsize("new-experiment-polynomials-1-1", 1,1);
 verify_field_bitsize("new-experiment-polynomials-1-2", 1,2);
 verify_field_bitsize("new-experiment-polynomials-1-3", 1,3);
-
+*/
 verify_field_bitsize("experiment-polynomials-0-2", 0,2);
 verify_field_bitsize("experiment-polynomials-0-3", 0,3);
 verify_field_bitsize("experiment-polynomials-0-4", 0,4);
@@ -71,7 +71,7 @@ verify_field_bitsize("experiment-polynomials-3-1", 3,1);
 
 verify_field_bitsize("experiment-polynomials-4-0", 4,0);
 verify_field_bitsize("experiment-polynomials-5-0", 5,0);
-*/
+
 /*
 \\verify_field_bitsize("bsgs-r3-polynomials-0-4", 0,4);
 \\verify_field_bitsize("experiment-polynomials-4-0", 4,0);

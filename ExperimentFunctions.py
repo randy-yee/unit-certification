@@ -227,22 +227,20 @@ hybrid_balance_calculator(urank, deg_n, detLambda)=
     first_guess = first_guess/(bsgsCoeffA+pmaxCoeffA);
     return(first_guess);
 }
-\\# loop_range is a triple indicating the start, end and increment of the loop
-\\# note tha the input files have a specific form, and the vector read in is always called data
 
-\\# param: signature_string is used to specify the read in file and the output file
-\\#     ex. "1-1", "1-2", "0-3" etc
+\\ The input files have a specific form: the vector read in is always called data
+\\ INPUT:
+\\ @param: signature_string is used to specify the read in file and the output file
+\\     ex. "1-1", "1-2", "0-3" etc
 \\
-\\# param: loop_range is a length 3 vector which specifies which fields to compute on
-\\#     they are the arguments for forstep: ex. [3,7,2], will run fields 3,5,7 from data
-\\# \param: b_ranges is a matrix of size n x 3, where each row is a triple of forstep arguments
-\\# that specifies a range of babystock volumes
-\\# each corresponds to the field number's ceiling mod 3 , only because this corresponds to a rough
-\\# indicator of the discriminant size.
+\\ @param: loop_range is a triple indicating the start, end and increment of the loop
+\\      which in turn specifies which fields to compute on
+\\ @param: b_ranges is a matrix of size n x 3, where each row is a triple of forstep arguments
+\\      specifying a range of babystock volumes
 \\# auxilliary is an additional vector that will hold options.
-\\# - auxilliary[1] if present will correspond to the scanball size.
-\\# - auxilliary[2] can specify the output file (string)
-\\# - auxilliary[3] can specify the input file  (string)
+\\# - auxilliary[1] if present will correspond to the radius of each baby scan
+\\# - auxilliary[2] if present specifies the output file (string)
+\\# - auxilliary[3] if present specifies the input file  (string)
 run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary, single_attempt = 0)=
 {
     GP_ASSERT_EQ(length(loop_range),3);
@@ -250,9 +248,8 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary, single_a
     suffix = strexpand("(", loop_range[1], ",", loop_range[2], ")");
     [OUTFILE1, infilestring] = generateFileStrings(signature_string, suffix, auxilliary);
 
-    \\\ Note that variable _data_ must be defined in the input file
     read(infilestring);
-
+    \\ a t_VEC called data must be defined in the input file
     GP_ASSERT_TRUE(type(data) == "t_VEC");
     GP_ASSERT_TRUE(loop_range[2] <= length(data));
     if(type(b_ranges) == "t_MAT", GP_ASSERT_TRUE(loop_range[2] <= matsize(b_ranges)[1]););
@@ -262,17 +259,17 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary, single_a
         timeout = 24*60*60*1000; \\12 hours
         \\# INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
         [K, lglat, reg1, r] = setInstanceVariables(data[i]);
-        \\# in case bnfinit is needed -- for debug purposes
-        \\K1 = bnfinit(data[i][2],1); unit_index = random(length(K1.fu))+1;
 
         \\# compute expected precision requirements
         [REQ_BSGS, REQ_COMPARE, bsgs_eps] = compute_precision(~K, ~lglat, ~reg1);
         default(realprecision, ceil(REQ_BSGS));
 
         lglat_new = lglat;
+        /*
         lglat_new[,1] *= 8*37;
         lglat_new[,r] *= (3^2);
         lglat_new = lglat_new*qflll(lglat_new);
+        */
         newreg = abs(matdet(lglat_new));
         sumv = column_sum(lglat_new);
 
@@ -371,83 +368,6 @@ run_bsgs_experiment(signature_string, loop_range, b_ranges, auxilliary, single_a
     );
 }
 
-
-
-\\ aux is for variable argument
-\\ aux[1] specifies the epsilon value
-\\ aux[2] specifies output string
-\\ and empty list in single_range will sweep the range up to roughly sqrt(reg)
-run_bsgs_experiment_single(signature_string, fieldnum, single_range, auxilliary)=
-{
-    timeout = 12*60*60*1000;
-    suffix = strexpand("(", fieldnum, "_", single_range, ")");
-    [OUTFILE1, infilestring] = generateFileStrings(signature_string, suffix, auxilliary);
-    read(infilestring);
-
-    forstep(i=fieldnum,fieldnum,1,
-        \\# INSTANTIATES THE FIELD AND THE LOGLATTICE OF UNITS AND CPCT REPS
-        \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-        [K, lglat, reg1,r] = setInstanceVariables(data[i]);
-
-        \\# in case bnfinit is needed
-        \\K1 = bnfinit(data[i][2],1); unit_index = random(length(K1.fu))+1;
-
-        [REQ_BSGS, REQ_COMPARE, eps] = compute_precision(~K, ~lglat, ~reg1);
-        default(realbitprecision, ceil(REQ_BSGS));
-
-        print("REQBSGS", default(realbitprecision), "  ", ceil(REQ_BSGS));
-        lglat_new = lglat;
-
-        writeInfo(i, K, lglat_new, reg1, signature_string, REQ_BSGS);
-
-        cpct_units = cpct_from_loglattice(K, lglat_new, eps);
-        scaleB = 2;          \\ 1 means you scan the whole region
-
-        \\scanBallRadius =1;
-        original_precision = default(realbitprecision);
-
-        \\# note that while scanBallRadius is computed to low precision,
-        \\# when input to bsgs, it is wrapped in bitprecision(), which copies
-        \\# it as a higher precision (extends with 0). This is needed otherwise
-        \\# computations with scanBall radius get truncated
-        if(auxilliary[1] == 0,
-            print("No scan radius specified. Auto-selecting");
-            default(realbitprecision, 20);
-            scanBallRadius = log( 7/sqrt( poldegree(K.pol) ))/2;
-            default(realbitprecision, original_precision);
-        ,
-            scanBallRadius = auxilliary[1];
-        );
-        my(init, end, stepsize);
-        if (length(single_range) == 0,
-            end = floor(sqrt(reg1));
-            init = floor(end/50);
-            stepsize = max(init, 1);
-        ,
-            init = single_range[1];
-            end = single_range[2];
-            stepsize = single_range[3];
-        );
-        print(init, " ", end, " ", stepsize);
-        forstep (j = init, end, stepsize,
-            \\scaling_variable = ((2^r)* log(abs(K.disc))^(1+j/den))/constscale ;
-            scaling_variable = j;
-            \\write(OUTFILE1, "\nscaling var = log(abs(disc))^(1+",j, "/",den,")*(2*r)/",constscale , "=",precision(scaling_variable,10));
-
-            t9 = getabstime();
-            bsgs_output= bsgs(K,cpct_units, scaleB, scaling_variable, bitprecision(scanBallRadius, REQ_BSGS), eps,REQ_BSGS,OUTFILE1, [timeout]);
-            t10 = getabstime();
-
-            bsgs_out_lattice = log_lattice_from_compact_set(K,bsgs_output);
-            print("result regulator: ", precision(get_abs_determinant(bsgs_out_lattice),10));
-            print("actual regulator: ", precision(reg1,10));
-            write(OUTFILE1, "Overall   time: ",precision(t10-t9,10), "  In mins: " ,precision((t10-t9)/60000.0,10),"  reg ratio: ", precision(get_abs_determinant(bsgs_out_lattice)/reg1, 10));
-            write(strexpand("bsgs-b-",sigstring, suffix), j, " , ",precision(t10-t9,10));
-            if (j == init, timeout = min(timeout, max(2*(t10-t9), 30*60000)); );
-        );
-    );
-
-}
 
 
 pmax_bound(signature_string, loop_ranges, auxilliary) =
