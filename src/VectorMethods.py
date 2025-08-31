@@ -1,10 +1,8 @@
-\\ This file contains all the more basic vector functionalities from Ha's code
+\\ A loose collection of functions operating on vectors
 /*
-make_poly
 invert_coordinates
 mulvec
 pointwise_vector_mul
-dividevector
 pointwise_vector_div
 concat_negative_sum
 sumvec
@@ -14,48 +12,42 @@ is_trace_zero
 check0
 samevecs
 vec_flip_positive
+vec_less_than
+double_complex_coordinates
+infinity_norm
 increment_coordinates
 column_lin_comb
 change_precision
-
-vec_less_than
+gram_schmidt
+get_enumeration_bounds
+compute_subgroup
+get_scaled_ideal_lattice
+check_ideal_reduced
 */
-
-sqrt2 = sqrt(2);
 
 read("src/MLLL.py");
 read("src/bounds.gp")
 read("test/TestingUtility.gp")
 
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ INPUT:
-\\ - in a list L containing t coefficients ordered largest exponent to smallest
-\\ OUTPUT:
-\\ - a polynomial f in x of degree (t-1) with coefficients determined by L
-
-make_poly(coeffs) = {
-  my(poly_f = 0);
-  for(k =1, length(coeffs),  poly_f += coeffs[k]*x^(length(coeffs)-k) );
-  return(poly_f)
-};
-
 /********************************************/
 /* VECTOR and MATRIX multiplication methods */
 /********************************************/
 
-\\ Inverts the coordinates of a column vector y in the ring R^n.
-\\ Note that this can take in a row vector, but it makes more sense for columns
+\\ Inverts the coordinates of a real vector y
+\\ Note that this can take in a t_VEC, but always returns a t_COL
 invert_coordinates(~y)=vector({length(y)},{i},{1/y[i]})~;
 
-/* 2. Pointwise multiply each column vector of mat by vector vec. Essentially the matrix version of pointwise_vector_mul */
-/* Outputs a matrix with the same dimensions as mat. The rows of the new matrix are v[i]*row[i] */
+/* 
+ *  BRIEF: Pointwise multiply each row of mat by vector vec.
+ *  Corresponds to operation V * M, where V is the diagonal matrix whose entries are given by vec
+ *  Outputs a matrix with the same dimensions as mat whose rows are v[i]*row[i] 
+*/
 mulvec(~mat,~vec) = matrix({matsize(mat)[1],matsize(mat)[2]},{i},{j},{mat[i,j]*vec[i]});
 
-/*2b. multiply 2 vectors/columns in the ring R^n (pointwise)
+
+\\ BRIEF: Pointwise multiplication of two vectors/columns 
 \\ OUTPUT:
-\\ - coordinate-wise product of the two inputs, as a column
-*/
-\\ Note that it's a bit confusing if vectors are input but a column returned.
+\\ - coordinate-wise product of the two inputs. Always returns a column
 pointwise_vector_mul(~u1, ~u2) = vector(length(u1),{i},{u1[i]*u2[i]})~;
 
 /*3. multiply a matrix y with the inverse of a vector v.
@@ -66,15 +58,7 @@ dividevector(~y,~u) = mulvec(y,invert_coordinates(u));
 pointwise_vector_div(~u1,~u2) = pointwise_vector_mul(u1,invert_coordinates(u2));
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ BRIEF: Return (v || c) where c is equal to the negative sum of entries of v
-\\ INPUT:
-\\ - A vector v of length t
-\\ OUTPUT:
-\\ - A vector (v || c) of length (t+1)
-concat_negative_sum(v) = concat(v,-sumvec(v));
-
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ INPUT: A vector v of length t
+\\ INPUT: A vector v of nonzero length
 \\ OUTPUT: The sum of the coordinates of the vector v
 sumvec(~v)= {
     my(entry_sum:small = 0);
@@ -83,10 +67,18 @@ sumvec(~v)= {
     );
     return(entry_sum);
 }
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+\\ BRIEF: Return (v || c) where c is equal to the negative sum of entries of v
+\\ INPUT:
+\\ - A vector v of length t
+\\ OUTPUT:
+\\ - A vector (v || c) of length (t+1)
+concat_negative_sum(v) = concat(v,-sumvec(v));
 
 
 /******************************************************************************/
 /* Returns an approximation of the vector v */
+/* Not terribly efficient. maybe this can be done using strings? */
 /******************************************************************************/
 vector_approximate(~v,eps)= {
     my( vn1=eps*round(v*1/(eps))*1.00 );
@@ -96,20 +88,24 @@ vector_approximate2(~v,eps)= {
     my( vn1=eps*round(v*1/(eps))*1.00 );
     vn1;
 }
-/* maybe this can be done using strings? */
 
 
 /******************************************************************************/
 /*12. sum coordinates, and see if close enough to 0 */
 /******************************************************************************/
 is_trace_zero(v,eps)={
+    GP_ASSERT_TRUE(eps > 0);
     if(abs(sumvec(v))<eps, return(1), return(0));
 }:bool
 
-/******************************************************************************/
-/*9. check that the coordinates of vector v in R^n are all abs. val. less than
-1 or not (PRECISION for comparisons all coordinates of v with 1)*/
+
+\\ BRIEF: Checks if the real vector v is in the normed body of 1.
+\\ i.e. determines whether the magnitude of the coords of v are less than 1
+\\ NOTE: Requires PRECISION -- eps is used in comparing coordinates of v with 1)
+\\ DEPRECATE: Appears in 
+\\ scanball_map, one_massive_qfminim, overlap_scanball, compact_storage_overlap_scanball
 check0(~v,eps) = {
+    GP_ASSERT_TRUE(eps > 0);
     for (ctr = 1, length(v),
         if ( 1-abs(v[ctr]) < eps,
             return(0)
@@ -118,12 +114,14 @@ check0(~v,eps) = {
     return(1);
 }:bool;
 
+
 \\ Check whether two vectors are the same, up to some error
 \\ INPUT:
 \\ - v1 and v2 are both vectors, eps is the acceptable error
 \\ OUTPUT:
 \\ - 0 if the entries of v1 and v2 are not each within eps of each other, 1 otherwise.
 samevecs(~v1,~v2, ~eps)={
+  GP_ASSERT_TRUE(eps > 0);
   if(length(v1) != length(v2), return(0));
   for (i = 1, length(v1),
     if( abs(v1[i] - v2[i]) > eps, return(0));
@@ -131,8 +129,7 @@ samevecs(~v1,~v2, ~eps)={
   return(1);
 };
 
-\\
-\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
 \\ BRIEF: Return adjusted vector so that the first nonzero entry is positive
 \\ INPUT:
 \\ - a vector v
@@ -149,12 +146,11 @@ vec_flip_positive(v1)={
 
 
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-\\ BRIEF: Checks if each of the entries of v1 are smaller than that of of v2
-\\ - axis allows us to skip comparison on the specified coordinate, which is
-\\   needed in the expand_minset function. Leave as 0 otherwise
+\\ BRIEF: Checks if the entries of v1 are smaller than that of of v2
+\\ - If the value of axis is set, skip comparison on the specified coordinate.
 \\ INPUT:
-\\ - vectors v1, v2
-\\ - integer value axis
+\\ - VEC_t : v1, v2
+\\ - t_INT axis
 \\ OUTPUT
 \\ - 0 if v1 equals or exceeds v2 on any coordinate (except possibly axis)
 \\ - 1 if v1 is smaller than v2 on each coordinate (except possibly axis)
@@ -190,7 +186,6 @@ double_complex_coordinates(~r1, ~v)=
 \\ OUTPUT:
 \\ - Real number corresponding to the infinity norm of v
 infinity_norm(~v)={
-  \\my(len=length(v), abv, val = 0);for (i=1, len,abv = abs(v[i]);if (abv > val, val = abv););
   return(normlp(v));
 }
 
@@ -207,7 +202,7 @@ infinity_norm(~v)={
 \\ - MODIFY IN PLACE: V -> V' incremented in the way described above
 \\ - Note that when called, the argument current_vec MUST be provided with a '~' character in front
 increment_coordinates(a_vec, ~current_vec)={
-    \\# It is assumed that a_vec[i] > current_vec[i] for all i, but not checked!
+    \\ It is assumed that a_vec[i] > current_vec[i] for all i, but not checked!
     my(place = length(current_vec), carryflag = 0;);
     current_vec[place]+=1;
     if(current_vec[place] >= a_vec[place], carryflag =1);
@@ -222,7 +217,7 @@ increment_coordinates(a_vec, ~current_vec)={
 }
 
 \\ BRIEF:
-\\ - compute a linear combination of the columns of a matrix
+\\ - compute a linear combination of the columns of a matrix. 
 \\ INPUT:
 \\ - A matrix called lattice of dimension (t,s)
 \\ - A coeff_vector of length s
@@ -240,7 +235,7 @@ column_lin_comb(~lattice, ~coeff_vector)=
 }
 
 \\ BRIEF:
-\\ - changes the working precision of GP
+\\ - helper function to change the working precision of GP
 \\ INPUT:
 \\ - an integer value newbitprec
 \\ OUTPUT:
@@ -253,7 +248,7 @@ change_precision(newbitprec)=
 }
 
 \\ BRIEF:
-\\ - perform gram schmidt on the input matrix over the reals (DEBUGSCALING- norml2)
+\\ - perform gram schmidt on the input matrix over the reals
 \\ INPUT:
 \\ - real_lattice is a matrix
 \\ OUTPUT:
@@ -339,7 +334,7 @@ get_scaled_ideal_lattice(K, ~ideal_I, scale_vector=0)=
 
 
 \\ BRIEF:
-\\ -
+\\ - Check if the input ideal is a reduced ideal of number field G
 \\ INPUT:
 \\ - G a number field
 \\ - ideal is a coefficient matrix of an ideal wrt integral basis of G
@@ -350,7 +345,12 @@ check_ideal_reduced(~G, ~ideal)=
     \\# if the norm is too small, then its not reduced
     if(abs(1/idealnorm(G, ideal))>sqrt(abs(G.disc)), return(0));
     my(rank = length(ideal),
-        k_vector, zero_vec, iteration_vector);
+        k_vector, zero_vec, iteration_vector,
+        complex_basis, real_basis, 
+        basis_change,
+        real_basis_lll,complex_lattice_lll,
+        check_elements, one_vec, test_vector_real
+        );
 
     complex_basis = G[5][1]*ideal;
     real_basis = embed_real(G, complex_basis);

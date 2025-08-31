@@ -211,7 +211,7 @@ babystock_scan(y,L,babystock_box,G,eps)={
 reddiv_compact_old(~y,~u,~G,~M1, p_avoid=1)={
     my(y1, ideal_uY, numerical_mat_Y, red1, shortest_vec, nu, lmu,
         ideal_denom,vec_ctr,beta_found =0,
-        comp = 2^(-ceil((poldegree(G.pol)^2 +2)*log(infinity_norm(u))+2*poldegree(G.pol)^2 +5))
+        comp = 2^(-ceil((poldegree(G.pol)^2 +2)*log(normlp(u))+2*poldegree(G.pol)^2 +5))
     );
 
     numerical_mat_Y = M1*y;                                                     \\ complex embedding matrix of y

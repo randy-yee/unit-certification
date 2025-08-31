@@ -4,16 +4,6 @@
 \\ read("test/TestingUtility.gp");
 }
 
-
-{ \\ test cases for make_poly
-    my(coeffs = [1,2,3,4]);
-    GP_ASSERT_EQ(make_poly(coeffs), x^3 + 2*x^2 + 3*x + 4);
-
-    coeffs = [9];
-    GP_ASSERT_EQ(make_poly(coeffs),9);
-
-}
-
 { \\ test cases for invert_coordinates
     my(vector1, vector2, eps,output_vector,output_vector2);
 
@@ -56,17 +46,6 @@
     v1 = [1,2,3,4,5]~;
     v2 = [10,11,5,7,8]~;
     GP_ASSERT_EQ(pointwise_vector_mul(v1,v2), [10,22, 15, 28,40]~);
-
-}
-
-
-{ \\ test cases for dividevector
-
-    my(v1,M1);
-
-    M1 = Mat([1,2;3,4]);
-    v1 = [10,11]~;
-    GP_ASSERT_EQ(dividevector(M1,v1), Mat([1/10,2/10; 3/11, 4/11]));
 
 }
 

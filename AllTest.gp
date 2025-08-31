@@ -31,12 +31,6 @@ What does this mean?
 
 
 {
-/*
-Debugging notes:
-currently the original implementation is on msx that uses the non-normalized log vector
-
-
-*/
 read("test/TestingUtility.gp");
 
 
@@ -53,8 +47,6 @@ read("test/test_minima.py");
 read("test/test_neighbours.py");
 
 read("test/test_reduction.py");
-
-
 
 read("test/test_bsgs.py");
 read("test/test_pmax_log.py");

@@ -1,11 +1,13 @@
 /*
 Implementation of the method of Pohst/Arenz for obtaining a set of
 fundamental units from a full set of independent units.
-Also known as the p-max algorithm
+Hereby referred to as the p-max algorithm
 
 Notation reminder:
-The matrix nf[5][1] is the matrix whose columns are the embeddings (up to complex conjugate) of integral basis elements
-Sometimes we need to embed this into R^n by splitting the complex embeddings into real and imaginary parts, and scaling by sqrt(2)
+The matrix nf[5][1] is the matrix whose columns are the embeddings (up to complex conjugate) 
+of integral basis elements
+Sometimes we need to embed this into R^n by splitting the complex embeddings into 
+real and imaginary parts, and scaling by sqrt(2)
 
 
 
@@ -68,12 +70,14 @@ DEBUG_LLLreduce = 0;
 ERROR_FILE = "data/pohst-errors.txt";
 
 
-\\ If the field regulator is known, can be used to see if a sublattice of the unit group is actually the unit group itself, or determine the index
+\\ BRIEF: Compute the regulator of a unit (sub)-group
 \\ INPUT:
 \\ - G a number field
-\\ - a matrix representing a lattice in G
+\\ - a matrix representing a subgroup of the units of G 
+\\ (units are represented by column vectors in standard form)
 \\ OUTPUT:
-\\ - Gives the (equivalent of the) regulator of the matrix.
+\\ - Gives the regulator of the corresponding unit group.
+\\ NOTE: Often used to compute the index of the subgroup. Inefficientfor large disc fields.
 log_determinant(G, unitmat)={
     my(square_matrix);
     square_matrix = G[5][1][1..length(unitmat),];
@@ -85,31 +89,36 @@ log_determinant(G, unitmat)={
 };
 
 
-\\ converts the numerical integral basis matrix of a number field with signature (r1,r2) into an appropriate
-\\ matrix in R^n for the purpose of using in qfminim. n = n = r1 +2*r2
-\\ Takes the r2 complex embedding values and treats their real and imag parts separately
-\\ Need to scale by sqrt2 so as to maintain a consistent norm.
+\\ Let G be a number field of degree n = n = r1 +2*r2
+\\ Let B denote the standard form matrix representing the integral basis of G.
+\\ Computes the complex embedding matrix of B and converts it to an (nxn) real matrix 
+\\ for the purpose of using qfminim. 
+\\ Specifically, separate the real and imag parts of the r2 complex embeddings into separate rows
+\\ Scale by sqrt2 to maintain a consistent norm.
 \\ INPUT:
-\\ - G is a number field obtained from nfinit of degree n
+\\ - G is a degree n number field obtained from nfinit()
 \\ OUTPUT
 \\ - An n by n square matrix as described above.
 get_R_basis(G)={
     my(
-      outmatrix,                                                 \\ holds output matrix
-      tempvec,                                                   \\ temporary vector holder
-      b_mat = G[5][1],                                           \\ holds integral basis embedding matrix
-      column_num = matsize(b_mat)[2]
+      outmatrix,
+      tempvec,
+      b_mat = G[5][1],
+      num_cols = matsize(b_mat)[2]
     );
 
-    if(G.r1 == length(G.zk), return(b_mat) );                           \\ if totally real then do nothing
+    \\ if totally real, do nothing
+    if(G.r1 == length(G.zk), return(b_mat) );
+
+    \\ o/w, copy the real rows, and separately process the complex rows 
     outmatrix = b_mat[1..G.r1,];
-    outmatrix = matrix(G.r1,column_num, i, j, b_mat[i,j]);              \\ copy real part of the matrix
+    for(i= G.r1+1, G.r1+G.r2,
+        \\ create scaled vector from real parts
+        tempvec = vector(num_cols, j, sqrt2*real(b_mat[i,j]));      
+        outmatrix = matconcat([outmatrix; tempvec]);
 
-    for(i= G.r1+1, G.r1+G.r2,                                         \\ loop over complex embeddings
-        tempvec = vector(column_num, j, sqrt2*real(b_mat[i,j]));      \\ create scaled vector from real parts
-        outmatrix = matconcat([outmatrix; tempvec]);                  \\ concat to outmatrix
-
-        tempvec = vector(column_num, j, sqrt2*imag(b_mat[i,j]));      \\ create scaled vector from imag parts
+        \\ create scaled vector from imag parts
+        tempvec = vector(num_cols, j, sqrt2*imag(b_mat[i,j]));
         outmatrix = matconcat([outmatrix; tempvec]);
     );
     return(outmatrix);
@@ -345,7 +354,6 @@ update_eta_set_torsion(G, t_gen, p, new_units)={
 
 \\DEBUGSCALING - as far as I can tell, using Practical Lagrange paper as reference
 \\ real_IB should not have the scaling factors of square root 2 on complex embeddings
-\\ ask Ha and Mike
 has_pth_root_normal(G, real_IB, p, unit_coeffs,eps)={
     my(
       basis_numerical,
@@ -585,25 +593,23 @@ pohst_check_normal(G, L, B,eps)={
                 for(i =1, length(new_units), new_units[,i] = nfeltmul(G, nfeltpow(G, torsiongen, updatevec[i]), new_units[,i]) );
             );
 
-            \\eta_matrix = new_units;
-            eta_exp_mat = matid(length(new_units));                          \\ JL7_UPDATE
+            eta_exp_mat = matid(length(new_units));
             if(DEBUG_MAIN,
             print("--- MAIN LOOP DATA ----","\n--- P = ", p);
             for(j=1, length(new_units), print("--- eta_", j , " = ", new_units[,j], " Norm = ", nfeltnorm(G, new_units[,j]) ) );
             print("--- Current lattice log determinant: ", precision(log_determinant(G, new_units), 10));
             print("--- MAIN LOOP DATA END ----");
             );
-            \\eta_matrix = new_units;                                                 \\ needed to reset the eta_matrix so that it doesn't get too big.
 
-            k = 1;                                                                  \\ Each time a new prime is considered, reset k to 1
-            solutionflag = 1;                                                       \\ flag indicating if a solution is found
-            solution = 0;                                                           \\ variable to hold solution
+            k = 1;
+            solutionflag = 1;
+            solution = 0;
 
             while(solutionflag,
 
                 if(DEBUG_MAIN, print("\n--- For P= ", p, " Checking eta_", k, " for pth roots..."););
 
-                \\ compute test_eta_k prior to input to pth root, there's no way to avoid this
+                \\ compute test_eta_k prior to input to pth root
                 test_eta_k = 1;
                 for(i = 1, length(new_units), test_eta_k = nfeltmul(G, test_eta_k, nfeltpow(G, new_units[,i], eta_exp_mat[i,k])));
 
@@ -615,14 +621,12 @@ pohst_check_normal(G, L, B,eps)={
 
                 if(DEBUG_MAIN, print("--- ( P= ", p, " eta_", k, ") Found a solution?: ", solutionflag , "\n"););
 
-                \\ when a solution is found, execute the following code
+                \\ if a solution is found, need to compute the bigger lattice
                 if(solutionflag,
                     if(DEBUG_MAIN, print("--- pth root found for p = ", p ); print("found solution: ", solution); );
-                    \\print("Current units: ", new_units);
 
-                    \\ UPDATE new_units by replacing the kth entry and performing LLL reduction on the real matrix
+                    \\ Replacing the kth column and perform LLL reduction
                     new_units[,k] = solution;
-                    \\print("after replacement: ", precision(log(abs(K[5][1]*new_units)),10));
 
                     new_units = LLL_reduce_units(G, new_units);
                     print("Regulator of new_units after replacement+LLL: ", precision(log_determinant(G, new_units), 10));
@@ -644,13 +648,13 @@ pohst_check_normal(G, L, B,eps)={
                 );  \\ closes solution found code
                 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
                 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-                if(solutionflag == 0,                                               \\ in the case no solution to the equation, we have to update the eta matrix
-                    if(k == length(L), solutionflag = 0; break );                   \\ when k == length(L), we are finished with the current prime.
-                                                                                    \\ break out of the while loop and go to the next prime p
-                    if(DEBUG_MAIN,
-                        print("eta update inputs: ");
-                        print(k, "  ", test_eta_k, "\n\n", eta_exp_mat, "\n\n", new_units );
-                      );
+                if(solutionflag == 0,
+                    \\ When no solution to the equation is ofund, this clause updates the eta matrix
+
+                    \\ when k == length(L), the current prime is finnished, so break
+                    \\ and go to the next prime p
+                    if(k == length(L), solutionflag = 0; break );                   
+
                     [updatevec] = update_eta_set(G,k,test_eta_k,p,eta_exp_mat ,new_units);
                     for(j = k+1, length(eta_exp_mat),
                         eta_exp_mat[,j] = eta_exp_mat[,j] + updatevec[j-k]*eta_exp_mat[,k];         \\ add the correct multiple of the kth column
@@ -664,19 +668,19 @@ pohst_check_normal(G, L, B,eps)={
                     ));
 
                     k++;
-
                     solutionflag = 1;
-                );  \\ close the no solution found code
-                \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-                \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-            );,                                                                 \\ close while loop and start the 'else' of the pari_prime_check 'if'
+                );
+
+            );, \\ close inner while loop
+
             if(DEBUG_POHST,print("pari check succeeds"));
-        );                                                                      \\ close the pari_prime_check 'if statement'
+
+        ); \\ close the outermost 'if' clause
         p = nextprime(p+1);
-    );
+    ); \\ close the outermost while loop
 
     print("Finished!");
-    return(new_units);     \\ Note, the modified matrix does indeed generate the right lattice -- See Arenz pg 165
+    return(new_units);
 
 };
 
@@ -694,7 +698,6 @@ bruteforce_proot(G, p , unitmat, eps)={
   print("Brute force check: ");
   my(exponentvec = vector(length(unitmat), i, 0));                              \\ initialize exponent vec to 0 vector
 
-
   for(i=1, p^length(unitmat)-1,                                                 \\ there are p^r-1 exponent vectors to consider, excluding 0
     exponentvec[1] += 1;
     for(j=1, length(exponentvec)-1,                                             \\ the loop updates the exponent vector by incrementing by 1 as a base p number
@@ -704,7 +707,6 @@ bruteforce_proot(G, p , unitmat, eps)={
         );
 
     );
-    \\print(exponentvec);
     test_element = nfalgtobasis(G,1);                                           \\ get the element 1
 
     \\ this for loop computes the element with the corresponding exponents on each element of unitmat
@@ -854,7 +856,7 @@ create_beta(torsion, torsiongen2, p, new_units)={
 
 \\ NOTE: Implemented for testing. In practice it may be beneficial to add an LLL step at the end
 get_log_lattice(nf1, M)={
-    r = nf1.r1 +nf1.r2 -1;
+    my(numMat, r = nf1.r1 +nf1.r2 -1);
     numMat = log(abs(nf1[5][1]*M));
     numMat = numMat[1..r,];
     \\ numMat = numMat*qflll(numMat);
