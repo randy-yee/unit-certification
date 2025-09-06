@@ -472,7 +472,7 @@ pmax_log_experiment(signature_string, loop_ranges, auxilliary) =
         lglat_new = lglat; \\modpair1[2] =1;
 
         \\lglat_new[,1] *= 990013;
-        lglat_new[,r] *= 990013;
+        \\lglat_new[,r] *= 990013;
         \\lglat_new[,1] *= 8*37;
         \\lglat_new[,r] *= (3^2);
 
@@ -658,7 +658,7 @@ for(i=start, end,
 
     \\write(OUTFILE1, "adding index divisors ");
     \\lglat_new[,1] *= 990013;
-    lglat_new[,r] *= 990013;
+    \\lglat_new[,r] *= 990013;
     \\lglat_new[,1] *= 8*37;
     \\lglat_new[,r] *= (3^2);
     lglat_new = lglat_new*qflll(lglat_new);
